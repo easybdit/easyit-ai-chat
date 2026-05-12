@@ -7,7 +7,7 @@
  */
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-class EasyIT_AI_Chat_DeepSeek extends EasyIT_AI_Chat_Provider {
+class WPEasyAI_DeepSeek extends WPEasyAI_Provider {
 
 	public function chat( array $messages, string $system = '' ): string {
 		$key     = $this->opts['deepseek_key'] ?? '';

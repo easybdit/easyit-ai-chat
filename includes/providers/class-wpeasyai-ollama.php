@@ -7,7 +7,7 @@
  */
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-class EasyIT_AI_Chat_Ollama extends EasyIT_AI_Chat_Provider {
+class WPEasyAI_Ollama extends WPEasyAI_Provider {
 
 	public function chat( array $messages, string $system = '' ): string {
 		$url     = rtrim( $this->opts['ollama_url'], '/' ) . '/api/chat';

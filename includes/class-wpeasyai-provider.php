@@ -7,7 +7,7 @@
  */
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-abstract class EasyIT_AI_Chat_Provider {
+abstract class WPEasyAI_Provider {
 
 	protected array $opts;
 

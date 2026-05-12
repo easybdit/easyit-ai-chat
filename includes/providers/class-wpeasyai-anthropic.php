@@ -7,7 +7,7 @@
  */
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-class EasyIT_AI_Chat_Anthropic extends EasyIT_AI_Chat_Provider {
+class WPEasyAI_Anthropic extends WPEasyAI_Provider {
 
 	public function chat( array $messages, string $system = '' ): string {
 		$key     = $this->opts['anthropic_key'] ?? '';

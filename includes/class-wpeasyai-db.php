@@ -7,16 +7,16 @@
  */
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-class EasyIT_AI_Chat_DB {
+class WPEasyAI_DB {
 
-	const SESSIONS_TABLE  = 'easyit_ai_sessions';
-	const MESSAGES_TABLE  = 'easyit_ai_messages';
+	const SESSIONS_TABLE  = 'wpeasyai_sessions';
+	const MESSAGES_TABLE  = 'wpeasyai_messages';
 
 	public static function create_tables(): void {
 		global $wpdb;
 		$charset = $wpdb->get_charset_collate();
 
-		$sessions = "CREATE TABLE {$wpdb->prefix}easyit_ai_sessions (
+		$sessions = "CREATE TABLE {$wpdb->prefix}wpeasyai_sessions (
 			id          BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
 			uuid        VARCHAR(36)     NOT NULL,
 			user_id     BIGINT UNSIGNED NOT NULL DEFAULT 0,
@@ -31,7 +31,7 @@ class EasyIT_AI_Chat_DB {
 			KEY guest_token (guest_token)
 		) $charset;";
 
-		$messages = "CREATE TABLE {$wpdb->prefix}easyit_ai_messages (
+		$messages = "CREATE TABLE {$wpdb->prefix}wpeasyai_messages (
 			id         BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
 			session_id BIGINT UNSIGNED NOT NULL,
 			role       ENUM('user','assistant') NOT NULL,

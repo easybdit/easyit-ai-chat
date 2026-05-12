@@ -1,9 +1,9 @@
 /* LaravelAI Chat — Admin global styles */
-.eai-settings-wrap h1,
-.eai-test-page h1 { display: none; } /* Hidden — replaced by hero */
+.weai-settings-wrap h1,
+.weai-test-page h1 { display: none; } /* Hidden — replaced by hero */
 
 /* Override WP form-table inside our panels */
-.eai-card .form-table { display: none !important; }
+.weai-card .form-table { display: none !important; }
 
 /* Nice checkbox styling in WP context */
-.eai-check-row input[type="checkbox"] { accent-color: #4f46e5; }
+.weai-check-row input[type="checkbox"] { accent-color: #4f46e5; }

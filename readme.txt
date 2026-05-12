@@ -1,6 +1,7 @@
-=== EasyIT AI Chat ===
+=== WP Easy AI Chat ===
 Contributors:      easybdit
-Tags:              ai, chatbot, ollama, openai, chatgpt, anthropic, claude, deepseek, chat, artificial intelligence
+Donate link:       https://easyit.com.bd/donate
+Tags:              ai, chatbot, ollama, openai, chatgpt, anthropic, claude, deepseek, chat
 Requires at least: 6.0
 Tested up to:      6.7
 Requires PHP:      8.0
@@ -8,112 +9,78 @@ Stable tag:        1.0.0
 License:           GPL-2.0-or-later
 License URI:       https://www.gnu.org/licenses/gpl-2.0.html
 
-Unified AI chatbot for WordPress. Connect Ollama, OpenAI, Anthropic (Claude), and DeepSeek with one shortcode.
+Unified AI chatbot for WordPress. Connect Ollama, OpenAI, Anthropic (Claude) and DeepSeek with one shortcode: [easyai]
 
 == Description ==
 
-**EasyIT AI Chat** lets you embed a fully-featured, ChatGPT-style AI chatbot on any WordPress page using a single shortcode. Switch between four AI providers without touching code.
+**WP Easy AI Chat** embeds a fully-featured, ChatGPT-style AI chatbot on any WordPress page using a single shortcode `[easyai]`. Switch between four AI providers without touching code.
 
 = Key Features =
 
 * **Multi-provider** — Ollama (free, local), OpenAI (GPT-3.5/4), Anthropic (Claude), DeepSeek
 * **ChatGPT-style UI** — dark sidebar, conversation history, session management
-* **Persistent sessions** — conversations saved to your database per user or guest
+* **Persistent sessions** — saved to your own WordPress database
 * **Markdown rendering** — bold, italic, code blocks, lists, headings
-* **Provider switcher** — users can switch AI provider per conversation
-* **Guest support** — allow non-logged-in visitors to chat (with cookie tracking)
-* **Privacy-ready** — GDPR privacy notice with link to your Privacy Policy page
+* **Provider switcher** — switch AI provider per conversation
+* **Guest support** — allow non-logged-in visitors to chat
+* **Privacy-ready** — GDPR notice, configurable data retention
 * **Rate limiting** — built-in per-user request throttling
-* **Admin test chat** — test all providers directly from your WordPress dashboard
-* **Fully responsive** — works on desktop, tablet and mobile
+* **Admin test chat** — test all providers from the dashboard
+* **Fully responsive** — desktop, tablet and mobile
 
-= Shortcode Usage =
+= Shortcode =
 
-Basic:
-`[easyit_ai_chat]`
+`[easyai]`
 
 With options:
-`[easyit_ai_chat provider="openai" height="600" title="My Assistant"]`
 
-All attributes:
+`[easyai provider="openai" height="600" title="My Assistant"]`
 
-* `provider` — `ollama` | `openai` | `anthropic` | `deepseek` (default: your settings)
+= Shortcode Attributes =
+
+* `provider` — `ollama` | `openai` | `anthropic` | `deepseek`
 * `title` — Widget heading text
 * `placeholder` — Input placeholder text
-* `system_prompt` — Override the AI system/persona prompt for this widget
+* `system_prompt` — Override AI system/persona prompt
 * `height` — Messages area height in pixels (default: 600)
-
-= Provider Setup =
-
-**Ollama** (free, runs locally or on your server) — no API key needed. Install from [ollama.com](https://ollama.com), pull a model (`ollama pull qwen2:1.5b`), and point the plugin to your server URL.
-
-**OpenAI** — requires an API key from [platform.openai.com](https://platform.openai.com). Supports GPT-3.5, GPT-4o, and all chat models.
-
-**Anthropic (Claude)** — requires an API key from [console.anthropic.com](https://console.anthropic.com). Supports Claude 3 Haiku, Sonnet, and Opus.
-
-**DeepSeek** — requires an API key from [platform.deepseek.com](https://platform.deepseek.com).
-
-= Privacy =
-
-This plugin stores conversation history in your own WordPress database. No data is sent to third-party services other than the AI provider you configure. Guest sessions are tracked via a first-party cookie. See the plugin's Settings → General tab to configure data retention.
 
 == Installation ==
 
-1. Upload the `easyit-ai-chat` folder to `/wp-content/plugins/`
-2. Activate the plugin via **Plugins → Installed Plugins**
-3. Navigate to **EasyIT AI Chat → Settings** in your WordPress admin
-4. Configure your chosen AI provider (URL/API key, model)
-5. Add `[easyit_ai_chat]` to any page or post
+1. Upload the `wpeasyai` folder to `/wp-content/plugins/`
+2. Activate via **Plugins → Installed Plugins**
+3. Go to **WP Easy AI → Settings**
+4. Configure your AI provider
+5. Add `[easyai]` to any page
 
 == Frequently Asked Questions ==
 
 = Do I need an API key? =
-Only for OpenAI, Anthropic, and DeepSeek. Ollama is completely free and self-hosted — no API key required.
+Only for OpenAI, Anthropic, and DeepSeek. Ollama is completely free and self-hosted.
 
-= Can I use multiple providers on the same site? =
-Yes. Each shortcode instance can specify its own provider attribute. You can have different providers on different pages.
-
-= Can guests (non-logged-in users) use the chat? =
-Yes, if you enable "Allow Guest Chat" in Settings → General. Guest sessions are tracked with a first-party browser cookie.
-
-= How do I give the AI a specific personality? =
-Set a System Prompt in Settings → General, or use the `system_prompt` attribute on any individual shortcode.
+= Can guests use the chat? =
+Yes, enable "Allow Guest Chat" in Settings → General.
 
 = Is conversation history stored on my server? =
-Yes. All messages are stored in your WordPress database (`wp_easyit_ai_messages` and `wp_easyit_ai_sessions` tables). No data is sent to any third party other than your configured AI provider.
+Yes — in your WordPress database. Nothing sent to third parties except your configured AI provider.
 
-= How do I delete user data (GDPR)? =
-Conversation data is tied to the WordPress user ID. You can set a data retention period in Settings → General to auto-purge old conversations.
-
-= Will this work with page builders (Elementor, Divi, Gutenberg)? =
-Yes. The shortcode works in any context that supports shortcodes, including Gutenberg (as a Shortcode block), Elementor, Divi, and WPBakery.
-
-= Can I embed multiple chat widgets on one page? =
-Yes, each `[easyit_ai_chat]` shortcode creates an independent widget with its own session.
+= Works with Gutenberg / Elementor / Divi? =
+Yes, use a Shortcode block or shortcode element.
 
 == Screenshots ==
 
-1. Public chat page — ChatGPT-style UI with dark sidebar and conversation history
-2. Admin settings page — tabbed provider configuration
-3. Admin test chat — test your AI providers directly from the dashboard
-4. Mobile view — responsive layout adapts to small screens
+1. Public chat page — ChatGPT-style UI with dark sidebar
+2. Admin settings — tabbed provider configuration
+3. Admin test chat — test providers from the dashboard
+4. Mobile responsive layout
 
 == Changelog ==
 
 = 1.0.0 =
 * Initial release
-* Support for Ollama, OpenAI (ChatGPT), Anthropic (Claude), DeepSeek
-* ChatGPT-style UI with dark sidebar, session list, and persistent conversations
-* Multi-turn conversation with full database persistence
-* Provider switcher per session
-* Markdown rendering (bold, italic, code blocks, lists, headings)
-* Admin settings page with tabbed provider configuration
-* Test-connection button per provider
-* Admin test-chat page
-* Guest chat support with cookie-based session tracking
-* Rate limiting per user/guest
-* GDPR-friendly privacy notice
-* Fully responsive layout
+* Ollama, OpenAI, Anthropic (Claude), DeepSeek support
+* ChatGPT-style UI with persistent sessions
+* Guest chat, rate limiting, GDPR notice
+* Admin settings + test chat page
 
 == Upgrade Notice ==
 

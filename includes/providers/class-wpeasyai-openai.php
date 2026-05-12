@@ -7,7 +7,7 @@
  */
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-class EasyIT_AI_Chat_OpenAI extends EasyIT_AI_Chat_Provider {
+class WPEasyAI_OpenAI extends WPEasyAI_Provider {
 
 	public function chat( array $messages, string $system = '' ): string {
 		$key     = $this->opts['openai_key'] ?? '';

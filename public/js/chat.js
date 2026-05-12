@@ -1,8 +1,8 @@
-/* global EasyITAIChatConfig */
+/* global WPEasyAIConfig */
 (function () {
 	'use strict';
 
-	var cfg = window.EasyITAIChatConfig || {};
+	var cfg = window.WPEasyAIConfig || {};
 	var i18n = cfg.i18n || {};
 
 	/* ── Tiny markdown renderer ─────────────────────────────── */
@@ -16,9 +16,9 @@
 		// Fenced code blocks
 		text = text.replace(/```(\w*)\n?([\s\S]*?)```/g, function(_, lang, code) {
 			var label = lang || 'code';
-			return '<div class="eai-code-block">'
-				+ '<div class="eai-code-header"><span>' + esc(label) + '</span>'
-				+ '<button class="eai-code-copy" data-code="' + esc(code.trimEnd()) + '">' + (i18n.copy||'Copy') + '</button></div>'
+			return '<div class="weai-code-block">'
+				+ '<div class="weai-code-header"><span>' + esc(label) + '</span>'
+				+ '<button class="weai-code-copy" data-code="' + esc(code.trimEnd()) + '">' + (i18n.copy||'Copy') + '</button></div>'
 				+ '<pre>' + esc(code.trimEnd()) + '</pre></div>';
 		});
 		// Inline code
@@ -60,22 +60,22 @@
 		var systemPrompt = widget.dataset.systemPrompt || '';
 		var sessionUuid  = null;
 
-		var sidebar      = widget.querySelector('.eai-sidebar');
-		var sessionsList = widget.querySelector('.eai-sessions-list');
-		var messages     = widget.querySelector('.eai-messages');
-		var input        = widget.querySelector('.eai-input');
-		var sendBtn      = widget.querySelector('.eai-send-btn');
-		var newChatBtn   = widget.querySelector('.eai-new-chat-btn');
-		var provSelect   = widget.querySelector('.eai-provider-select');
-		var toggleBtn    = widget.querySelector('.eai-toggle-sidebar');
-		var deleteBtn    = widget.querySelector('.eai-delete-session-btn');
-		var titleEl      = widget.querySelector('.eai-session-title');
+		var sidebar      = widget.querySelector('.weai-sidebar');
+		var sessionsList = widget.querySelector('.weai-sessions-list');
+		var messages     = widget.querySelector('.weai-messages');
+		var input        = widget.querySelector('.weai-input');
+		var sendBtn      = widget.querySelector('.weai-send-btn');
+		var newChatBtn   = widget.querySelector('.weai-new-chat-btn');
+		var provSelect   = widget.querySelector('.weai-provider-select');
+		var toggleBtn    = widget.querySelector('.weai-toggle-sidebar');
+		var deleteBtn    = widget.querySelector('.weai-delete-session-btn');
+		var titleEl      = widget.querySelector('.weai-session-title');
 
 		if ( !messages || !input || !sendBtn ) return;
 
 		/* ── Sessions list ── */
 		function loadSessions() {
-			ajax('easyit_ai_chat_sessions', {}, function(res) {
+			ajax('wpeasyai_sessions', {}, function(res) {
 				if (!res.success) return;
 				renderSessions(res.data.sessions || []);
 			});
@@ -101,13 +101,13 @@
 			var html = '';
 			function renderGroup(label, list) {
 				if (!list.length) return;
-				html += '<div class="eai-session-group-label">' + esc(label) + '</div>';
+				html += '<div class="weai-session-group-label">' + esc(label) + '</div>';
 				list.forEach(function(s) {
-					var active = s.uuid === sessionUuid ? ' eai-active' : '';
-					html += '<div class="eai-session-item' + active + '" data-uuid="' + esc(s.uuid) + '">'
+					var active = s.uuid === sessionUuid ? ' weai-active' : '';
+					html += '<div class="weai-session-item' + active + '" data-uuid="' + esc(s.uuid) + '">'
 						+ '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13" style="flex-shrink:0"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>'
-						+ '<span class="eai-session-title-text">' + esc(s.title) + '</span>'
-						+ '<button class="eai-session-del" data-uuid="' + esc(s.uuid) + '" title="Delete">'
+						+ '<span class="weai-session-title-text">' + esc(s.title) + '</span>'
+						+ '<button class="weai-session-del" data-uuid="' + esc(s.uuid) + '" title="Delete">'
 						+ '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg>'
 						+ '</button></div>';
 				});
@@ -122,11 +122,11 @@
 		function switchSession(uuid) {
 			sessionUuid = uuid;
 			// Update active state
-			widget.querySelectorAll('.eai-session-item').forEach(function(el) {
-				el.classList.toggle('eai-active', el.dataset.uuid === uuid);
+			widget.querySelectorAll('.weai-session-item').forEach(function(el) {
+				el.classList.toggle('weai-active', el.dataset.uuid === uuid);
 			});
 			clearMessages();
-			ajax('easyit_ai_chat_history', { session: uuid }, function(res) {
+			ajax('wpeasyai_history', { session: uuid }, function(res) {
 				if (!res.success) return;
 				if (res.data.provider) {
 					provider = res.data.provider;
@@ -150,31 +150,31 @@
 		}
 
 		function showWelcome() {
-			if (!messages.querySelector('.eai-welcome')) {
-				messages.innerHTML = widget.querySelector('.eai-widget-welcome-template') ?
-					widget.querySelector('.eai-widget-welcome-template').innerHTML : '';
+			if (!messages.querySelector('.weai-welcome')) {
+				messages.innerHTML = widget.querySelector('.weai-widget-welcome-template') ?
+					widget.querySelector('.weai-widget-welcome-template').innerHTML : '';
 			}
 		}
 
 		function hideWelcome() {
-			var w = messages.querySelector('.eai-welcome');
+			var w = messages.querySelector('.weai-welcome');
 			if (w) w.remove();
 		}
 
 		function appendMessage(role, content, providerLabel, scroll) {
 			hideWelcome();
 			var div = document.createElement('div');
-			div.className = 'eai-msg eai-msg--' + (role === 'user' ? 'user' : 'assistant');
+			div.className = 'weai-msg weai-msg--' + (role === 'user' ? 'user' : 'assistant');
 
 			var avatarText = role === 'user' ? (i18n.you||'You').charAt(0) : '🤖';
-			var bubble     = role === 'user' ? '<div class="eai-msg-bubble">' + esc(content) + '</div>' : '<div class="eai-msg-bubble">' + md(content) + '</div>';
-			var meta       = providerLabel ? '<div class="eai-msg-meta">' + esc(providerLabel) + '</div>' : '';
+			var bubble     = role === 'user' ? '<div class="weai-msg-bubble">' + esc(content) + '</div>' : '<div class="weai-msg-bubble">' + md(content) + '</div>';
+			var meta       = providerLabel ? '<div class="weai-msg-meta">' + esc(providerLabel) + '</div>' : '';
 
-			div.innerHTML  = '<div class="eai-msg-avatar">' + avatarText + '</div>'
-				+ '<div class="eai-msg-body">' + bubble + meta + '</div>';
+			div.innerHTML  = '<div class="weai-msg-avatar">' + avatarText + '</div>'
+				+ '<div class="weai-msg-body">' + bubble + meta + '</div>';
 
 			// Wire copy buttons in code blocks
-			div.querySelectorAll('.eai-code-copy').forEach(function(btn) {
+			div.querySelectorAll('.weai-code-copy').forEach(function(btn) {
 				btn.addEventListener('click', function() {
 					var code = btn.dataset.code || '';
 					if (navigator.clipboard) {
@@ -193,10 +193,10 @@
 
 		function appendTyping() {
 			var div = document.createElement('div');
-			div.className = 'eai-msg eai-msg--assistant';
-			div.innerHTML = '<div class="eai-msg-avatar">🤖</div>'
-				+ '<div class="eai-msg-body"><div class="eai-msg-bubble"><div class="eai-typing">'
-				+ '<div class="eai-typing-dot"></div><div class="eai-typing-dot"></div><div class="eai-typing-dot"></div>'
+			div.className = 'weai-msg weai-msg--assistant';
+			div.innerHTML = '<div class="weai-msg-avatar">🤖</div>'
+				+ '<div class="weai-msg-body"><div class="weai-msg-bubble"><div class="weai-typing">'
+				+ '<div class="weai-typing-dot"></div><div class="weai-typing-dot"></div><div class="weai-typing-dot"></div>'
 				+ '</div></div></div>';
 			messages.appendChild(div);
 			scrollBottom();
@@ -219,7 +219,7 @@
 			appendMessage('user', text, null, true);
 			var typing = appendTyping();
 
-			ajax('easyit_ai_chat_send', {
+			ajax('wpeasyai_send', {
 				message:  text,
 				provider: provider,
 				session:  sessionUuid || '',
@@ -262,10 +262,10 @@
 				clearMessages();
 				// Re-add welcome
 				var welcome = document.createElement('div');
-				welcome.className = 'eai-welcome';
-				welcome.innerHTML = '<div class="eai-welcome-icon">🤖</div>'
-					+ '<h3 class="eai-welcome-title">' + esc(titleEl ? titleEl.textContent : 'AI Chat') + '</h3>'
-					+ '<p class="eai-welcome-sub">How can I help you today?</p>';
+				welcome.className = 'weai-welcome';
+				welcome.innerHTML = '<div class="weai-welcome-icon">🤖</div>'
+					+ '<h3 class="weai-welcome-title">' + esc(titleEl ? titleEl.textContent : 'AI Chat') + '</h3>'
+					+ '<p class="weai-welcome-sub">How can I help you today?</p>';
 				messages.appendChild(welcome);
 				if (titleEl) titleEl.textContent = titleEl.dataset.orig || titleEl.textContent;
 				loadSessions();
@@ -281,7 +281,7 @@
 
 		if (toggleBtn) {
 			toggleBtn.addEventListener('click', function() {
-				widget.classList.toggle('eai-sidebar-hidden');
+				widget.classList.toggle('weai-sidebar-hidden');
 			});
 		}
 
@@ -289,15 +289,15 @@
 			deleteBtn.addEventListener('click', function() {
 				if (!sessionUuid) return;
 				if (!confirm(i18n.delete_confirm || 'Delete this conversation?')) return;
-				ajax('easyit_ai_chat_delete', { session: sessionUuid }, function(res) {
+				ajax('wpeasyai_delete', { session: sessionUuid }, function(res) {
 					if (res.success) {
 						sessionUuid = null;
 						clearMessages();
 						var welcome = document.createElement('div');
-						welcome.className = 'eai-welcome';
-						welcome.innerHTML = '<div class="eai-welcome-icon">🤖</div>'
-							+ '<h3 class="eai-welcome-title">AI Chat</h3>'
-							+ '<p class="eai-welcome-sub">How can I help you today?</p>';
+						welcome.className = 'weai-welcome';
+						welcome.innerHTML = '<div class="weai-welcome-icon">🤖</div>'
+							+ '<h3 class="weai-welcome-title">AI Chat</h3>'
+							+ '<p class="weai-welcome-sub">How can I help you today?</p>';
 						messages.appendChild(welcome);
 						loadSessions();
 					}
@@ -307,19 +307,19 @@
 
 		// Session click & delete
 		sessionsList.addEventListener('click', function(e) {
-			var delBtn = e.target.closest('.eai-session-del');
+			var delBtn = e.target.closest('.weai-session-del');
 			if (delBtn) {
 				e.stopPropagation();
 				var uuid = delBtn.dataset.uuid;
 				if (!confirm(i18n.delete_confirm || 'Delete?')) return;
-				ajax('easyit_ai_chat_delete', { session: uuid }, function(res) {
+				ajax('wpeasyai_delete', { session: uuid }, function(res) {
 					if (res.success) {
 						if (uuid === sessionUuid) {
 							sessionUuid = null;
 							clearMessages();
 							var welcome = document.createElement('div');
-							welcome.className = 'eai-welcome';
-							welcome.innerHTML = '<div class="eai-welcome-icon">🤖</div><h3 class="eai-welcome-title">AI Chat</h3><p class="eai-welcome-sub">How can I help you today?</p>';
+							welcome.className = 'weai-welcome';
+							welcome.innerHTML = '<div class="weai-welcome-icon">🤖</div><h3 class="weai-welcome-title">AI Chat</h3><p class="weai-welcome-sub">How can I help you today?</p>';
 							messages.appendChild(welcome);
 						}
 						loadSessions();
@@ -327,7 +327,7 @@
 				});
 				return;
 			}
-			var item = e.target.closest('.eai-session-item');
+			var item = e.target.closest('.weai-session-item');
 			if (item && item.dataset.uuid) {
 				switchSession(item.dataset.uuid);
 			}
@@ -362,7 +362,7 @@
 
 	/* ── Boot all widgets on page ── */
 	document.addEventListener('DOMContentLoaded', function() {
-		document.querySelectorAll('.eai-widget').forEach(initWidget);
+		document.querySelectorAll('.weai-widget').forEach(initWidget);
 	});
 
 })();

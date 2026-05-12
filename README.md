@@ -1,259 +1,187 @@
 <div align="center">
 
-<img src="https://avatars.githubusercontent.com/u/283857424?s=80&v=4" width="80" height="80" style="border-radius:16px" alt="EasyIT">
-
-# EasyIT AI Chat
+# WP Easy AI Chat
 
 **Unified AI chatbot plugin for WordPress**
 
 [![WordPress](https://img.shields.io/badge/WordPress-6.0%2B-21759b?style=flat-square&logo=wordpress&logoColor=white)](https://wordpress.org)
 [![PHP](https://img.shields.io/badge/PHP-8.0%2B-777bb4?style=flat-square&logo=php&logoColor=white)](https://php.net)
 [![License](https://img.shields.io/badge/License-GPL--2.0--or--later-green?style=flat-square)](LICENSE)
-[![Version](https://img.shields.io/badge/Version-1.0.0-orange?style=flat-square)](https://github.com/easybdit/easyit-ai-chat/releases)
-[![Organization](https://img.shields.io/badge/By-EasyIT-0f3460?style=flat-square)](https://github.com/easybdit)
+[![Version](https://img.shields.io/badge/Version-1.0.0-orange?style=flat-square)](https://github.com/easybdit/wpeasyai/releases)
+[![Donate](https://img.shields.io/badge/Donate-💛-yellow?style=flat-square)](https://easyit.com.bd/donate)
 
-Connect **Ollama · OpenAI · Anthropic Claude · DeepSeek** to any WordPress page with one shortcode.
+Connect **Ollama · OpenAI · Anthropic Claude · DeepSeek** to any WordPress page.
 
-[Installation](#-installation) · [Shortcode](#-shortcode-reference) · [Providers](#-provider-setup) · [Roadmap](#-roadmap) · [Contributing](#-contributing)
+**Shortcode:** `[easyai]`
+
+[Install](#-installation) · [Shortcode](#-shortcode) · [Providers](#-provider-setup) · [Roadmap](#-roadmap) · [Donate](https://easyit.com.bd/donate)
 
 </div>
 
 ---
 
-## 📸 Preview
-
-| Public Chat Page | Admin Settings | Admin Test Chat |
-|:---:|:---:|:---:|
-| ChatGPT-style UI with dark sidebar | Tabbed provider config | Test any provider instantly |
-
----
-
 ## ✨ Features
 
-| Feature | Description |
-|---------|-------------|
-| 🦙 **Multi-provider** | Ollama (free/local), OpenAI, Anthropic Claude, DeepSeek |
-| 💬 **ChatGPT-style UI** | Dark sidebar, session list, full conversation history |
-| 🗄️ **Persistent sessions** | Conversations saved to your WordPress database |
-| 📝 **Markdown rendering** | Code blocks, bold, italic, lists, headings |
-| 🔀 **Provider switcher** | Switch AI provider per conversation |
-| 👥 **Guest support** | Non-logged-in users via cookie-based sessions |
-| 🔒 **Privacy-ready** | GDPR notice, configurable data retention |
-| 🚦 **Rate limiting** | 20 req/60s per user/guest |
-| 🧪 **Admin test chat** | Test providers from your dashboard |
-| 📱 **Responsive** | Desktop, tablet & mobile |
-| 🔐 **Secure** | Nonce verification, input sanitization, prepared queries |
+| | Feature | Detail |
+|--|---------|--------|
+| 🦙 | **Multi-provider** | Ollama (free/local), OpenAI, Anthropic Claude, DeepSeek |
+| 💬 | **ChatGPT-style UI** | Dark sidebar, session list, full conversation history |
+| 🗄️ | **Persistent sessions** | Saved to your own WordPress database |
+| 📝 | **Markdown** | Code blocks, bold, italic, lists, headings |
+| 🔀 | **Provider switcher** | Switch AI per conversation |
+| 👥 | **Guest support** | Non-logged-in users via cookie sessions |
+| 🔒 | **Privacy-ready** | GDPR notice, configurable data retention |
+| 🚦 | **Rate limiting** | 20 req / 60s per user |
+| 🧪 | **Test chat** | Test any provider from the dashboard |
+| 📱 | **Responsive** | Desktop, tablet & mobile |
+| 🔐 | **Secure** | Nonces, sanitization, prepared queries |
 
 ---
 
 ## 🚀 Installation
 
-### Method 1 — Upload ZIP *(recommended)*
-1. Download [`easyit-ai-chat-v1.0.0.zip`](https://github.com/easybdit/easyit-ai-chat/releases/latest)
-2. WordPress Admin → **Plugins → Add New → Upload Plugin**
-3. Choose the ZIP → **Install Now** → **Activate**
+**Method 1 — ZIP upload**
+1. Download [`wpeasyai-v1.0.0.zip`](https://github.com/easybdit/wpeasyai/releases/latest)
+2. WP Admin → **Plugins → Add New → Upload Plugin**
+3. Activate ✅
 
-### Method 2 — Git Clone
+**Method 2 — Git**
 ```bash
-cd /path/to/wp-content/plugins/
-git clone https://github.com/easybdit/easyit-ai-chat.git
+cd /wp-content/plugins/
+git clone https://github.com/easybdit/wpeasyai.git
 ```
-Then activate from **Plugins → Installed Plugins**.
-
-### Method 3 — Manual
-Extract the ZIP into `/wp-content/plugins/easyit-ai-chat/` and activate.
 
 ---
 
-## ⚙️ Quick Setup
-
-1. Go to **WordPress Admin → EasyIT AI Chat → Settings**
-2. Pick your provider tab (Ollama, OpenAI, Anthropic, or DeepSeek)
-3. Enter the server URL or API key + model name
-4. Click **Test Connection** to verify
-5. Click **Save Settings**
-6. Add `[easyit_ai_chat]` to any page or post
-
----
-
-## 📋 Shortcode Reference
+## 📋 Shortcode
 
 ```
-[easyit_ai_chat]
+[easyai]
 ```
 
-| Attribute | Default | Options |
-|-----------|---------|---------|
-| `provider` | *(settings default)* | `ollama` \| `openai` \| `anthropic` \| `deepseek` |
+| Attribute | Default | Values |
+|-----------|---------|--------|
+| `provider` | *(settings)* | `ollama` · `openai` · `anthropic` · `deepseek` |
 | `title` | `AI Chat` | Any text |
 | `placeholder` | `Ask me anything…` | Any text |
-| `system_prompt` | *(settings default)* | Any text |
-| `height` | `600` | Integer (pixels) |
+| `system_prompt` | *(settings)* | Any text |
+| `height` | `600` | Pixels |
 
 **Examples:**
 ```
-[easyit_ai_chat]
-
-[easyit_ai_chat provider="openai" height="700"]
-
-[easyit_ai_chat provider="anthropic" title="Claude Assistant"]
-
-[easyit_ai_chat provider="ollama" system_prompt="You are a helpful support agent for EasyIT."]
+[easyai]
+[easyai provider="openai" height="700"]
+[easyai provider="anthropic" title="Claude Assistant"]
+[easyai system_prompt="You are an EasyIT support agent."]
 ```
 
 ---
 
 ## 🔧 Provider Setup
 
-### 🦙 Ollama — Free & Local
-No API key. Runs on your server or local machine.
-
+### 🦙 Ollama — Free, No API key
 ```bash
-# Install Ollama: https://ollama.com
-ollama pull qwen2:1.5b    # fast & lightweight
-ollama pull llama3         # powerful
-ollama pull mistral        # balanced
+ollama pull qwen2:1.5b   # lightweight
+ollama pull llama3        # powerful
 ```
+Set URL: `http://localhost:11434` or your server IP.
 
-Set **Ollama URL** in settings to `http://localhost:11434` (or your server IP).
+### ✨ OpenAI → [platform.openai.com](https://platform.openai.com/api-keys)
+Models: `gpt-4o-mini`, `gpt-4o`, `gpt-3.5-turbo`
 
-### ✨ OpenAI (ChatGPT)
-1. Get API key → [platform.openai.com/api-keys](https://platform.openai.com/api-keys)
-2. Recommended models: `gpt-4o-mini`, `gpt-4o`, `gpt-3.5-turbo`
+### 🎭 Anthropic → [console.anthropic.com](https://console.anthropic.com)
+Models: `claude-3-5-sonnet-20241022`, `claude-3-haiku-20240307`
 
-### 🎭 Anthropic (Claude)
-1. Get API key → [console.anthropic.com](https://console.anthropic.com)
-2. Recommended models: `claude-3-5-sonnet-20241022`, `claude-3-haiku-20240307`
-
-### 🔍 DeepSeek
-1. Get API key → [platform.deepseek.com](https://platform.deepseek.com)
-2. Recommended models: `deepseek-chat`, `deepseek-reasoner`
+### 🔍 DeepSeek → [platform.deepseek.com](https://platform.deepseek.com)
+Models: `deepseek-chat`, `deepseek-reasoner`
 
 ---
 
-## 🗂️ Project Structure
+## 🗂️ Structure
 
 ```
-easyit-ai-chat/
-├── easyit-ai-chat.php              ← Main plugin entry point
-├── uninstall.php                   ← Cleanup on plugin deletion
-├── readme.txt                      ← WordPress.org readme
-├── README.md                       ← This file
-├── CHANGELOG.md                    ← Version history
-├── LICENSE                         ← GPL-2.0-or-later
-│
+wpeasyai/
+├── wpeasyai.php                     ← Main plugin file
+├── uninstall.php
+├── readme.txt                       ← WordPress.org
+├── README.md
+├── CHANGELOG.md
+├── LICENSE
 ├── admin/
-│   ├── class-easyit-ai-chat-admin.php   ← Admin menus, settings, enqueue
-│   ├── assets/
-│   │   ├── admin.css
-│   │   └── admin.js
-│   └── views/
-│       ├── settings-page.php            ← Tabbed settings UI
-│       └── test-chat-page.php           ← Admin test chat page
-│
+│   ├── class-wpeasyai-admin.php
+│   ├── assets/ (admin.css, admin.js)
+│   └── views/ (settings-page.php, test-chat-page.php)
 ├── includes/
-│   ├── class-easyit-ai-chat-options.php     ← Settings manager
-│   ├── class-easyit-ai-chat-provider.php    ← Abstract provider base
-│   ├── class-easyit-ai-chat-db.php          ← Database layer
-│   ├── class-easyit-ai-chat-engine.php      ← AJAX handlers
+│   ├── class-wpeasyai-options.php
+│   ├── class-wpeasyai-provider.php
+│   ├── class-wpeasyai-db.php
+│   ├── class-wpeasyai-engine.php
 │   └── providers/
-│       ├── class-easyit-ai-chat-ollama.php
-│       ├── class-easyit-ai-chat-openai.php
-│       ├── class-easyit-ai-chat-anthropic.php
-│       └── class-easyit-ai-chat-deepseek.php
-│
+│       ├── class-wpeasyai-ollama.php
+│       ├── class-wpeasyai-openai.php
+│       ├── class-wpeasyai-anthropic.php
+│       └── class-wpeasyai-deepseek.php
 ├── public/
-│   ├── class-easyit-ai-chat-public.php  ← Shortcode + enqueue
-│   ├── css/chat.css                     ← Widget styles
-│   └── js/chat.js                       ← Widget JavaScript
-│
-└── languages/                           ← i18n (.po/.mo files)
+│   ├── class-wpeasyai-public.php
+│   ├── css/chat.css
+│   └── js/chat.js
+└── languages/
 ```
-
----
-
-## 🔐 Security
-
-- ✅ All AJAX requests verified with `check_ajax_referer()`
-- ✅ All `$_POST` input sanitized (`sanitize_text_field`, `sanitize_key`, etc.)
-- ✅ All DB queries use `$wpdb->prepare()` or safe WP methods
-- ✅ Session ownership verified before any data access
-- ✅ Rate limiting: 20 requests / 60 seconds per user or guest
-- ✅ API keys stored server-side only, never sent to browser
-- ✅ All output escaped (`esc_html`, `esc_attr`, `esc_url`, `esc_js`)
-- ✅ `wp_die()` called after all JSON error responses
 
 ---
 
 ## 🛣️ Roadmap
 
-### ✅ v1.0.0 — Free (Current)
-- Multi-provider: Ollama, OpenAI, Anthropic, DeepSeek
-- ChatGPT-style UI with persistent sessions
-- Guest chat, rate limiting, GDPR notice
+**v1.0.0 — Free ✅**
+- Multi-provider AI chat with persistent sessions
 - Admin settings + test chat
 
-### 🔲 v2.0.0 — Premium *(coming soon)*
-- Floating chat bubble widget
-- Custom AI personas per page/post
-- File & image upload support
-- Conversation export (CSV / PDF)
+**v2.0.0 — Premium 🔲**
+- Floating chat bubble
+- Custom AI personas per page
+- File/image upload
+- Conversation export (CSV/PDF)
 - Analytics dashboard
-- Webhook / Zapier integrations
 - WooCommerce product assistant
-- WPML / Polylang multilingual
-- Priority support
+- Webhook integrations
 
 ---
 
 ## 🤝 Contributing
 
-Contributions are welcome!
-
 ```bash
-# 1. Fork this repo on GitHub
-# 2. Clone your fork
-git clone https://github.com/YOUR-USERNAME/easyit-ai-chat.git
-
-# 3. Create a feature branch
-git checkout -b feature/your-feature-name
-
-# 4. Make changes following WordPress Coding Standards
-# https://developer.wordpress.org/coding-standards/
-
-# 5. Commit with a clear message
-git commit -m "Add: description of your change"
-
-# 6. Push and open a Pull Request
-git push origin feature/your-feature-name
+git clone https://github.com/easybdit/wpeasyai.git
+git checkout -b feature/your-feature
+# Follow WordPress Coding Standards
+git commit -m "feat: your change"
+git push origin feature/your-feature
+# Open Pull Request
 ```
 
-### Reporting Bugs
-Please use [GitHub Issues](https://github.com/easybdit/easyit-ai-chat/issues) and include:
-- WordPress version
-- PHP version
-- Plugin version
-- Steps to reproduce
-- Expected vs actual behaviour
+Bug reports → [GitHub Issues](https://github.com/easybdit/wpeasyai/issues)
+
+---
+
+## 💛 Support & Donate
+
+If this plugin helps your site, consider supporting development:
+
+**[💛 Donate via easyit.com.bd/donate](https://easyit.com.bd/donate)**
 
 ---
 
 ## 📄 License
 
-**GPL-2.0-or-later** — see [LICENSE](LICENSE)
-
-This plugin is free software. You can redistribute and/or modify it under the terms of the GNU General Public License (version 2 or later).
-
----
-
-## 👨‍💻 About EasyIT
-
-Built with ❤️ by **[EasyIT](https://github.com/easybdit)** — Bangladesh 🇧🇩
-
-> Making AI accessible for every WordPress site.
+GPL-2.0-or-later · [LICENSE](LICENSE)
 
 ---
 
 <div align="center">
-  <sub>⭐ Star this repo if it helped you!</sub>
+
+Built with ❤️ by **[EasyIT](https://easyit.com.bd)** — Bangladesh 🇧🇩
+
+📧 [muradbd.info@gmail.com](mailto:muradbd.info@gmail.com) · 🌐 [easyit.com.bd](https://easyit.com.bd) · 🐙 [github.com/easybdit](https://github.com/easybdit)
+
+⭐ Star this repo if it helped you!
+
 </div>

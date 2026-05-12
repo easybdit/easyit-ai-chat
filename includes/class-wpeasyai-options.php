@@ -7,8 +7,8 @@
  */
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-class EasyIT_AI_Chat_Options {
-	const OPTION_KEY = 'easyit_ai_chat_options';
+class WPEasyAI_Options {
+	const OPTION_KEY = 'wpeasyai_options';
 
 	public static function defaults(): array {
 		return [

@@ -7,7 +7,7 @@
  */
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-class EasyIT_AI_Chat_Engine {
+class WPEasyAI_Engine {
 
 	const RATE_LIMIT_WINDOW = 60;   // seconds
 	const RATE_LIMIT_MAX    = 20;   // requests per window
@@ -15,23 +15,23 @@ class EasyIT_AI_Chat_Engine {
 
 	public function __construct() {
 		// Logged-in + guests
-		add_action( 'wp_ajax_easyit_ai_chat_send',           [ $this, 'ajax_send' ] );
-		add_action( 'wp_ajax_nopriv_easyit_ai_chat_send',    [ $this, 'ajax_send' ] );
-		add_action( 'wp_ajax_easyit_ai_chat_sessions',       [ $this, 'ajax_sessions' ] );
-		add_action( 'wp_ajax_nopriv_easyit_ai_chat_sessions',[ $this, 'ajax_sessions' ] );
-		add_action( 'wp_ajax_easyit_ai_chat_new',            [ $this, 'ajax_new_session' ] );
-		add_action( 'wp_ajax_nopriv_easyit_ai_chat_new',     [ $this, 'ajax_new_session' ] );
-		add_action( 'wp_ajax_easyit_ai_chat_history',        [ $this, 'ajax_history' ] );
-		add_action( 'wp_ajax_nopriv_easyit_ai_chat_history', [ $this, 'ajax_history' ] );
-		add_action( 'wp_ajax_easyit_ai_chat_delete',         [ $this, 'ajax_delete' ] );
-		add_action( 'wp_ajax_nopriv_easyit_ai_chat_delete',  [ $this, 'ajax_delete' ] );
-		add_action( 'wp_ajax_easyit_ai_chat_health',         [ $this, 'ajax_health' ] );
+		add_action( 'wp_ajax_wpeasyai_send',           [ $this, 'ajax_send' ] );
+		add_action( 'wp_ajax_nopriv_wpeasyai_send',    [ $this, 'ajax_send' ] );
+		add_action( 'wp_ajax_wpeasyai_sessions',       [ $this, 'ajax_sessions' ] );
+		add_action( 'wp_ajax_nopriv_wpeasyai_sessions',[ $this, 'ajax_sessions' ] );
+		add_action( 'wp_ajax_wpeasyai_new',            [ $this, 'ajax_new_session' ] );
+		add_action( 'wp_ajax_nopriv_wpeasyai_new',     [ $this, 'ajax_new_session' ] );
+		add_action( 'wp_ajax_wpeasyai_history',        [ $this, 'ajax_history' ] );
+		add_action( 'wp_ajax_nopriv_wpeasyai_history', [ $this, 'ajax_history' ] );
+		add_action( 'wp_ajax_wpeasyai_delete',         [ $this, 'ajax_delete' ] );
+		add_action( 'wp_ajax_nopriv_wpeasyai_delete',  [ $this, 'ajax_delete' ] );
+		add_action( 'wp_ajax_wpeasyai_health',         [ $this, 'ajax_health' ] );
 	}
 
 	// ── Helpers ───────────────────────────────────────────────────────────
 
 	private function verify_nonce(): void {
-		if ( ! check_ajax_referer( 'easyit_ai_chat_nonce', 'nonce', false ) ) {
+		if ( ! check_ajax_referer( 'wpeasyai_nonce', 'nonce', false ) ) {
 			wp_send_json_error( [ 'message' => 'Security check failed.' ], 403 );
 			wp_die();
 		}
@@ -42,7 +42,7 @@ class EasyIT_AI_Chat_Engine {
 		$guest_token = '';
 
 		if ( ! $user_id ) {
-			$opts = EasyIT_AI_Chat_Options::all();
+			$opts = WPEasyAI_Options::all();
 			if ( empty( $opts['allow_guest_chat'] ) ) {
 				wp_send_json_error( [ 'message' => 'Please log in to use the chat.' ], 401 );
 				wp_die();
@@ -64,7 +64,7 @@ class EasyIT_AI_Chat_Engine {
 	}
 
 	private function is_rate_limited( string $key ): bool {
-		$transient = 'eai_rl_' . md5( $key );
+		$transient = 'weai_rl_' . md5( $key );
 		$count     = (int) get_transient( $transient );
 		if ( $count >= self::RATE_LIMIT_MAX ) {
 			return true;
@@ -73,13 +73,13 @@ class EasyIT_AI_Chat_Engine {
 		return false;
 	}
 
-	private function get_provider( string $slug ): EasyIT_AI_Chat_Provider {
-		$opts = EasyIT_AI_Chat_Options::all();
+	private function get_provider( string $slug ): WPEasyAI_Provider {
+		$opts = WPEasyAI_Options::all();
 		return match ( $slug ) {
-			'openai'    => new EasyIT_AI_Chat_OpenAI( $opts ),
-			'anthropic' => new EasyIT_AI_Chat_Anthropic( $opts ),
-			'deepseek'  => new EasyIT_AI_Chat_DeepSeek( $opts ),
-			default     => new EasyIT_AI_Chat_Ollama( $opts ),
+			'openai'    => new WPEasyAI_OpenAI( $opts ),
+			'anthropic' => new WPEasyAI_Anthropic( $opts ),
+			'deepseek'  => new WPEasyAI_DeepSeek( $opts ),
+			default     => new WPEasyAI_Ollama( $opts ),
 		};
 	}
 
@@ -125,7 +125,7 @@ class EasyIT_AI_Chat_Engine {
 
 		// Ensure valid session
 		if ( $uuid && $this->is_valid_uuid( $uuid ) ) {
-			$session = EasyIT_AI_Chat_DB::get_session( $uuid );
+			$session = WPEasyAI_DB::get_session( $uuid );
 			if ( ! $session || ! $this->can_access_session( $session, $user_id, $guest_token ) ) {
 				$uuid = '';
 			}
@@ -135,11 +135,11 @@ class EasyIT_AI_Chat_Engine {
 
 		if ( ! $uuid ) {
 			$title = mb_substr( $message, 0, 40 );
-			$uuid  = EasyIT_AI_Chat_DB::create_session( $user_id, $guest_token, $provider, $title );
+			$uuid  = WPEasyAI_DB::create_session( $user_id, $guest_token, $provider, $title );
 		}
 
 		// Build history
-		$rows     = EasyIT_AI_Chat_DB::get_messages( $uuid );
+		$rows     = WPEasyAI_DB::get_messages( $uuid );
 		$messages = [];
 		foreach ( $rows as $row ) {
 			$messages[] = [ 'role' => $row['role'], 'content' => $row['content'] ];
@@ -148,11 +148,11 @@ class EasyIT_AI_Chat_Engine {
 
 		// Auto-title on first message
 		if ( count( $rows ) === 0 ) {
-			EasyIT_AI_Chat_DB::update_session_title( $uuid, mb_substr( $message, 0, 50 ) );
+			WPEasyAI_DB::update_session_title( $uuid, mb_substr( $message, 0, 50 ) );
 		}
 
 		// Call provider
-		$opts          = EasyIT_AI_Chat_Options::all();
+		$opts          = WPEasyAI_Options::all();
 		$system_prompt = ! empty( $system ) ? $system : ( $opts['system_prompt'] ?? '' );
 
 		try {
@@ -163,8 +163,8 @@ class EasyIT_AI_Chat_Engine {
 		}
 
 		// Persist
-		EasyIT_AI_Chat_DB::add_message( $uuid, 'user',      $message  );
-		EasyIT_AI_Chat_DB::add_message( $uuid, 'assistant', $ai_reply );
+		WPEasyAI_DB::add_message( $uuid, 'user',      $message  );
+		WPEasyAI_DB::add_message( $uuid, 'assistant', $ai_reply );
 
 		wp_send_json_success( [
 			'reply'    => $ai_reply,
@@ -179,7 +179,7 @@ class EasyIT_AI_Chat_Engine {
 	public function ajax_sessions(): void {
 		$this->verify_nonce();
 		[ $user_id, $guest_token ] = $this->get_identity();
-		$sessions = EasyIT_AI_Chat_DB::get_sessions( $user_id, $guest_token );
+		$sessions = WPEasyAI_DB::get_sessions( $user_id, $guest_token );
 		wp_send_json_success( [ 'sessions' => $sessions ] );
 	}
 
@@ -189,7 +189,7 @@ class EasyIT_AI_Chat_Engine {
 		$this->verify_nonce();
 		[ $user_id, $guest_token ] = $this->get_identity();
 		$provider = isset( $_POST['provider'] ) ? sanitize_key( wp_unslash( $_POST['provider'] ) ) : 'ollama';
-		$uuid     = EasyIT_AI_Chat_DB::create_session( $user_id, $guest_token, $provider, 'New Chat' );
+		$uuid     = WPEasyAI_DB::create_session( $user_id, $guest_token, $provider, 'New Chat' );
 		wp_send_json_success( [ 'session' => $uuid ] );
 	}
 
@@ -205,13 +205,13 @@ class EasyIT_AI_Chat_Engine {
 			return;
 		}
 
-		$session = EasyIT_AI_Chat_DB::get_session( $uuid );
+		$session = WPEasyAI_DB::get_session( $uuid );
 		if ( ! $session || ! $this->can_access_session( $session, $user_id, $guest_token ) ) {
 			wp_send_json_error( [ 'message' => 'Session not found.' ], 404 );
 			return;
 		}
 
-		$messages = EasyIT_AI_Chat_DB::get_messages( $uuid );
+		$messages = WPEasyAI_DB::get_messages( $uuid );
 		wp_send_json_success( [
 			'messages' => $messages,
 			'provider' => $session['provider'],
@@ -231,20 +231,20 @@ class EasyIT_AI_Chat_Engine {
 			return;
 		}
 
-		$session = EasyIT_AI_Chat_DB::get_session( $uuid );
+		$session = WPEasyAI_DB::get_session( $uuid );
 		if ( ! $session || ! $this->can_access_session( $session, $user_id, $guest_token ) ) {
 			wp_send_json_error( [ 'message' => 'Session not found.' ], 404 );
 			return;
 		}
 
-		EasyIT_AI_Chat_DB::delete_session( $uuid );
+		WPEasyAI_DB::delete_session( $uuid );
 		wp_send_json_success( [ 'done' => true ] );
 	}
 
 	// ── AJAX: health check ────────────────────────────────────────────────
 
 	public function ajax_health(): void {
-		if ( ! check_ajax_referer( 'easyit_ai_chat_admin_nonce', 'nonce', false ) ) {
+		if ( ! check_ajax_referer( 'wpeasyai_admin_nonce', 'nonce', false ) ) {
 			wp_send_json_error( [ 'message' => 'Security check failed.' ], 403 );
 			return;
 		}
