@@ -2,7 +2,7 @@
 /**
  * DeepSeek provider implementation.
  *
- * @package EasyIT_AI_Chat
+ * @package WPEasyAI
  * @since   1.0.0
  */
 if ( ! defined( 'ABSPATH' ) ) exit;
@@ -42,8 +42,7 @@ class WPEasyAI_DeepSeek extends WPEasyAI_Provider {
 		try {
 			$key = $this->opts['deepseek_key'] ?? '';
 			$this->require_api_key( $key, 'DeepSeek' );
-			$data = $this->http_get( 'https://api.deepseek.com/v1/models',
-				[ 'Authorization' => 'Bearer ' . $key ] );
+			$data = $this->http_get( 'https://api.deepseek.com/v1/models', [ 'Authorization' => 'Bearer ' . $key ] );
 			return ! empty( $data['data'] );
 		} catch ( Exception $e ) {
 			return false;

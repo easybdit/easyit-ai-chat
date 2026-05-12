@@ -3,8 +3,9 @@
  * Plugin Name:       WP Easy AI Chat
  * Plugin URI:        https://github.com/easybdit/wpeasyai
  * Description:       Unified AI chatbot for WordPress. Connect Ollama, OpenAI, Anthropic (Claude) and DeepSeek with one shortcode [easyai]. Free, open-source, no tracking.
- * Version:           1.0.0
+ * Version:           1.0.1
  * Requires at least: 6.0
+ * Tested up to:      6.7
  * Requires PHP:      8.0
  * Author:            EasyIT
  * Author URI:        https://easyit.com.bd
@@ -20,7 +21,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'WPEASYAI_VERSION',  '1.0.0' );
+define( 'WPEASYAI_VERSION',  '1.0.1' );
 define( 'WPEASYAI_FILE',     __FILE__ );
 define( 'WPEASYAI_DIR',      plugin_dir_path( __FILE__ ) );
 define( 'WPEASYAI_URL',      plugin_dir_url( __FILE__ ) );
@@ -43,11 +44,7 @@ require_once WPEASYAI_DIR . 'public/class-wpeasyai-public.php';
  * @since 1.0.0
  */
 function wpeasyai_init(): void {
-	load_plugin_textdomain(
-		'wpeasyai',
-		false,
-		dirname( WPEASYAI_BASENAME ) . '/languages'
-	);
+	load_plugin_textdomain( 'wpeasyai', false, dirname( WPEASYAI_BASENAME ) . '/languages' );
 	new WPEasyAI_Engine();
 	new WPEasyAI_Admin();
 	new WPEasyAI_Public();
@@ -61,6 +58,6 @@ add_action( 'plugins_loaded', 'wpeasyai_init' );
  */
 function wpeasyai_activate(): void {
 	WPEasyAI_DB::create_tables();
-	update_option( 'wpeasyai_db_version', '1.0.0' );
+	update_option( 'wpeasyai_db_version', '1.0.1' );
 }
 register_activation_hook( __FILE__, 'wpeasyai_activate' );

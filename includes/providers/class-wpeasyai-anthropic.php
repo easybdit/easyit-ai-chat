@@ -2,7 +2,7 @@
 /**
  * Anthropic (Claude) provider implementation.
  *
- * @package EasyIT_AI_Chat
+ * @package WPEasyAI
  * @since   1.0.0
  */
 if ( ! defined( 'ABSPATH' ) ) exit;
@@ -17,13 +17,16 @@ class WPEasyAI_Anthropic extends WPEasyAI_Provider {
 
 		$payload_messages = [];
 		foreach ( $messages as $m ) {
-			$payload_messages[] = [ 'role' => $m['role'], 'content' => $m['content'] ];
+			if ( in_array( $m['role'], [ 'user', 'assistant' ], true ) ) {
+				$payload_messages[] = [ 'role' => $m['role'], 'content' => $m['content'] ];
+			}
 		}
 
 		$body = [
-			'model'      => $model,
-			'max_tokens' => (int) ( $this->opts['max_tokens'] ?? 1000 ),
-			'messages'   => $payload_messages,
+			'model'       => $model,
+			'max_tokens'  => (int) ( $this->opts['max_tokens'] ?? 1000 ),
+			'temperature' => (float) ( $this->opts['temperature'] ?? 0.7 ),
+			'messages'    => $payload_messages,
 		];
 		if ( ! empty( $system ) ) {
 			$body['system'] = $system;

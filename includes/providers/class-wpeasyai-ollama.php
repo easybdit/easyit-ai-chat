@@ -2,7 +2,7 @@
 /**
  * Ollama provider implementation.
  *
- * @package EasyIT_AI_Chat
+ * @package WPEasyAI
  * @since   1.0.0
  */
 if ( ! defined( 'ABSPATH' ) ) exit;

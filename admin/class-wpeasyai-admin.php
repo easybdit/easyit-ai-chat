@@ -2,7 +2,7 @@
 /**
  * Admin area: menus, settings, assets.
  *
- * @package EasyIT_AI_Chat
+ * @package WPEasyAI
  * @since   1.0.0
  */
 if ( ! defined( 'ABSPATH' ) ) exit;
@@ -17,12 +17,17 @@ class WPEasyAI_Admin {
 	}
 
 	public function add_menu(): void {
-		add_menu_page( 'EasyIT AI Chat', 'EasyIT AI Chat', 'manage_options', 'wpeasyai',
-			[ $this, 'render_settings' ], 'dashicons-format-chat', 81 );
-		add_submenu_page( 'wpeasyai', 'Settings', 'Settings', 'manage_options',
-			'wpeasyai', [ $this, 'render_settings' ] );
-		add_submenu_page( 'wpeasyai', 'Test Chat', 'Test Chat', 'manage_options',
-			'laraveweai-test-chat', [ $this, 'render_test_chat' ] );
+		add_menu_page(
+			__( 'EasyIT AI Chat', 'wpeasyai' ),
+			__( 'EasyIT AI Chat', 'wpeasyai' ),
+			'manage_options', 'wpeasyai',
+			[ $this, 'render_settings' ],
+			'dashicons-format-chat', 81
+		);
+		add_submenu_page( 'wpeasyai', __( 'Settings', 'wpeasyai' ), __( 'Settings', 'wpeasyai' ),
+			'manage_options', 'wpeasyai', [ $this, 'render_settings' ] );
+		add_submenu_page( 'wpeasyai', __( 'Test Chat', 'wpeasyai' ), __( 'Test Chat', 'wpeasyai' ),
+			'manage_options', 'wpeasyai-test-chat', [ $this, 'render_test_chat' ] );
 	}
 
 	public function register_settings(): void {
@@ -34,7 +39,8 @@ class WPEasyAI_Admin {
 	public function sanitize( $input ): array {
 		$c = WPEasyAI_Options::all();
 		return [
-			'default_provider'    => in_array( $input['default_provider'] ?? '', ['ollama','openai','anthropic','deepseek'], true ) ? $input['default_provider'] : $c['default_provider'],
+			'default_provider'    => in_array( $input['default_provider'] ?? '', [ 'ollama','openai','anthropic','deepseek' ], true )
+									 ? $input['default_provider'] : $c['default_provider'],
 			'ollama_url'          => esc_url_raw( $input['ollama_url'] ?? $c['ollama_url'] ),
 			'ollama_model'        => sanitize_text_field( $input['ollama_model'] ?? $c['ollama_model'] ),
 			'ollama_timeout'      => absint( $input['ollama_timeout'] ?? $c['ollama_timeout'] ),
@@ -48,35 +54,36 @@ class WPEasyAI_Admin {
 			'deepseek_model'      => sanitize_text_field( $input['deepseek_model'] ?? $c['deepseek_model'] ),
 			'deepseek_timeout'    => absint( $input['deepseek_timeout'] ?? $c['deepseek_timeout'] ),
 			'system_prompt'       => sanitize_textarea_field( $input['system_prompt'] ?? $c['system_prompt'] ),
-			'temperature'         => min( 2.0, max( 0.0, (float)( $input['temperature'] ?? $c['temperature'] ) ) ),
+			'temperature'         => min( 2.0, max( 0.0, (float) ( $input['temperature'] ?? $c['temperature'] ) ) ),
 			'max_tokens'          => max( 100, min( 8000, absint( $input['max_tokens'] ?? $c['max_tokens'] ) ) ),
 			'chat_title'          => sanitize_text_field( $input['chat_title'] ?? $c['chat_title'] ),
 			'placeholder_text'    => sanitize_text_field( $input['placeholder_text'] ?? $c['placeholder_text'] ),
 			'show_provider_badge' => ! empty( $input['show_provider_badge'] ),
 			'allow_guest_chat'    => ! empty( $input['allow_guest_chat'] ),
-			'save_guest_history'  => ! empty( $input['save_guest_history'] ),
 			'privacy_notice'      => ! empty( $input['privacy_notice'] ),
 			'data_retention_days' => max( 1, absint( $input['data_retention_days'] ?? $c['data_retention_days'] ) ),
 		];
 	}
 
 	public function enqueue_assets( string $hook ): void {
-		$pages = [ 'toplevel_page_wpeasyai', 'wpeasyai_page_laraveweai-test-chat' ];
+		$pages = [ 'toplevel_page_wpeasyai', 'wpeasyai_page_wpeasyai-test-chat' ];
 		if ( ! in_array( $hook, $pages, true ) ) return;
 
 		wp_enqueue_style(  'wpeasyai-admin', WPEASYAI_URL . 'admin/assets/admin.css', [], WPEASYAI_VERSION );
-		wp_enqueue_script( 'wpeasyai-admin', WPEASYAI_URL . 'admin/assets/admin.js', ['jquery'], WPEASYAI_VERSION, true );
+		wp_enqueue_script( 'wpeasyai-admin', WPEASYAI_URL . 'admin/assets/admin.js', [ 'jquery' ], WPEASYAI_VERSION, true );
 		wp_localize_script( 'wpeasyai-admin', 'WPEasyAIAdmin', [
 			'ajax_url' => admin_url( 'admin-ajax.php' ),
 			'nonce'    => wp_create_nonce( 'wpeasyai_admin_nonce' ),
-			'i18n'     => [ 'testing' => 'Testing…', 'error' => 'Request failed.' ],
+			'i18n'     => [
+				'testing' => __( 'Testing\u2026', 'wpeasyai' ),
+				'error'   => __( 'Request failed.', 'wpeasyai' ),
+			],
 		] );
 
-		// Also enqueue public chat assets on test-chat page (wp_enqueue_scripts doesn't fire in admin)
-		if ( 'wpeasyai_page_laraveweai-test-chat' === $hook ) {
+		if ( 'wpeasyai_page_wpeasyai-test-chat' === $hook ) {
 			$opts = WPEasyAI_Options::all();
 			wp_enqueue_style(  'wpeasyai', WPEASYAI_URL . 'public/css/chat.css', [], WPEASYAI_VERSION );
-			wp_enqueue_script( 'wpeasyai', WPEASYAI_URL . 'public/js/chat.js',  [], WPEASYAI_VERSION, true );
+			wp_enqueue_script( 'wpeasyai', WPEASYAI_URL . 'public/js/chat.js', [], WPEASYAI_VERSION, true );
 			wp_localize_script( 'wpeasyai', 'WPEasyAIConfig', $this->chat_config( $opts ) );
 		}
 	}
@@ -90,25 +97,25 @@ class WPEasyAI_Admin {
 			'privacy_notice'      => (bool) $opts['privacy_notice'],
 			'is_logged_in'        => is_user_logged_in(),
 			'i18n'                => [
-				'new_chat'       => 'New Chat',
-				'thinking'       => 'Thinking…',
-				'error_generic'  => 'Something went wrong. Please try again.',
-				'error_empty'    => 'Please type a message first.',
-				'delete_confirm' => 'Delete this conversation?',
-				'privacy_text'   => 'Conversations are saved. See our Privacy Policy.',
-				'copied'         => 'Copied!',
-				'copy'           => 'Copy',
-				'you'            => 'You',
-				'ai'             => 'AI',
-				'no_sessions'    => 'No conversations yet.',
-				'today'          => 'Today',
-				'yesterday'      => 'Yesterday',
+				'new_chat'       => __( 'New Chat',                                         'wpeasyai' ),
+				'thinking'       => __( 'Thinking\u2026',                                   'wpeasyai' ),
+				'error_generic'  => __( 'Something went wrong. Please try again.',          'wpeasyai' ),
+				'error_empty'    => __( 'Please type a message first.',                     'wpeasyai' ),
+				'delete_confirm' => __( 'Delete this conversation?',                        'wpeasyai' ),
+				'privacy_text'   => __( 'Conversations are saved. See our Privacy Policy.', 'wpeasyai' ),
+				'copied'         => __( 'Copied!',                                          'wpeasyai' ),
+				'copy'           => __( 'Copy',                                             'wpeasyai' ),
+				'you'            => __( 'You',                                              'wpeasyai' ),
+				'ai'             => __( 'AI',                                               'wpeasyai' ),
+				'no_sessions'    => __( 'No conversations yet.',                            'wpeasyai' ),
+				'today'          => __( 'Today',                                            'wpeasyai' ),
+				'yesterday'      => __( 'Yesterday',                                        'wpeasyai' ),
 			],
 		];
 	}
 
 	public function action_links( array $links ): array {
-		array_unshift( $links, '<a href="' . admin_url( 'admin.php?page=wpeasyai' ) . '">Settings</a>' );
+		array_unshift( $links, '<a href="' . esc_url( admin_url( 'admin.php?page=wpeasyai' ) ) . '">' . esc_html__( 'Settings', 'wpeasyai' ) . '</a>' );
 		return $links;
 	}
 

@@ -2,7 +2,7 @@
 /**
  * Plugin options/settings manager.
  *
- * @package EasyIT_AI_Chat
+ * @package WPEasyAI
  * @since   1.0.0
  */
 if ( ! defined( 'ABSPATH' ) ) exit;
@@ -29,10 +29,9 @@ class WPEasyAI_Options {
 			'temperature'         => 0.7,
 			'max_tokens'          => 1000,
 			'chat_title'          => 'AI Chat',
-			'placeholder_text'    => 'Ask me anything…',
+			'placeholder_text'    => 'Ask me anything\u2026',
 			'show_provider_badge' => true,
 			'allow_guest_chat'    => true,
-			'save_guest_history'  => true,
 			'privacy_notice'      => true,
 			'data_retention_days' => 90,
 		];

@@ -1,187 +1,104 @@
-<div align="center">
+=== WP Easy AI Chat ===
+Contributors:      easybdit
+Donate link:       https://easyit.com.bd/donate
+Tags:              ai, chatbot, ollama, openai, anthropic, deepseek, chat
+Requires at least: 6.0
+Tested up to:      6.7
+Requires PHP:      8.0
+Stable tag:        1.0.1
+License:           GPL-2.0-or-later
+License URI:       https://www.gnu.org/licenses/gpl-2.0.html
 
-# WP Easy AI Chat
+Unified AI chatbot for WordPress. Connect Ollama, OpenAI, Anthropic (Claude) and DeepSeek with one shortcode: [easyai]
 
-**Unified AI chatbot plugin for WordPress**
+== Description ==
 
-[![WordPress](https://img.shields.io/badge/WordPress-6.0%2B-21759b?style=flat-square&logo=wordpress&logoColor=white)](https://wordpress.org)
-[![PHP](https://img.shields.io/badge/PHP-8.0%2B-777bb4?style=flat-square&logo=php&logoColor=white)](https://php.net)
-[![License](https://img.shields.io/badge/License-GPL--2.0--or--later-green?style=flat-square)](LICENSE)
-[![Version](https://img.shields.io/badge/Version-1.0.0-orange?style=flat-square)](https://github.com/easybdit/wpeasyai/releases)
-[![Donate](https://img.shields.io/badge/Donate-💛-yellow?style=flat-square)](https://easyit.com.bd/donate)
+**WP Easy AI Chat** embeds a fully-featured AI chatbot on any WordPress page using a single shortcode `[easyai]`. Switch between four AI providers without touching code.
 
-Connect **Ollama · OpenAI · Anthropic Claude · DeepSeek** to any WordPress page.
+= Key Features =
 
-**Shortcode:** `[easyai]`
+* **Multi-provider** — Ollama (free, local), OpenAI (GPT-3.5/4), Anthropic (Claude), DeepSeek
+* **Modern chat UI** — dark sidebar, conversation history, session management
+* **Persistent sessions** — saved to your own WordPress database
+* **Markdown rendering** — bold, italic, code blocks, lists, headings
+* **Provider switcher** — switch AI provider per conversation
+* **Guest support** — allow non-logged-in visitors to chat
+* **Privacy-ready** — GDPR notice, configurable data retention
+* **Rate limiting** — built-in per-user request throttling
+* **Admin test chat** — test all providers from the dashboard
+* **Fully responsive** — desktop, tablet and mobile
 
-[Install](#-installation) · [Shortcode](#-shortcode) · [Providers](#-provider-setup) · [Roadmap](#-roadmap) · [Donate](https://easyit.com.bd/donate)
+= Shortcode =
 
-</div>
+`[easyai]`
 
----
+With options:
 
-## ✨ Features
+`[easyai provider="openai" height="600" title="My Assistant"]`
 
-| | Feature | Detail |
-|--|---------|--------|
-| 🦙 | **Multi-provider** | Ollama (free/local), OpenAI, Anthropic Claude, DeepSeek |
-| 💬 | **ChatGPT-style UI** | Dark sidebar, session list, full conversation history |
-| 🗄️ | **Persistent sessions** | Saved to your own WordPress database |
-| 📝 | **Markdown** | Code blocks, bold, italic, lists, headings |
-| 🔀 | **Provider switcher** | Switch AI per conversation |
-| 👥 | **Guest support** | Non-logged-in users via cookie sessions |
-| 🔒 | **Privacy-ready** | GDPR notice, configurable data retention |
-| 🚦 | **Rate limiting** | 20 req / 60s per user |
-| 🧪 | **Test chat** | Test any provider from the dashboard |
-| 📱 | **Responsive** | Desktop, tablet & mobile |
-| 🔐 | **Secure** | Nonces, sanitization, prepared queries |
+= Shortcode Attributes =
 
----
+* `provider` — `ollama` | `openai` | `anthropic` | `deepseek`
+* `title` — Widget heading text
+* `placeholder` — Input placeholder text
+* `system_prompt` — Override AI system/persona prompt
+* `height` — Messages area height in pixels (default: 600)
 
-## 🚀 Installation
+== Installation ==
 
-**Method 1 — ZIP upload**
-1. Download [`wpeasyai-v1.0.0.zip`](https://github.com/easybdit/wpeasyai/releases/latest)
-2. WP Admin → **Plugins → Add New → Upload Plugin**
-3. Activate ✅
+1. Upload the `wpeasyai` folder to `/wp-content/plugins/`
+2. Activate via **Plugins &rarr; Installed Plugins**
+3. Go to **EasyIT AI Chat &rarr; Settings**
+4. Configure your AI provider
+5. Add `[easyai]` to any page
 
-**Method 2 — Git**
-```bash
-cd /wp-content/plugins/
-git clone https://github.com/easybdit/wpeasyai.git
-```
+== Frequently Asked Questions ==
 
----
+= Do I need an API key? =
+Only for OpenAI, Anthropic, and DeepSeek. Ollama is completely free and self-hosted.
 
-## 📋 Shortcode
+= Can guests use the chat? =
+Yes, enable "Allow Guest Chat" in Settings &rarr; General.
 
-```
-[easyai]
-```
+= Is conversation history stored on my server? =
+Yes — in your WordPress database. Nothing is sent to third parties except your configured AI provider.
 
-| Attribute | Default | Values |
-|-----------|---------|--------|
-| `provider` | *(settings)* | `ollama` · `openai` · `anthropic` · `deepseek` |
-| `title` | `AI Chat` | Any text |
-| `placeholder` | `Ask me anything…` | Any text |
-| `system_prompt` | *(settings)* | Any text |
-| `height` | `600` | Pixels |
+= Works with Gutenberg / Elementor / Divi? =
+Yes, use a Shortcode block or shortcode element.
 
-**Examples:**
-```
-[easyai]
-[easyai provider="openai" height="700"]
-[easyai provider="anthropic" title="Claude Assistant"]
-[easyai system_prompt="You are an EasyIT support agent."]
-```
+== Screenshots ==
 
----
+1. Public chat page — modern UI with dark sidebar
+2. Admin settings — tabbed provider configuration
+3. Admin test chat — test providers from the dashboard
+4. Mobile responsive layout
 
-## 🔧 Provider Setup
+== Changelog ==
 
-### 🦙 Ollama — Free, No API key
-```bash
-ollama pull qwen2:1.5b   # lightweight
-ollama pull llama3        # powerful
-```
-Set URL: `http://localhost:11434` or your server IP.
+= 1.0.1 =
+* Fixed broken admin design — all CSS moved to admin.css (no more wp_add_inline_style in views)
+* Fixed wrong shortcode in test-chat page (was [wpeasyai], now [easyai])
+* Fixed CSS stray brace breaking responsive styles
+* Fixed body class typo (wweai-chat-page corrected to weai-chat-page)
+* Fixed admin hook slug mismatch for test-chat page asset loading
+* Added temperature field to Anthropic API payload
+* Anthropic provider now filters to only user/assistant roles
+* Removed unused $config_printed property
+* Removed unused save_guest_history option
+* All shortcode examples updated to [easyai]
+* Removed chatgpt from readme tags (trademark)
 
-### ✨ OpenAI → [platform.openai.com](https://platform.openai.com/api-keys)
-Models: `gpt-4o-mini`, `gpt-4o`, `gpt-3.5-turbo`
+= 1.0.0 =
+* Initial release
+* Ollama, OpenAI, Anthropic (Claude), DeepSeek support
+* Modern chat UI with persistent sessions
+* Guest chat, rate limiting, GDPR notice
+* Admin settings + test chat page
 
-### 🎭 Anthropic → [console.anthropic.com](https://console.anthropic.com)
-Models: `claude-3-5-sonnet-20241022`, `claude-3-haiku-20240307`
+== Upgrade Notice ==
 
-### 🔍 DeepSeek → [platform.deepseek.com](https://platform.deepseek.com)
-Models: `deepseek-chat`, `deepseek-reasoner`
+= 1.0.1 =
+Bug-fix release. Fixes broken admin design and several functional issues. Please update.
 
----
-
-## 🗂️ Structure
-
-```
-wpeasyai/
-├── wpeasyai.php                     ← Main plugin file
-├── uninstall.php
-├── readme.txt                       ← WordPress.org
-├── README.md
-├── CHANGELOG.md
-├── LICENSE
-├── admin/
-│   ├── class-wpeasyai-admin.php
-│   ├── assets/ (admin.css, admin.js)
-│   └── views/ (settings-page.php, test-chat-page.php)
-├── includes/
-│   ├── class-wpeasyai-options.php
-│   ├── class-wpeasyai-provider.php
-│   ├── class-wpeasyai-db.php
-│   ├── class-wpeasyai-engine.php
-│   └── providers/
-│       ├── class-wpeasyai-ollama.php
-│       ├── class-wpeasyai-openai.php
-│       ├── class-wpeasyai-anthropic.php
-│       └── class-wpeasyai-deepseek.php
-├── public/
-│   ├── class-wpeasyai-public.php
-│   ├── css/chat.css
-│   └── js/chat.js
-└── languages/
-```
-
----
-
-## 🛣️ Roadmap
-
-**v1.0.0 — Free ✅**
-- Multi-provider AI chat with persistent sessions
-- Admin settings + test chat
-
-**v2.0.0 — Premium 🔲**
-- Floating chat bubble
-- Custom AI personas per page
-- File/image upload
-- Conversation export (CSV/PDF)
-- Analytics dashboard
-- WooCommerce product assistant
-- Webhook integrations
-
----
-
-## 🤝 Contributing
-
-```bash
-git clone https://github.com/easybdit/wpeasyai.git
-git checkout -b feature/your-feature
-# Follow WordPress Coding Standards
-git commit -m "feat: your change"
-git push origin feature/your-feature
-# Open Pull Request
-```
-
-Bug reports → [GitHub Issues](https://github.com/easybdit/wpeasyai/issues)
-
----
-
-## 💛 Support & Donate
-
-If this plugin helps your site, consider supporting development:
-
-**[💛 Donate via easyit.com.bd/donate](https://easyit.com.bd/donate)**
-
----
-
-## 📄 License
-
-GPL-2.0-or-later · [LICENSE](LICENSE)
-
----
-
-<div align="center">
-
-Built with ❤️ by **[EasyIT](https://easyit.com.bd)** — Bangladesh 🇧🇩
-
-📧 [muradbd.info@gmail.com](mailto:muradbd.info@gmail.com) · 🌐 [easyit.com.bd](https://easyit.com.bd) · 🐙 [github.com/easybdit](https://github.com/easybdit)
-
-⭐ Star this repo if it helped you!
-
-</div>
+= 1.0.0 =
+Initial release — no upgrade steps required.

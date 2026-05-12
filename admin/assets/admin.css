@@ -1,9 +1,291 @@
-/* LaravelAI Chat — Admin global styles */
+/* ==========================================================
+   WP Easy AI Chat — Admin Styles
+   ========================================================== */
+
+/* Hide WP default H1 — replaced by hero */
 .weai-settings-wrap h1,
-.weai-test-page h1 { display: none; } /* Hidden — replaced by hero */
+.weai-test-page h1 { display: none; }
 
 /* Override WP form-table inside our panels */
 .weai-card .form-table { display: none !important; }
 
-/* Nice checkbox styling in WP context */
-.weai-check-row input[type="checkbox"] { accent-color: #4f46e5; }
+/* ── Settings page wrap ──────────────────────────────────── */
+.weai-settings-wrap { max-width: 900px; }
+
+/* ── Hero banner ─────────────────────────────────────────── */
+.weai-settings-wrap .weai-hero,
+.weai-test-hero {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	background: linear-gradient(135deg, #0f3460 0%, #1a1a2e 100%);
+	border-radius: 12px;
+	padding: 20px 28px;
+	margin-bottom: 24px;
+	gap: 16px;
+	box-shadow: 0 4px 20px rgba(15,52,96,.3);
+}
+.weai-settings-wrap .weai-hero-left,
+.weai-test-hero-left {
+	display: flex;
+	align-items: center;
+	gap: 16px;
+}
+.weai-settings-wrap .weai-hero-icon,
+.weai-test-hero-icon {
+	width: 52px;
+	height: 52px;
+	background: rgba(255,255,255,.12);
+	border-radius: 12px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-size: 26px;
+	border: 1px solid rgba(255,255,255,.15);
+}
+.weai-test-hero-icon { width: 46px; height: 46px; font-size: 22px; border-radius: 10px; }
+.weai-settings-wrap .weai-hero-title { color: #fff; font-size: 20px; font-weight: 700; margin: 0; }
+.weai-settings-wrap .weai-hero-sub   { color: rgba(255,255,255,.6); font-size: 13px; margin: 3px 0 0; }
+.weai-test-hero h1 { color: #fff; font-size: 18px; font-weight: 700; margin: 0; display: block !important; }
+.weai-test-hero p  { color: rgba(255,255,255,.6); font-size: 12px; margin: 2px 0 0; }
+.weai-settings-wrap .weai-hero-badge {
+	background: rgba(255,255,255,.1);
+	color: rgba(255,255,255,.8);
+	border: 1px solid rgba(255,255,255,.2);
+	border-radius: 20px;
+	padding: 5px 14px;
+	font-size: 12px;
+	font-weight: 600;
+	white-space: nowrap;
+}
+
+/* Back button (test-chat page) */
+.weai-back-btn {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	padding: 7px 14px;
+	background: rgba(255,255,255,.1);
+	color: #fff;
+	border: 1px solid rgba(255,255,255,.2);
+	border-radius: 7px;
+	text-decoration: none;
+	font-size: 13px;
+	font-weight: 500;
+	transition: background .15s;
+	white-space: nowrap;
+}
+.weai-back-btn:hover { background: rgba(255,255,255,.18); color: #fff; }
+
+/* ── Tab nav ─────────────────────────────────────────────── */
+.weai-tab-nav {
+	display: flex;
+	gap: 4px;
+	padding: 4px;
+	background: #f3f4f6;
+	border-radius: 10px;
+	margin-bottom: 20px;
+	flex-wrap: wrap;
+}
+.weai-tab-btn {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	padding: 8px 16px;
+	border-radius: 7px;
+	border: none;
+	background: transparent;
+	cursor: pointer;
+	font-size: 13px;
+	font-weight: 500;
+	color: #6b7280;
+	transition: all .15s;
+	white-space: nowrap;
+}
+.weai-tab-btn:hover  { background: rgba(255,255,255,.7); color: #111827; }
+.weai-tab-btn.active { background: #fff; color: #111827; box-shadow: 0 1px 3px rgba(0,0,0,.12); }
+.weai-tab-btn .weai-tab-icon { font-size: 15px; }
+
+/* ── Panels ──────────────────────────────────────────────── */
+.weai-panel        { display: none; }
+.weai-panel.active { display: block; }
+
+/* ── Card ────────────────────────────────────────────────── */
+.weai-card {
+	background: #fff;
+	border: 1px solid #e5e7eb;
+	border-radius: 12px;
+	padding: 24px 28px;
+	margin-bottom: 16px;
+}
+.weai-card-title {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	font-size: 15px;
+	font-weight: 700;
+	color: #111827;
+	margin: 0 0 20px;
+	padding-bottom: 14px;
+	border-bottom: 1px solid #f0f0f0;
+}
+.weai-card-title .icon { font-size: 20px; }
+
+/* ── Fields ──────────────────────────────────────────────── */
+.weai-field { margin-bottom: 18px; }
+.weai-field:last-child { margin-bottom: 0; }
+.weai-label {
+	display: block;
+	font-size: 13px;
+	font-weight: 600;
+	color: #374151;
+	margin-bottom: 6px;
+}
+.weai-label .req { color: #ef4444; margin-left: 2px; }
+
+.weai-field input[type="text"],
+.weai-field input[type="url"],
+.weai-field input[type="password"],
+.weai-field input[type="number"],
+.weai-field select,
+.weai-field textarea {
+	width: 100%;
+	padding: 9px 13px;
+	border: 1.5px solid #e5e7eb;
+	border-radius: 8px;
+	font-size: 13px;
+	color: #111827;
+	background: #fff;
+	transition: border-color .15s, box-shadow .15s;
+	outline: none;
+	font-family: inherit;
+	box-shadow: none;
+}
+.weai-field input[type="text"]:focus,
+.weai-field input[type="url"]:focus,
+.weai-field input[type="password"]:focus,
+.weai-field input[type="number"]:focus,
+.weai-field select:focus,
+.weai-field textarea:focus {
+	border-color: #4f46e5;
+	box-shadow: 0 0 0 3px rgba(79,70,229,.1);
+}
+.weai-field input[type="number"] { max-width: 120px; }
+.weai-field-desc { font-size: 11.5px; color: #9ca3af; margin-top: 5px; }
+
+/* ── Test connection row ─────────────────────────────────── */
+.weai-test-row {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	margin-top: 20px;
+	padding-top: 18px;
+	border-top: 1px solid #f3f4f6;
+}
+.weai-test-btn-styled {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	padding: 8px 18px;
+	background: #f8f9fa;
+	border: 1.5px solid #e5e7eb;
+	border-radius: 8px;
+	cursor: pointer;
+	font-size: 13px;
+	font-weight: 600;
+	color: #374151;
+	transition: all .15s;
+}
+.weai-test-btn-styled:hover { background: #f0f0f0; border-color: #d1d5db; }
+.weai-test-result { font-size: 13px; font-weight: 500; }
+
+/* ── Checkbox rows ───────────────────────────────────────── */
+.weai-check-row {
+	display: flex;
+	align-items: flex-start;
+	gap: 10px;
+	padding: 12px 14px;
+	border: 1.5px solid #e5e7eb;
+	border-radius: 8px;
+	margin-bottom: 10px;
+	cursor: pointer;
+	transition: border-color .15s, background .15s;
+}
+.weai-check-row:hover { border-color: #c7d2fe; background: #fafafa; }
+.weai-check-row input[type="checkbox"] {
+	margin-top: 2px;
+	flex-shrink: 0;
+	width: 16px;
+	height: 16px;
+	accent-color: #4f46e5;
+}
+.weai-check-label { font-size: 13px; font-weight: 600; color: #111827; margin-bottom: 2px; }
+.weai-check-desc  { font-size: 12px; color: #9ca3af; }
+
+/* ── Shortcode card (aside) ──────────────────────────────── */
+.weai-shortcode-card {
+	background: linear-gradient(135deg, #f8f9ff 0%, #fef9ff 100%);
+	border: 1.5px solid #e0e7ff;
+	border-radius: 10px;
+	padding: 16px;
+	margin-bottom: 14px;
+}
+.weai-shortcode-card h4 {
+	font-size: 12px;
+	font-weight: 700;
+	color: #4f46e5;
+	text-transform: uppercase;
+	letter-spacing: .06em;
+	margin: 0 0 10px;
+}
+.weai-sc-item {
+	background: #fff;
+	border: 1px solid #e0e7ff;
+	border-radius: 7px;
+	padding: 8px 12px;
+	margin-bottom: 7px;
+	font-family: Consolas, monospace;
+	font-size: 12px;
+	color: #4f46e5;
+	cursor: pointer;
+	transition: background .15s;
+	word-break: break-all;
+}
+.weai-sc-item:hover { background: #eef2ff; }
+.weai-sc-item:last-child { margin-bottom: 0; }
+
+/* ── Save button ─────────────────────────────────────────── */
+.weai-save-btn {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	padding: 11px 28px;
+	background: linear-gradient(135deg, #4f46e5, #7c3aed);
+	color: #fff;
+	border: none;
+	border-radius: 9px;
+	font-size: 14px;
+	font-weight: 600;
+	cursor: pointer;
+	transition: all .15s;
+	box-shadow: 0 4px 14px rgba(79,70,229,.35);
+}
+.weai-save-btn:hover  { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(79,70,229,.4); }
+.weai-save-btn:active { transform: translateY(0); }
+
+/* ── Two-column layout ───────────────────────────────────── */
+.weai-settings-layout {
+	display: flex;
+	gap: 20px;
+	align-items: flex-start;
+}
+.weai-settings-main  { flex: 1; min-width: 0; }
+.weai-settings-aside { width: 220px; flex-shrink: 0; }
+
+@media (max-width: 900px) {
+	.weai-settings-layout { flex-direction: column; }
+	.weai-settings-aside  { width: 100%; }
+}
+
+/* ── Test-chat page ──────────────────────────────────────── */
+.weai-test-page { max-width: 1000px; }

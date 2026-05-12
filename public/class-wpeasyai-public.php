@@ -2,24 +2,22 @@
 /**
  * Public-facing shortcode and assets.
  *
- * @package EasyIT_AI_Chat
+ * @package WPEasyAI
  * @since   1.0.0
  */
 if ( ! defined( 'ABSPATH' ) ) exit;
 
 class WPEasyAI_Public {
 
-	private static bool $config_printed = false;
-
 	public function __construct() {
 		add_action( 'wp_enqueue_scripts', [ $this, 'enqueue_assets' ] );
-		add_shortcode( 'easyai',  [ $this, 'render_shortcode' ] );
-		add_filter( 'body_class',         [ $this, 'body_class' ] );
+		add_shortcode( 'easyai', [ $this, 'render_shortcode' ] );
+		add_filter( 'body_class', [ $this, 'body_class' ] );
 	}
 
 	public function body_class( array $classes ): array {
 		global $post;
-		if ( $post && has_shortcode( $post->post_content, 'wpeasyai' ) ) {
+		if ( $post && has_shortcode( $post->post_content, 'easyai' ) ) {
 			$classes[] = 'weai-chat-page';
 		}
 		return $classes;
@@ -28,9 +26,8 @@ class WPEasyAI_Public {
 	public function enqueue_assets(): void {
 		wp_enqueue_style(  'wpeasyai', WPEASYAI_URL . 'public/css/chat.css', [], WPEASYAI_VERSION );
 		wp_enqueue_script( 'wpeasyai', WPEASYAI_URL . 'public/js/chat.js',  [], WPEASYAI_VERSION, true );
-
-		// Add page-level override CSS as inline style (proper WP way, avoids raw <style> tags).
 		wp_add_inline_style( 'wpeasyai', self::page_override_css() );
+
 		$opts = WPEasyAI_Options::all();
 		wp_localize_script( 'wpeasyai', 'WPEasyAIConfig', [
 			'ajax_url'            => admin_url( 'admin-ajax.php' ),
@@ -40,19 +37,19 @@ class WPEasyAI_Public {
 			'privacy_notice'      => (bool) $opts['privacy_notice'],
 			'is_logged_in'        => is_user_logged_in(),
 			'i18n'                => [
-				'new_chat'       => __( 'New Chat',                                        'wpeasyai' ),
-				'thinking'       => __( 'Thinking…',                                       'wpeasyai' ),
-				'error_generic'  => __( 'Something went wrong. Please try again.',         'wpeasyai' ),
-				'error_empty'    => __( 'Please type a message first.',                    'wpeasyai' ),
-				'delete_confirm' => __( 'Delete this conversation?',                       'wpeasyai' ),
-				'privacy_text'   => __( 'Conversations are saved. See our Privacy Policy.','wpeasyai' ),
-				'copied'         => __( 'Copied!',                                         'wpeasyai' ),
-				'copy'           => __( 'Copy',                                            'wpeasyai' ),
-				'you'            => __( 'You',                                             'wpeasyai' ),
-				'ai'             => __( 'AI',                                              'wpeasyai' ),
-				'no_sessions'    => __( 'No conversations yet.',                           'wpeasyai' ),
-				'today'          => __( 'Today',                                           'wpeasyai' ),
-				'yesterday'      => __( 'Yesterday',                                       'wpeasyai' ),
+				'new_chat'       => __( 'New Chat',                                         'wpeasyai' ),
+				'thinking'       => __( 'Thinking\u2026',                                   'wpeasyai' ),
+				'error_generic'  => __( 'Something went wrong. Please try again.',          'wpeasyai' ),
+				'error_empty'    => __( 'Please type a message first.',                     'wpeasyai' ),
+				'delete_confirm' => __( 'Delete this conversation?',                        'wpeasyai' ),
+				'privacy_text'   => __( 'Conversations are saved. See our Privacy Policy.', 'wpeasyai' ),
+				'copied'         => __( 'Copied!',                                          'wpeasyai' ),
+				'copy'           => __( 'Copy',                                             'wpeasyai' ),
+				'you'            => __( 'You',                                              'wpeasyai' ),
+				'ai'             => __( 'AI',                                               'wpeasyai' ),
+				'no_sessions'    => __( 'No conversations yet.',                            'wpeasyai' ),
+				'today'          => __( 'Today',                                            'wpeasyai' ),
+				'yesterday'      => __( 'Yesterday',                                        'wpeasyai' ),
 			],
 		] );
 	}
@@ -65,7 +62,7 @@ class WPEasyAI_Public {
 			'placeholder'   => $opts['placeholder_text'],
 			'system_prompt' => $opts['system_prompt'],
 			'height'        => 600,
-		], $atts, 'wpeasyai' );
+		], $atts, 'easyai' );
 
 		$provider      = sanitize_key( $atts['provider'] );
 		$title         = sanitize_text_field( $atts['title'] );
@@ -73,19 +70,21 @@ class WPEasyAI_Public {
 		$system_prompt = sanitize_textarea_field( $atts['system_prompt'] );
 		$height        = max( 300, absint( $atts['height'] ) );
 
-		$providers = [ 'ollama' => 'Ollama', 'openai' => 'OpenAI', 'anthropic' => 'Anthropic', 'deepseek' => 'DeepSeek' ];
+		$providers = [
+			'ollama'    => 'Ollama',
+			'openai'    => 'OpenAI',
+			'anthropic' => 'Anthropic',
+			'deepseek'  => 'DeepSeek',
+		];
 
 		ob_start();
-
-		// Page-override CSS is added via wp_add_inline_style() in enqueue_assets().
 		?>
 <div class="weai-page-wrap">
 <div class="weai-widget"
-	 data-provider="<?php echo esc_attr( $provider ); ?>"
-	 data-system-prompt="<?php echo esc_attr( $system_prompt ); ?>"
-	 style="--weai-msg-height:<?php echo esc_attr( $height ); ?>px">
+	data-provider="<?php echo esc_attr( $provider ); ?>"
+	data-system-prompt="<?php echo esc_attr( $system_prompt ); ?>"
+	style="--weai-msg-height:<?php echo esc_attr( $height ); ?>px">
 
-	<!-- SIDEBAR -->
 	<div class="weai-sidebar">
 		<div class="weai-sidebar-header">
 			<button class="weai-new-chat-btn" type="button">
@@ -97,15 +96,12 @@ class WPEasyAI_Public {
 		<div class="weai-sidebar-footer">
 			<select class="weai-provider-select">
 				<?php foreach ( $providers as $slug => $label ) : ?>
-					<option value="<?php echo esc_attr( $slug ); ?>" <?php selected( $provider, $slug ); ?>>
-						<?php echo esc_html( $label ); ?>
-					</option>
+				<option value="<?php echo esc_attr( $slug ); ?>" <?php selected( $provider, $slug ); ?>><?php echo esc_html( $label ); ?></option>
 				<?php endforeach; ?>
 			</select>
 		</div>
-	</div><!-- /.weai-sidebar -->
+	</div>
 
-	<!-- MAIN PANEL -->
 	<div class="weai-main">
 		<div class="weai-topbar">
 			<button class="weai-toggle-sidebar" type="button" title="<?php esc_attr_e( 'Toggle sidebar', 'wpeasyai' ); ?>">
@@ -128,7 +124,7 @@ class WPEasyAI_Public {
 		<?php if ( ! empty( $opts['privacy_notice'] ) ) : ?>
 		<div class="weai-privacy">
 			🔒 <?php esc_html_e( 'Conversations are saved. See our', 'wpeasyai' ); ?>
-			<a href="<?php echo esc_url( get_privacy_policy_url() ?: '#' ); ?>" target="_blank" rel="noopener">
+			<a href="<?php echo esc_url( get_privacy_policy_url() ?: '#' ); ?>" target="_blank" rel="noopener noreferrer">
 				<?php esc_html_e( 'Privacy Policy', 'wpeasyai' ); ?>
 			</a>.
 		</div>
@@ -146,20 +142,14 @@ class WPEasyAI_Public {
 			</div>
 			<p class="weai-hint"><?php esc_html_e( 'Enter to send · Shift+Enter for new line', 'wpeasyai' ); ?></p>
 		</div>
-	</div><!-- /.weai-main -->
+	</div>
 
-</div><!-- /.weai-widget -->
-</div><!-- /.weai-page-wrap -->
+</div>
+</div>
 		<?php
 		return ob_get_clean();
 	}
 
-	/**
-	 * Returns the CSS that overrides theme content-column constraints on chat pages.
-	 * Delivered via wp_add_inline_style() — no raw <style> tags in shortcode output.
-	 *
-	 * @return string
-	 */
 	private static function page_override_css(): string {
 		return '
 			body.weai-chat-page .site-main,

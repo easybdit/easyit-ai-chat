@@ -2,15 +2,15 @@
 /**
  * Database abstraction layer.
  *
- * @package EasyIT_AI_Chat
+ * @package WPEasyAI
  * @since   1.0.0
  */
 if ( ! defined( 'ABSPATH' ) ) exit;
 
 class WPEasyAI_DB {
 
-	const SESSIONS_TABLE  = 'wpeasyai_sessions';
-	const MESSAGES_TABLE  = 'wpeasyai_messages';
+	const SESSIONS_TABLE = 'wpeasyai_sessions';
+	const MESSAGES_TABLE = 'wpeasyai_messages';
 
 	public static function create_tables(): void {
 		global $wpdb;
@@ -46,37 +46,34 @@ class WPEasyAI_DB {
 		dbDelta( $messages );
 	}
 
-	/** Get all sessions for current user/guest, newest first */
 	public static function get_sessions( int $user_id, string $guest_token ): array {
 		global $wpdb;
 		$table = $wpdb->prefix . self::SESSIONS_TABLE;
 		if ( $user_id > 0 ) {
 			return $wpdb->get_results(
-				$wpdb->prepare( "SELECT * FROM $table WHERE user_id=%d ORDER BY updated_at DESC LIMIT 50", $user_id ),
+				$wpdb->prepare( "SELECT * FROM {$table} WHERE user_id=%d ORDER BY updated_at DESC LIMIT 50", $user_id ),
 				ARRAY_A
 			) ?: [];
 		}
 		if ( $guest_token ) {
 			return $wpdb->get_results(
-				$wpdb->prepare( "SELECT * FROM $table WHERE guest_token=%s ORDER BY updated_at DESC LIMIT 20", $guest_token ),
+				$wpdb->prepare( "SELECT * FROM {$table} WHERE guest_token=%s ORDER BY updated_at DESC LIMIT 20", $guest_token ),
 				ARRAY_A
 			) ?: [];
 		}
 		return [];
 	}
 
-	/** Get single session by UUID */
 	public static function get_session( string $uuid ): ?array {
 		global $wpdb;
 		$table = $wpdb->prefix . self::SESSIONS_TABLE;
 		$row   = $wpdb->get_row(
-			$wpdb->prepare( "SELECT * FROM $table WHERE uuid=%s", $uuid ),
+			$wpdb->prepare( "SELECT * FROM {$table} WHERE uuid=%s", $uuid ),
 			ARRAY_A
 		);
 		return $row ?: null;
 	}
 
-	/** Create new session, return uuid */
 	public static function create_session( int $user_id, string $guest_token, string $provider, string $title = 'New Chat' ): string {
 		global $wpdb;
 		$uuid = wp_generate_uuid4();
@@ -90,7 +87,6 @@ class WPEasyAI_DB {
 		return $uuid;
 	}
 
-	/** Update session title */
 	public static function update_session_title( string $uuid, string $title ): void {
 		global $wpdb;
 		$wpdb->update(
@@ -100,16 +96,14 @@ class WPEasyAI_DB {
 		);
 	}
 
-	/** Touch updated_at */
 	public static function touch_session( string $uuid ): void {
 		global $wpdb;
 		$wpdb->query( $wpdb->prepare(
-			"UPDATE {$wpdb->prefix}" . self::SESSIONS_TABLE . " SET updated_at=NOW() WHERE uuid=%s",
+			"UPDATE {$wpdb->prefix}wpeasyai_sessions SET updated_at=NOW() WHERE uuid=%s",
 			$uuid
 		) );
 	}
 
-	/** Delete session + messages */
 	public static function delete_session( string $uuid ): void {
 		global $wpdb;
 		$session = self::get_session( $uuid );
@@ -118,21 +112,19 @@ class WPEasyAI_DB {
 		$wpdb->delete( $wpdb->prefix . self::SESSIONS_TABLE, [ 'uuid' => $uuid ] );
 	}
 
-	/** Get messages for session */
 	public static function get_messages( string $uuid ): array {
 		global $wpdb;
 		$session = self::get_session( $uuid );
 		if ( ! $session ) return [];
 		return $wpdb->get_results(
 			$wpdb->prepare(
-				"SELECT role, content, created_at FROM {$wpdb->prefix}" . self::MESSAGES_TABLE . " WHERE session_id=%d ORDER BY id ASC",
+				"SELECT role, content, created_at FROM {$wpdb->prefix}wpeasyai_messages WHERE session_id=%d ORDER BY id ASC",
 				$session['id']
 			),
 			ARRAY_A
 		) ?: [];
 	}
 
-	/** Append a message */
 	public static function add_message( string $uuid, string $role, string $content ): void {
 		global $wpdb;
 		$session = self::get_session( $uuid );
@@ -145,22 +137,7 @@ class WPEasyAI_DB {
 		self::touch_session( $uuid );
 	}
 
-	/** Clear messages but keep session */
-	public static function clear_messages( string $uuid ): void {
-		global $wpdb;
-		$session = self::get_session( $uuid );
-		if ( ! $session ) return;
-		$wpdb->delete( $wpdb->prefix . self::MESSAGES_TABLE, [ 'session_id' => $session['id'] ] );
-		$wpdb->update(
-			$wpdb->prefix . self::SESSIONS_TABLE,
-			[ 'title' => 'New Chat' ],
-			[ 'uuid' => $uuid ]
-		);
-	}
-
-	/** Delete all data for user (GDPR) */
 	public static function delete_user_data( int $user_id ): void {
-		global $wpdb;
 		$sessions = self::get_sessions( $user_id, '' );
 		foreach ( $sessions as $s ) {
 			self::delete_session( $s['uuid'] );
