@@ -1,104 +1,116 @@
-=== WP Easy AI Chat ===
-Contributors:      easybdit
-Donate link:       https://easyit.com.bd/donate
-Tags:              ai, chatbot, ollama, openai, anthropic, deepseek, chat
+=== EasyIT AI Chat ===
+Contributors: easyit
+Tags: chatbot, ollama, openai, anthropic, deepseek
 Requires at least: 6.0
-Tested up to:      6.9
-Requires PHP:      8.0
-Stable tag:        1.0.1
-License:           GPL-2.0-or-later
-License URI:       https://www.gnu.org/licenses/gpl-2.0.html
+Tested up to: 6.7
+Requires PHP: 8.0
+Stable tag: 1.0.2
+License: GPLv2 or later
+License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-Unified AI chatbot for WordPress. Connect Ollama, OpenAI, Anthropic (Claude) and DeepSeek with one shortcode: [easyai]
+Unified AI chatbot for your site. Connect Ollama, OpenAI, Anthropic (Claude), or DeepSeek with one shortcode. Free, open-source, no tracking.
 
 == Description ==
 
-**WP Easy AI Chat** embeds a fully-featured AI chatbot on any WordPress page using a single shortcode `[easyai]`. Switch between four AI providers without touching code.
+**EasyIT AI Chat** lets you add an AI-powered chatbot to any page or post with a single shortcode: `[easyai]`. Pick whichever AI provider fits your budget and privacy needs — you bring your own keys (or run Ollama locally for free).
+
+= Supported AI Providers =
+
+* **Ollama** — run open models (Llama, Mistral, Gemma, Qwen, etc.) on your own server. Completely private, completely free.
+* **OpenAI** — GPT-4o, GPT-4o-mini, GPT-4-turbo, GPT-3.5-turbo.
+* **Anthropic (Claude)** — Claude 3.5 Sonnet, Claude 3.5 Haiku, Claude 3 Opus.
+* **DeepSeek** — DeepSeek-Chat, DeepSeek-Reasoner.
 
 = Key Features =
 
-* **Multi-provider** — Ollama (free, local), OpenAI (GPT-3.5/4), Anthropic (Claude), DeepSeek
-* **Modern chat UI** — dark sidebar, conversation history, session management
-* **Persistent sessions** — saved to your own WordPress database
-* **Markdown rendering** — bold, italic, code blocks, lists, headings
-* **Provider switcher** — switch AI provider per conversation
-* **Guest support** — allow non-logged-in visitors to chat
-* **Privacy-ready** — GDPR notice, configurable data retention
-* **Rate limiting** — built-in per-user request throttling
-* **Admin test chat** — test all providers from the dashboard
-* **Fully responsive** — desktop, tablet and mobile
+* **One shortcode, four providers.** Switch with a single attribute: `[easyai provider="anthropic"]`.
+* **ChatGPT-style UI** — sidebar with conversation history, code blocks with a copy button, lightweight markdown rendering, dark-mode friendly.
+* **Conversation memory** — sessions are saved per logged-in user, or per guest (cookie-scoped, never cross-user).
+* **Custom system prompt** — set a global prompt in settings or override per shortcode.
+* **Test Connection** button on every provider tab — verify your key/URL before going live.
+* **Rate limiting** — built-in per-user / per-guest throttle to prevent abuse.
+* **Privacy notice** — optional, configurable, links to your site's Privacy Policy.
+* **No telemetry.** No external calls except to the AI provider you choose.
+* **GPL-2.0-or-later**, source on GitHub.
 
-= Shortcode =
+= Shortcode usage =
 
 `[easyai]`
+`[easyai provider="openai" title="Support Bot" height="500"]`
+`[easyai provider="ollama" system_prompt="You are a helpful gardening assistant."]`
 
-With options:
+Attributes: `provider`, `title`, `placeholder`, `system_prompt`, `height`.
 
-`[easyai provider="openai" height="600" title="My Assistant"]`
+= Privacy =
 
-= Shortcode Attributes =
+When the user sends a message, the message and the prior conversation are forwarded to whichever provider you configured. The message text is also stored in your own database so the conversation can resume. Nothing is sent to the plugin author. You should mention the chosen provider in your site's Privacy Policy. See the **Privacy Notice** toggle in settings to display a small notice inside the chat itself.
 
-* `provider` — `ollama` | `openai` | `anthropic` | `deepseek`
-* `title` — Widget heading text
-* `placeholder` — Input placeholder text
-* `system_prompt` — Override AI system/persona prompt
-* `height` — Messages area height in pixels (default: 600)
+= Third-party services =
+
+This plugin can optionally send user messages to one of the following services, depending on which provider you select in settings:
+
+* **OpenAI** — Terms: https://openai.com/policies/row-terms-of-use — Privacy: https://openai.com/policies/row-privacy-policy
+* **Anthropic** — Terms: https://www.anthropic.com/legal/consumer-terms — Privacy: https://www.anthropic.com/legal/privacy
+* **DeepSeek** — Terms: https://chat.deepseek.com/downloads/DeepSeek%20Terms%20of%20Use.html — Privacy: https://chat.deepseek.com/downloads/DeepSeek%20Privacy%20Policy.html
+* **Ollama** — calls your own self-hosted Ollama URL (no third party involved by default).
+
+No data is transmitted unless you have configured a provider and a user sends a message.
 
 == Installation ==
 
-1. Upload the `wpeasyai` folder to `/wp-content/plugins/`
-2. Activate via **Plugins &rarr; Installed Plugins**
-3. Go to **EasyIT AI Chat &rarr; Settings**
-4. Configure your AI provider
-5. Add `[easyai]` to any page
+1. Upload the plugin folder to `/wp-content/plugins/` or install from the Plugins screen.
+2. Activate.
+3. Go to **EasyIT AI Chat → Settings** and configure at least one provider.
+4. Click **Test Connection** to verify.
+5. Add `[easyai]` to any page, post, or widget.
 
 == Frequently Asked Questions ==
 
 = Do I need an API key? =
-Only for OpenAI, Anthropic, and DeepSeek. Ollama is completely free and self-hosted.
 
-= Can guests use the chat? =
-Yes, enable "Allow Guest Chat" in Settings &rarr; General.
+For OpenAI, Anthropic, or DeepSeek — yes, you bring your own key. For Ollama, no key is needed; you just need an Ollama server reachable from your site.
 
-= Is conversation history stored on my server? =
-Yes — in your WordPress database. Nothing is sent to third parties except your configured AI provider.
+= Where can I run Ollama? =
 
-= Works with Gutenberg / Elementor / Divi? =
-Yes, use a Shortcode block or shortcode element.
+Locally on the same server as your site, or on any machine reachable via HTTP. See https://ollama.com for installation.
+
+= Does the plugin store conversations? =
+
+Yes, in two custom tables in your own database. They are deleted on uninstall. Guest sessions use a cookie token and are not linked to any personal data.
+
+= Can I use it without saving any history? =
+
+A "no-storage" mode is on the roadmap. For now you can clear conversations via the trash-can icon in the sidebar.
+
+= Will it slow my site down? =
+
+Frontend assets (~25 KB CSS + ~15 KB JS) load only on pages that use the `[easyai]` shortcode.
+
+= Is it really free? =
+
+Yes — GPL-2.0-or-later. The only costs you pay are to whichever AI provider you choose (Ollama is free).
 
 == Screenshots ==
 
-1. Public chat page — modern UI with dark sidebar
-2. Admin settings — tabbed provider configuration
-3. Admin test chat — test providers from the dashboard
-4. Mobile responsive layout
+1. The chat interface with sidebar, conversation history, and code-block copy button.
+2. Settings page — provider tabs with Test Connection.
+3. General settings — system prompt, privacy notice, provider badge.
 
 == Changelog ==
 
-= 1.0.1 =
-* Fixed broken admin design — all CSS moved to admin.css (no more wp_add_inline_style in views)
-* Fixed wrong shortcode in test-chat page (was [wpeasyai], now [easyai])
-* Fixed CSS stray brace breaking responsive styles
-* Fixed body class typo (wweai-chat-page corrected to weai-chat-page)
-* Fixed admin hook slug mismatch for test-chat page asset loading
-* Added temperature field to Anthropic API payload
-* Anthropic provider now filters to only user/assistant roles
-* Removed unused $config_printed property
-* Removed unused save_guest_history option
-* All shortcode examples updated to [easyai]
-* Removed chatgpt from readme tags (trademark)
+= 1.0.2 =
+* Renamed plugin and folder to comply with WordPress.org trademark guidelines.
+* All exception messages now escaped before being thrown.
+* All direct database queries paired with object-cache reads/writes.
+* All AJAX handlers verify nonce before reading `$_POST`.
+* Removed deprecated `load_plugin_textdomain()` call (handled automatically by WP 4.6+).
+* All view-scoped variables prefixed to avoid global namespace collisions.
+* Excluded development files (`.gitignore`, `.github/`) from the production zip.
 
-= 1.0.0 =
-* Initial release
-* Ollama, OpenAI, Anthropic (Claude), DeepSeek support
-* Modern chat UI with persistent sessions
-* Guest chat, rate limiting, GDPR notice
-* Admin settings + test chat page
+= 1.0.1 =
+* Initial public release.
 
 == Upgrade Notice ==
 
-= 1.0.1 =
-Bug-fix release. Fixes broken admin design and several functional issues. Please update.
-
-= 1.0.0 =
-Initial release — no upgrade steps required.
+= 1.0.2 =
+Security and WordPress.org compliance update. Recommended for all users.

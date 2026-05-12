@@ -1,296 +1,309 @@
 <?php
 /**
  * Admin view: Settings page.
- * All styles live in admin/assets/admin.css — no inline CSS here.
  *
- * @package WPEasyAI
+ * Variables in scope (provided by EAIC_Admin::render_settings()):
+ *
+ * @var array $eaic_opts Plugin options merged with defaults.
+ *
+ * @package EasyIT_AI_Chat
  * @since   1.0.0
  */
-if ( ! defined( 'ABSPATH' ) ) exit;
-if ( ! is_array( $opts ) ) $opts = WPEasyAI_Options::defaults();
-?>
-<div class="wrap weai-settings-wrap">
 
-	<?php if ( isset( $_GET['settings-updated'] ) ) : // phpcs:ignore WordPress.Security.NonceVerification ?>
-	<div class="notice notice-success is-dismissible" style="border-radius:8px;margin-bottom:16px">
-		<p>&#x2705; <strong><?php esc_html_e( 'Settings saved.', 'wpeasyai' ); ?></strong>
-		<?php esc_html_e( 'Your configuration has been updated.', 'wpeasyai' ); ?></p>
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
+if ( ! isset( $eaic_opts ) || ! is_array( $eaic_opts ) ) {
+	$eaic_opts = EAIC_Options::defaults();
+}
+
+$eaic_provider_map = array(
+	'ollama'    => '🦙 Ollama',
+	'openai'    => '✨ OpenAI',
+	'anthropic' => '🎭 Anthropic',
+	'deepseek'  => '🔍 DeepSeek',
+);
+
+$eaic_option_key = EAIC_Options::OPTION_KEY;
+?>
+<div class="wrap eaic-settings-wrap">
+
+	<?php
+	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- "settings-updated" is set by core after options.php saves; no action is taken on it.
+	if ( isset( $_GET['settings-updated'] ) ) :
+		?>
+	<div class="notice notice-success is-dismissible">
+		<p>✅ <strong><?php esc_html_e( 'Settings saved.', 'easyit-ai-chat' ); ?></strong>
+		<?php esc_html_e( 'Your configuration has been updated.', 'easyit-ai-chat' ); ?></p>
 	</div>
 	<?php endif; ?>
 
-	<div class="weai-hero">
-		<div class="weai-hero-left">
-			<div class="weai-hero-icon">🤖</div>
+	<div class="eaic-hero">
+		<div class="eaic-hero-left">
+			<div class="eaic-hero-icon">🤖</div>
 			<div>
-				<div class="weai-hero-title"><?php esc_html_e( 'EasyIT AI Chat', 'wpeasyai' ); ?></div>
-				<div class="weai-hero-sub"><?php esc_html_e( 'Unified AI chatbot — Ollama · OpenAI · Anthropic · DeepSeek', 'wpeasyai' ); ?></div>
+				<div class="eaic-hero-title"><?php esc_html_e( 'EasyIT AI Chat', 'easyit-ai-chat' ); ?></div>
+				<div class="eaic-hero-sub"><?php esc_html_e( 'Unified AI chatbot — Ollama · OpenAI · Anthropic · DeepSeek', 'easyit-ai-chat' ); ?></div>
 			</div>
 		</div>
-		<div class="weai-hero-badge">v<?php echo esc_html( WPEASYAI_VERSION ); ?></div>
+		<div class="eaic-hero-badge">v<?php echo esc_html( EAIC_VERSION ); ?></div>
 	</div>
 
 	<form method="post" action="options.php">
-		<?php settings_fields( 'wpeasyai_group' ); ?>
+		<?php settings_fields( 'eaic_group' ); ?>
 
-		<div class="weai-settings-layout">
-		<div class="weai-settings-main">
+		<div class="eaic-settings-layout">
+		<div class="eaic-settings-main">
 
-			<div class="weai-tab-nav">
-				<button type="button" class="weai-tab-btn active" data-tab="ollama"><span class="weai-tab-icon">🦙</span> <?php esc_html_e( 'Ollama', 'wpeasyai' ); ?></button>
-				<button type="button" class="weai-tab-btn" data-tab="openai"><span class="weai-tab-icon">✨</span> <?php esc_html_e( 'OpenAI', 'wpeasyai' ); ?></button>
-				<button type="button" class="weai-tab-btn" data-tab="anthropic"><span class="weai-tab-icon">🎭</span> <?php esc_html_e( 'Anthropic', 'wpeasyai' ); ?></button>
-				<button type="button" class="weai-tab-btn" data-tab="deepseek"><span class="weai-tab-icon">🔍</span> <?php esc_html_e( 'DeepSeek', 'wpeasyai' ); ?></button>
-				<button type="button" class="weai-tab-btn" data-tab="general"><span class="weai-tab-icon">⚙️</span> <?php esc_html_e( 'General', 'wpeasyai' ); ?></button>
-				<button type="button" class="weai-tab-btn" data-tab="ui"><span class="weai-tab-icon">🎨</span> <?php esc_html_e( 'UI', 'wpeasyai' ); ?></button>
-			</div>
-
-			<!-- ── OLLAMA ── -->
-			<div class="weai-panel active" id="weai-panel-ollama">
-			<div class="weai-card">
-				<div class="weai-card-title"><span class="icon">🦙</span> <?php esc_html_e( 'Ollama — Self-Hosted, Free', 'wpeasyai' ); ?></div>
-
-				<div class="weai-field">
-					<label class="weai-label"><?php esc_html_e( 'Default Provider', 'wpeasyai' ); ?></label>
-					<select name="<?php echo esc_attr( WPEasyAI_Options::OPTION_KEY ); ?>[default_provider]">
-						<?php foreach ( [ 'ollama' => '🦙 Ollama', 'openai' => '✨ OpenAI', 'anthropic' => '🎭 Anthropic', 'deepseek' => '🔍 DeepSeek' ] as $k => $v ) : ?>
-						<option value="<?php echo esc_attr( $k ); ?>" <?php selected( $opts['default_provider'], $k ); ?>><?php echo esc_html( $v ); ?></option>
-						<?php endforeach; ?>
-					</select>
-					<div class="weai-field-desc"><?php esc_html_e( 'Used when no provider is specified in the shortcode.', 'wpeasyai' ); ?></div>
-				</div>
-				<div class="weai-field">
-					<label class="weai-label"><?php esc_html_e( 'Ollama Server URL', 'wpeasyai' ); ?></label>
-					<input type="url" name="<?php echo esc_attr( WPEasyAI_Options::OPTION_KEY ); ?>[ollama_url]" value="<?php echo esc_attr( $opts['ollama_url'] ); ?>" placeholder="http://localhost:11434">
-					<div class="weai-field-desc"><?php esc_html_e( 'e.g.', 'wpeasyai' ); ?> <code>http://localhost:11434</code></div>
-				</div>
-				<div class="weai-field">
-					<label class="weai-label"><?php esc_html_e( 'Model', 'wpeasyai' ); ?></label>
-					<input type="text" name="<?php echo esc_attr( WPEasyAI_Options::OPTION_KEY ); ?>[ollama_model]" value="<?php echo esc_attr( $opts['ollama_model'] ); ?>" placeholder="qwen2:1.5b">
-					<div class="weai-field-desc"><?php esc_html_e( 'e.g.', 'wpeasyai' ); ?> <code>qwen2:1.5b</code>, <code>llama3</code>, <code>mistral</code></div>
-				</div>
-				<div class="weai-field">
-					<label class="weai-label"><?php esc_html_e( 'Timeout (seconds)', 'wpeasyai' ); ?></label>
-					<input type="number" name="<?php echo esc_attr( WPEasyAI_Options::OPTION_KEY ); ?>[ollama_timeout]" value="<?php echo (int) $opts['ollama_timeout']; ?>" min="10" max="300">
-					<div class="weai-field-desc"><?php esc_html_e( 'Increase for large models or slow hardware.', 'wpeasyai' ); ?></div>
-				</div>
-				<div class="weai-test-row">
-					<button type="button" class="weai-test-btn-styled weai-test-btn" data-provider="ollama">🔌 <?php esc_html_e( 'Test Connection', 'wpeasyai' ); ?></button>
-					<span class="weai-test-result" id="weai-test-ollama"></span>
-				</div>
-			</div>
+			<div class="eaic-tab-nav">
+				<button type="button" class="eaic-tab-btn active" data-tab="ollama"><span class="eaic-tab-icon">🦙</span> <?php esc_html_e( 'Ollama', 'easyit-ai-chat' ); ?></button>
+				<button type="button" class="eaic-tab-btn" data-tab="openai"><span class="eaic-tab-icon">✨</span> <?php esc_html_e( 'OpenAI', 'easyit-ai-chat' ); ?></button>
+				<button type="button" class="eaic-tab-btn" data-tab="anthropic"><span class="eaic-tab-icon">🎭</span> <?php esc_html_e( 'Anthropic', 'easyit-ai-chat' ); ?></button>
+				<button type="button" class="eaic-tab-btn" data-tab="deepseek"><span class="eaic-tab-icon">🔍</span> <?php esc_html_e( 'DeepSeek', 'easyit-ai-chat' ); ?></button>
+				<button type="button" class="eaic-tab-btn" data-tab="general"><span class="eaic-tab-icon">⚙️</span> <?php esc_html_e( 'General', 'easyit-ai-chat' ); ?></button>
+				<button type="button" class="eaic-tab-btn" data-tab="ui"><span class="eaic-tab-icon">🎨</span> <?php esc_html_e( 'UI', 'easyit-ai-chat' ); ?></button>
 			</div>
 
-			<!-- ── OPENAI ── -->
-			<div class="weai-panel" id="weai-panel-openai">
-			<div class="weai-card">
-				<div class="weai-card-title"><span class="icon">✨</span> <?php esc_html_e( 'OpenAI', 'wpeasyai' ); ?></div>
-				<div class="weai-field">
-					<label class="weai-label"><?php esc_html_e( 'API Key', 'wpeasyai' ); ?> <span class="req">*</span></label>
-					<input type="password" name="<?php echo esc_attr( WPEasyAI_Options::OPTION_KEY ); ?>[openai_key]" value="<?php echo esc_attr( $opts['openai_key'] ); ?>" placeholder="sk-...">
-					<div class="weai-field-desc"><?php esc_html_e( 'Get your key at', 'wpeasyai' ); ?> <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener noreferrer">platform.openai.com</a></div>
-				</div>
-				<div class="weai-field">
-					<label class="weai-label"><?php esc_html_e( 'Model', 'wpeasyai' ); ?></label>
-					<input type="text" name="<?php echo esc_attr( WPEasyAI_Options::OPTION_KEY ); ?>[openai_model]" value="<?php echo esc_attr( $opts['openai_model'] ); ?>" placeholder="gpt-3.5-turbo">
-					<div class="weai-field-desc"><?php esc_html_e( 'e.g.', 'wpeasyai' ); ?> <code>gpt-3.5-turbo</code>, <code>gpt-4o-mini</code>, <code>gpt-4o</code></div>
-				</div>
-				<div class="weai-field">
-					<label class="weai-label"><?php esc_html_e( 'Timeout (seconds)', 'wpeasyai' ); ?></label>
-					<input type="number" name="<?php echo esc_attr( WPEasyAI_Options::OPTION_KEY ); ?>[openai_timeout]" value="<?php echo (int) $opts['openai_timeout']; ?>" min="10" max="120">
-				</div>
-				<div class="weai-test-row">
-					<button type="button" class="weai-test-btn-styled weai-test-btn" data-provider="openai">🔌 <?php esc_html_e( 'Test Connection', 'wpeasyai' ); ?></button>
-					<span class="weai-test-result" id="weai-test-openai"></span>
-				</div>
-			</div>
-			</div>
+			<!-- OLLAMA -->
+			<div class="eaic-panel active" id="eaic-panel-ollama">
+				<div class="eaic-card">
+					<div class="eaic-card-title"><span class="icon">🦙</span> <?php esc_html_e( 'Ollama — Self-Hosted, Free', 'easyit-ai-chat' ); ?></div>
 
-			<!-- ── ANTHROPIC ── -->
-			<div class="weai-panel" id="weai-panel-anthropic">
-			<div class="weai-card">
-				<div class="weai-card-title"><span class="icon">🎭</span> <?php esc_html_e( 'Anthropic (Claude)', 'wpeasyai' ); ?></div>
-				<div class="weai-field">
-					<label class="weai-label"><?php esc_html_e( 'API Key', 'wpeasyai' ); ?> <span class="req">*</span></label>
-					<input type="password" name="<?php echo esc_attr( WPEasyAI_Options::OPTION_KEY ); ?>[anthropic_key]" value="<?php echo esc_attr( $opts['anthropic_key'] ); ?>" placeholder="sk-ant-...">
-					<div class="weai-field-desc"><?php esc_html_e( 'Get your key at', 'wpeasyai' ); ?> <a href="https://console.anthropic.com/" target="_blank" rel="noopener noreferrer">console.anthropic.com</a></div>
-				</div>
-				<div class="weai-field">
-					<label class="weai-label"><?php esc_html_e( 'Model', 'wpeasyai' ); ?></label>
-					<input type="text" name="<?php echo esc_attr( WPEasyAI_Options::OPTION_KEY ); ?>[anthropic_model]" value="<?php echo esc_attr( $opts['anthropic_model'] ); ?>" placeholder="claude-3-haiku-20240307">
-					<div class="weai-field-desc"><?php esc_html_e( 'e.g.', 'wpeasyai' ); ?> <code>claude-3-haiku-20240307</code>, <code>claude-3-5-sonnet-20241022</code></div>
-				</div>
-				<div class="weai-field">
-					<label class="weai-label"><?php esc_html_e( 'Timeout (seconds)', 'wpeasyai' ); ?></label>
-					<input type="number" name="<?php echo esc_attr( WPEasyAI_Options::OPTION_KEY ); ?>[anthropic_timeout]" value="<?php echo (int) $opts['anthropic_timeout']; ?>" min="10" max="120">
-				</div>
-				<div class="weai-test-row">
-					<button type="button" class="weai-test-btn-styled weai-test-btn" data-provider="anthropic">🔌 <?php esc_html_e( 'Test Connection', 'wpeasyai' ); ?></button>
-					<span class="weai-test-result" id="weai-test-anthropic"></span>
-				</div>
-			</div>
-			</div>
-
-			<!-- ── DEEPSEEK ── -->
-			<div class="weai-panel" id="weai-panel-deepseek">
-			<div class="weai-card">
-				<div class="weai-card-title"><span class="icon">🔍</span> <?php esc_html_e( 'DeepSeek', 'wpeasyai' ); ?></div>
-				<div class="weai-field">
-					<label class="weai-label"><?php esc_html_e( 'API Key', 'wpeasyai' ); ?> <span class="req">*</span></label>
-					<input type="password" name="<?php echo esc_attr( WPEasyAI_Options::OPTION_KEY ); ?>[deepseek_key]" value="<?php echo esc_attr( $opts['deepseek_key'] ); ?>" placeholder="sk-...">
-					<div class="weai-field-desc"><?php esc_html_e( 'Get your key at', 'wpeasyai' ); ?> <a href="https://platform.deepseek.com/" target="_blank" rel="noopener noreferrer">platform.deepseek.com</a></div>
-				</div>
-				<div class="weai-field">
-					<label class="weai-label"><?php esc_html_e( 'Model', 'wpeasyai' ); ?></label>
-					<input type="text" name="<?php echo esc_attr( WPEasyAI_Options::OPTION_KEY ); ?>[deepseek_model]" value="<?php echo esc_attr( $opts['deepseek_model'] ); ?>" placeholder="deepseek-chat">
-					<div class="weai-field-desc"><?php esc_html_e( 'e.g.', 'wpeasyai' ); ?> <code>deepseek-chat</code>, <code>deepseek-reasoner</code></div>
-				</div>
-				<div class="weai-field">
-					<label class="weai-label"><?php esc_html_e( 'Timeout (seconds)', 'wpeasyai' ); ?></label>
-					<input type="number" name="<?php echo esc_attr( WPEasyAI_Options::OPTION_KEY ); ?>[deepseek_timeout]" value="<?php echo (int) $opts['deepseek_timeout']; ?>" min="10" max="120">
-				</div>
-				<div class="weai-test-row">
-					<button type="button" class="weai-test-btn-styled weai-test-btn" data-provider="deepseek">🔌 <?php esc_html_e( 'Test Connection', 'wpeasyai' ); ?></button>
-					<span class="weai-test-result" id="weai-test-deepseek"></span>
-				</div>
-			</div>
-			</div>
-
-			<!-- ── GENERAL ── -->
-			<div class="weai-panel" id="weai-panel-general">
-			<div class="weai-card">
-				<div class="weai-card-title"><span class="icon">⚙️</span> <?php esc_html_e( 'General Settings', 'wpeasyai' ); ?></div>
-				<div class="weai-field">
-					<label class="weai-label"><?php esc_html_e( 'System Prompt', 'wpeasyai' ); ?></label>
-					<textarea name="<?php echo esc_attr( WPEasyAI_Options::OPTION_KEY ); ?>[system_prompt]" rows="4" style="resize:vertical"><?php echo esc_textarea( $opts['system_prompt'] ); ?></textarea>
-					<div class="weai-field-desc"><?php esc_html_e( 'Default AI persona. Can be overridden per shortcode.', 'wpeasyai' ); ?></div>
-				</div>
-				<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
-				<div class="weai-field">
-					<label class="weai-label"><?php esc_html_e( 'Temperature', 'wpeasyai' ); ?></label>
-					<input type="number" step="0.1" min="0" max="2" name="<?php echo esc_attr( WPEasyAI_Options::OPTION_KEY ); ?>[temperature]" value="<?php echo esc_attr( (string) (float) $opts['temperature'] ); ?>">
-					<div class="weai-field-desc"><?php esc_html_e( '0 = focused · 1 = balanced · 2 = creative', 'wpeasyai' ); ?></div>
-				</div>
-				<div class="weai-field">
-					<label class="weai-label"><?php esc_html_e( 'Max Tokens', 'wpeasyai' ); ?></label>
-					<input type="number" min="100" max="8000" name="<?php echo esc_attr( WPEasyAI_Options::OPTION_KEY ); ?>[max_tokens]" value="<?php echo (int) $opts['max_tokens']; ?>">
-					<div class="weai-field-desc"><?php esc_html_e( 'Max response length (100–8000)', 'wpeasyai' ); ?></div>
-				</div>
-				</div>
-				<div class="weai-field">
-					<label class="weai-label"><?php esc_html_e( 'Data Retention (days)', 'wpeasyai' ); ?></label>
-					<input type="number" min="1" max="3650" name="<?php echo esc_attr( WPEasyAI_Options::OPTION_KEY ); ?>[data_retention_days]" value="<?php echo (int) $opts['data_retention_days']; ?>">
-					<div class="weai-field-desc"><?php esc_html_e( 'Auto-delete conversations older than this many days.', 'wpeasyai' ); ?></div>
-				</div>
-			</div>
-			<div class="weai-card">
-				<div class="weai-card-title"><span class="icon">🔐</span> <?php esc_html_e( 'Access & Privacy', 'wpeasyai' ); ?></div>
-				<label class="weai-check-row">
-					<input type="checkbox" name="<?php echo esc_attr( WPEasyAI_Options::OPTION_KEY ); ?>[allow_guest_chat]" value="1" <?php checked( $opts['allow_guest_chat'] ); ?>>
-					<div>
-						<div class="weai-check-label"><?php esc_html_e( 'Allow Guest Chat', 'wpeasyai' ); ?></div>
-						<div class="weai-check-desc"><?php esc_html_e( 'Non-logged-in visitors can use the chatbot. Uses cookies to track sessions.', 'wpeasyai' ); ?></div>
+					<div class="eaic-field">
+						<label class="eaic-label" for="eaic-default-provider"><?php esc_html_e( 'Default Provider', 'easyit-ai-chat' ); ?></label>
+						<select id="eaic-default-provider" name="<?php echo esc_attr( $eaic_option_key ); ?>[default_provider]">
+							<?php foreach ( $eaic_provider_map as $eaic_slug => $eaic_label ) : ?>
+								<option value="<?php echo esc_attr( $eaic_slug ); ?>" <?php selected( $eaic_opts['default_provider'], $eaic_slug ); ?>><?php echo esc_html( $eaic_label ); ?></option>
+							<?php endforeach; ?>
+						</select>
+						<div class="eaic-field-desc"><?php esc_html_e( 'Used when no provider is specified in the shortcode.', 'easyit-ai-chat' ); ?></div>
 					</div>
-				</label>
-				<label class="weai-check-row">
-					<input type="checkbox" name="<?php echo esc_attr( WPEasyAI_Options::OPTION_KEY ); ?>[privacy_notice]" value="1" <?php checked( $opts['privacy_notice'] ); ?>>
-					<div>
-						<div class="weai-check-label"><?php esc_html_e( 'Show Privacy Notice', 'wpeasyai' ); ?></div>
-						<div class="weai-check-desc"><?php esc_html_e( 'Display a "Conversations are saved" notice with link to your Privacy Policy.', 'wpeasyai' ); ?></div>
+
+					<div class="eaic-field">
+						<label class="eaic-label" for="eaic-ollama-url"><?php esc_html_e( 'Ollama Server URL', 'easyit-ai-chat' ); ?></label>
+						<input id="eaic-ollama-url" type="url" name="<?php echo esc_attr( $eaic_option_key ); ?>[ollama_url]" value="<?php echo esc_attr( $eaic_opts['ollama_url'] ); ?>" placeholder="http://localhost:11434">
+						<div class="eaic-field-desc"><?php esc_html_e( 'e.g.', 'easyit-ai-chat' ); ?> <code>http://localhost:11434</code></div>
 					</div>
-				</label>
-			</div>
-			</div>
 
-			<!-- ── UI ── -->
-			<div class="weai-panel" id="weai-panel-ui">
-			<div class="weai-card">
-				<div class="weai-card-title"><span class="icon">🎨</span> <?php esc_html_e( 'UI Customisation', 'wpeasyai' ); ?></div>
-				<div class="weai-field">
-					<label class="weai-label"><?php esc_html_e( 'Chat Widget Title', 'wpeasyai' ); ?></label>
-					<input type="text" name="<?php echo esc_attr( WPEasyAI_Options::OPTION_KEY ); ?>[chat_title]" value="<?php echo esc_attr( $opts['chat_title'] ); ?>" placeholder="AI Chat">
-				</div>
-				<div class="weai-field">
-					<label class="weai-label"><?php esc_html_e( 'Input Placeholder', 'wpeasyai' ); ?></label>
-					<input type="text" name="<?php echo esc_attr( WPEasyAI_Options::OPTION_KEY ); ?>[placeholder_text]" value="<?php echo esc_attr( $opts['placeholder_text'] ); ?>" placeholder="Ask me anything&hellip;">
-				</div>
-				<label class="weai-check-row">
-					<input type="checkbox" name="<?php echo esc_attr( WPEasyAI_Options::OPTION_KEY ); ?>[show_provider_badge]" value="1" <?php checked( $opts['show_provider_badge'] ); ?>>
-					<div>
-						<div class="weai-check-label"><?php esc_html_e( 'Show Provider Badge', 'wpeasyai' ); ?></div>
-						<div class="weai-check-desc"><?php esc_html_e( 'Display provider name and model below each AI response.', 'wpeasyai' ); ?></div>
+					<div class="eaic-field">
+						<label class="eaic-label" for="eaic-ollama-model"><?php esc_html_e( 'Model', 'easyit-ai-chat' ); ?></label>
+						<input id="eaic-ollama-model" type="text" name="<?php echo esc_attr( $eaic_option_key ); ?>[ollama_model]" value="<?php echo esc_attr( $eaic_opts['ollama_model'] ); ?>" placeholder="qwen2:1.5b">
+						<div class="eaic-field-desc"><?php esc_html_e( 'e.g.', 'easyit-ai-chat' ); ?> <code>qwen2:1.5b</code>, <code>llama3</code>, <code>mistral</code></div>
 					</div>
-				</label>
-			</div>
+
+					<div class="eaic-field">
+						<label class="eaic-label" for="eaic-ollama-timeout"><?php esc_html_e( 'Timeout (seconds)', 'easyit-ai-chat' ); ?></label>
+						<input id="eaic-ollama-timeout" type="number" name="<?php echo esc_attr( $eaic_option_key ); ?>[ollama_timeout]" value="<?php echo (int) $eaic_opts['ollama_timeout']; ?>" min="10" max="300">
+						<div class="eaic-field-desc"><?php esc_html_e( 'Increase for large models or slow hardware.', 'easyit-ai-chat' ); ?></div>
+					</div>
+
+					<div class="eaic-test-row">
+						<button type="button" class="eaic-test-btn-styled eaic-test-btn" data-provider="ollama">🔌 <?php esc_html_e( 'Test Connection', 'easyit-ai-chat' ); ?></button>
+						<span class="eaic-test-result" id="eaic-test-ollama"></span>
+					</div>
+				</div>
 			</div>
 
-			<div style="margin-top:8px">
-				<button type="submit" class="weai-save-btn">💾 <?php esc_html_e( 'Save Settings', 'wpeasyai' ); ?></button>
+			<!-- OPENAI -->
+			<div class="eaic-panel" id="eaic-panel-openai">
+				<div class="eaic-card">
+					<div class="eaic-card-title"><span class="icon">✨</span> <?php esc_html_e( 'OpenAI', 'easyit-ai-chat' ); ?></div>
+
+					<div class="eaic-field">
+						<label class="eaic-label" for="eaic-openai-key"><?php esc_html_e( 'API Key', 'easyit-ai-chat' ); ?> <span class="req">*</span></label>
+						<input id="eaic-openai-key" type="password" name="<?php echo esc_attr( $eaic_option_key ); ?>[openai_key]" value="<?php echo esc_attr( $eaic_opts['openai_key'] ); ?>" placeholder="sk-...">
+						<div class="eaic-field-desc"><?php esc_html_e( 'Get your key at', 'easyit-ai-chat' ); ?> <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener noreferrer">platform.openai.com</a></div>
+					</div>
+
+					<div class="eaic-field">
+						<label class="eaic-label" for="eaic-openai-model"><?php esc_html_e( 'Model', 'easyit-ai-chat' ); ?></label>
+						<input id="eaic-openai-model" type="text" name="<?php echo esc_attr( $eaic_option_key ); ?>[openai_model]" value="<?php echo esc_attr( $eaic_opts['openai_model'] ); ?>" placeholder="gpt-3.5-turbo">
+						<div class="eaic-field-desc"><?php esc_html_e( 'e.g.', 'easyit-ai-chat' ); ?> <code>gpt-3.5-turbo</code>, <code>gpt-4o-mini</code>, <code>gpt-4o</code></div>
+					</div>
+
+					<div class="eaic-field">
+						<label class="eaic-label" for="eaic-openai-timeout"><?php esc_html_e( 'Timeout (seconds)', 'easyit-ai-chat' ); ?></label>
+						<input id="eaic-openai-timeout" type="number" name="<?php echo esc_attr( $eaic_option_key ); ?>[openai_timeout]" value="<?php echo (int) $eaic_opts['openai_timeout']; ?>" min="10" max="120">
+					</div>
+
+					<div class="eaic-test-row">
+						<button type="button" class="eaic-test-btn-styled eaic-test-btn" data-provider="openai">🔌 <?php esc_html_e( 'Test Connection', 'easyit-ai-chat' ); ?></button>
+						<span class="eaic-test-result" id="eaic-test-openai"></span>
+					</div>
+				</div>
 			</div>
 
-		</div><!-- /.weai-settings-main -->
+			<!-- ANTHROPIC -->
+			<div class="eaic-panel" id="eaic-panel-anthropic">
+				<div class="eaic-card">
+					<div class="eaic-card-title"><span class="icon">🎭</span> <?php esc_html_e( 'Anthropic (Claude)', 'easyit-ai-chat' ); ?></div>
 
-		<div class="weai-settings-aside">
-			<div class="weai-shortcode-card">
-				<h4>📋 <?php esc_html_e( 'Shortcodes', 'wpeasyai' ); ?></h4>
-				<div class="weai-sc-item">[easyai]</div>
-				<div class="weai-sc-item">[easyai provider="openai"]</div>
-				<div class="weai-sc-item">[easyai provider="anthropic" height="600"]</div>
-				<div class="weai-sc-item">[easyai title="Custom Title"]</div>
+					<div class="eaic-field">
+						<label class="eaic-label" for="eaic-anthropic-key"><?php esc_html_e( 'API Key', 'easyit-ai-chat' ); ?> <span class="req">*</span></label>
+						<input id="eaic-anthropic-key" type="password" name="<?php echo esc_attr( $eaic_option_key ); ?>[anthropic_key]" value="<?php echo esc_attr( $eaic_opts['anthropic_key'] ); ?>" placeholder="sk-ant-...">
+						<div class="eaic-field-desc"><?php esc_html_e( 'Get your key at', 'easyit-ai-chat' ); ?> <a href="https://console.anthropic.com/" target="_blank" rel="noopener noreferrer">console.anthropic.com</a></div>
+					</div>
+
+					<div class="eaic-field">
+						<label class="eaic-label" for="eaic-anthropic-model"><?php esc_html_e( 'Model', 'easyit-ai-chat' ); ?></label>
+						<input id="eaic-anthropic-model" type="text" name="<?php echo esc_attr( $eaic_option_key ); ?>[anthropic_model]" value="<?php echo esc_attr( $eaic_opts['anthropic_model'] ); ?>" placeholder="claude-3-haiku-20240307">
+						<div class="eaic-field-desc"><?php esc_html_e( 'e.g.', 'easyit-ai-chat' ); ?> <code>claude-3-haiku-20240307</code>, <code>claude-3-5-sonnet-20241022</code></div>
+					</div>
+
+					<div class="eaic-field">
+						<label class="eaic-label" for="eaic-anthropic-timeout"><?php esc_html_e( 'Timeout (seconds)', 'easyit-ai-chat' ); ?></label>
+						<input id="eaic-anthropic-timeout" type="number" name="<?php echo esc_attr( $eaic_option_key ); ?>[anthropic_timeout]" value="<?php echo (int) $eaic_opts['anthropic_timeout']; ?>" min="10" max="120">
+					</div>
+
+					<div class="eaic-test-row">
+						<button type="button" class="eaic-test-btn-styled eaic-test-btn" data-provider="anthropic">🔌 <?php esc_html_e( 'Test Connection', 'easyit-ai-chat' ); ?></button>
+						<span class="eaic-test-result" id="eaic-test-anthropic"></span>
+					</div>
+				</div>
 			</div>
-			<div style="background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:16px;margin-bottom:14px">
-				<div style="font-size:12px;font-weight:700;color:#374151;margin-bottom:10px">🔗 <?php esc_html_e( 'Quick Links', 'wpeasyai' ); ?></div>
-				<a href="<?php echo esc_url( admin_url( 'admin.php?page=wpeasyai-test-chat' ) ); ?>" style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:linear-gradient(135deg,#4f46e5,#7c3aed);color:#fff;border-radius:8px;text-decoration:none;font-size:13px;font-weight:600;margin-bottom:8px">
-					💬 <?php esc_html_e( 'Test Chat', 'wpeasyai' ); ?>
+
+			<!-- DEEPSEEK -->
+			<div class="eaic-panel" id="eaic-panel-deepseek">
+				<div class="eaic-card">
+					<div class="eaic-card-title"><span class="icon">🔍</span> <?php esc_html_e( 'DeepSeek', 'easyit-ai-chat' ); ?></div>
+
+					<div class="eaic-field">
+						<label class="eaic-label" for="eaic-deepseek-key"><?php esc_html_e( 'API Key', 'easyit-ai-chat' ); ?> <span class="req">*</span></label>
+						<input id="eaic-deepseek-key" type="password" name="<?php echo esc_attr( $eaic_option_key ); ?>[deepseek_key]" value="<?php echo esc_attr( $eaic_opts['deepseek_key'] ); ?>" placeholder="sk-...">
+						<div class="eaic-field-desc"><?php esc_html_e( 'Get your key at', 'easyit-ai-chat' ); ?> <a href="https://platform.deepseek.com/" target="_blank" rel="noopener noreferrer">platform.deepseek.com</a></div>
+					</div>
+
+					<div class="eaic-field">
+						<label class="eaic-label" for="eaic-deepseek-model"><?php esc_html_e( 'Model', 'easyit-ai-chat' ); ?></label>
+						<input id="eaic-deepseek-model" type="text" name="<?php echo esc_attr( $eaic_option_key ); ?>[deepseek_model]" value="<?php echo esc_attr( $eaic_opts['deepseek_model'] ); ?>" placeholder="deepseek-chat">
+						<div class="eaic-field-desc"><?php esc_html_e( 'e.g.', 'easyit-ai-chat' ); ?> <code>deepseek-chat</code>, <code>deepseek-reasoner</code></div>
+					</div>
+
+					<div class="eaic-field">
+						<label class="eaic-label" for="eaic-deepseek-timeout"><?php esc_html_e( 'Timeout (seconds)', 'easyit-ai-chat' ); ?></label>
+						<input id="eaic-deepseek-timeout" type="number" name="<?php echo esc_attr( $eaic_option_key ); ?>[deepseek_timeout]" value="<?php echo (int) $eaic_opts['deepseek_timeout']; ?>" min="10" max="120">
+					</div>
+
+					<div class="eaic-test-row">
+						<button type="button" class="eaic-test-btn-styled eaic-test-btn" data-provider="deepseek">🔌 <?php esc_html_e( 'Test Connection', 'easyit-ai-chat' ); ?></button>
+						<span class="eaic-test-result" id="eaic-test-deepseek"></span>
+					</div>
+				</div>
+			</div>
+
+			<!-- GENERAL -->
+			<div class="eaic-panel" id="eaic-panel-general">
+				<div class="eaic-card">
+					<div class="eaic-card-title"><span class="icon">⚙️</span> <?php esc_html_e( 'General Settings', 'easyit-ai-chat' ); ?></div>
+
+					<div class="eaic-field">
+						<label class="eaic-label" for="eaic-system-prompt"><?php esc_html_e( 'System Prompt', 'easyit-ai-chat' ); ?></label>
+						<textarea id="eaic-system-prompt" name="<?php echo esc_attr( $eaic_option_key ); ?>[system_prompt]" rows="4"><?php echo esc_textarea( $eaic_opts['system_prompt'] ); ?></textarea>
+						<div class="eaic-field-desc"><?php esc_html_e( 'Default AI persona. Can be overridden per shortcode.', 'easyit-ai-chat' ); ?></div>
+					</div>
+
+					<div class="eaic-field-grid">
+						<div class="eaic-field">
+							<label class="eaic-label" for="eaic-temperature"><?php esc_html_e( 'Temperature', 'easyit-ai-chat' ); ?></label>
+							<input id="eaic-temperature" type="number" step="0.1" min="0" max="2" name="<?php echo esc_attr( $eaic_option_key ); ?>[temperature]" value="<?php echo esc_attr( (string) (float) $eaic_opts['temperature'] ); ?>">
+							<div class="eaic-field-desc"><?php esc_html_e( '0 = focused · 1 = balanced · 2 = creative', 'easyit-ai-chat' ); ?></div>
+						</div>
+						<div class="eaic-field">
+							<label class="eaic-label" for="eaic-max-tokens"><?php esc_html_e( 'Max Tokens', 'easyit-ai-chat' ); ?></label>
+							<input id="eaic-max-tokens" type="number" min="100" max="8000" name="<?php echo esc_attr( $eaic_option_key ); ?>[max_tokens]" value="<?php echo (int) $eaic_opts['max_tokens']; ?>">
+							<div class="eaic-field-desc"><?php esc_html_e( 'Max response length (100–8000)', 'easyit-ai-chat' ); ?></div>
+						</div>
+					</div>
+
+					<div class="eaic-field">
+						<label class="eaic-label" for="eaic-retention"><?php esc_html_e( 'Data Retention (days)', 'easyit-ai-chat' ); ?></label>
+						<input id="eaic-retention" type="number" min="1" max="3650" name="<?php echo esc_attr( $eaic_option_key ); ?>[data_retention_days]" value="<?php echo (int) $eaic_opts['data_retention_days']; ?>">
+						<div class="eaic-field-desc"><?php esc_html_e( 'Auto-delete conversations older than this many days.', 'easyit-ai-chat' ); ?></div>
+					</div>
+				</div>
+
+				<div class="eaic-card">
+					<div class="eaic-card-title"><span class="icon">🔐</span> <?php esc_html_e( 'Access & Privacy', 'easyit-ai-chat' ); ?></div>
+
+					<label class="eaic-check-row">
+						<input type="checkbox" name="<?php echo esc_attr( $eaic_option_key ); ?>[allow_guest_chat]" value="1" <?php checked( $eaic_opts['allow_guest_chat'] ); ?>>
+						<div>
+							<div class="eaic-check-label"><?php esc_html_e( 'Allow Guest Chat', 'easyit-ai-chat' ); ?></div>
+							<div class="eaic-check-desc"><?php esc_html_e( 'Non-logged-in visitors can use the chatbot. Uses cookies to track sessions.', 'easyit-ai-chat' ); ?></div>
+						</div>
+					</label>
+
+					<label class="eaic-check-row">
+						<input type="checkbox" name="<?php echo esc_attr( $eaic_option_key ); ?>[privacy_notice]" value="1" <?php checked( $eaic_opts['privacy_notice'] ); ?>>
+						<div>
+							<div class="eaic-check-label"><?php esc_html_e( 'Show Privacy Notice', 'easyit-ai-chat' ); ?></div>
+							<div class="eaic-check-desc"><?php esc_html_e( 'Display a "Conversations are saved" notice with link to your Privacy Policy.', 'easyit-ai-chat' ); ?></div>
+						</div>
+					</label>
+				</div>
+			</div>
+
+			<!-- UI -->
+			<div class="eaic-panel" id="eaic-panel-ui">
+				<div class="eaic-card">
+					<div class="eaic-card-title"><span class="icon">🎨</span> <?php esc_html_e( 'UI Customisation', 'easyit-ai-chat' ); ?></div>
+
+					<div class="eaic-field">
+						<label class="eaic-label" for="eaic-chat-title"><?php esc_html_e( 'Chat Widget Title', 'easyit-ai-chat' ); ?></label>
+						<input id="eaic-chat-title" type="text" name="<?php echo esc_attr( $eaic_option_key ); ?>[chat_title]" value="<?php echo esc_attr( $eaic_opts['chat_title'] ); ?>" placeholder="AI Chat">
+					</div>
+
+					<div class="eaic-field">
+						<label class="eaic-label" for="eaic-placeholder"><?php esc_html_e( 'Input Placeholder', 'easyit-ai-chat' ); ?></label>
+						<input id="eaic-placeholder" type="text" name="<?php echo esc_attr( $eaic_option_key ); ?>[placeholder_text]" value="<?php echo esc_attr( $eaic_opts['placeholder_text'] ); ?>" placeholder="<?php esc_attr_e( 'Ask me anything…', 'easyit-ai-chat' ); ?>">
+					</div>
+
+					<label class="eaic-check-row">
+						<input type="checkbox" name="<?php echo esc_attr( $eaic_option_key ); ?>[show_provider_badge]" value="1" <?php checked( $eaic_opts['show_provider_badge'] ); ?>>
+						<div>
+							<div class="eaic-check-label"><?php esc_html_e( 'Show Provider Badge', 'easyit-ai-chat' ); ?></div>
+							<div class="eaic-check-desc"><?php esc_html_e( 'Display provider name and model below each AI response.', 'easyit-ai-chat' ); ?></div>
+						</div>
+					</label>
+				</div>
+			</div>
+
+			<div class="eaic-save-row">
+				<button type="submit" class="eaic-save-btn">💾 <?php esc_html_e( 'Save Settings', 'easyit-ai-chat' ); ?></button>
+			</div>
+
+		</div><!-- /.eaic-settings-main -->
+
+		<div class="eaic-settings-aside">
+			<div class="eaic-shortcode-card">
+				<h4>📋 <?php esc_html_e( 'Shortcodes', 'easyit-ai-chat' ); ?></h4>
+				<div class="eaic-sc-item">[easyai]</div>
+				<div class="eaic-sc-item">[easyai provider="openai"]</div>
+				<div class="eaic-sc-item">[easyai provider="anthropic" height="600"]</div>
+				<div class="eaic-sc-item">[easyai title="Custom Title"]</div>
+			</div>
+
+			<div class="eaic-quick-links">
+				<div class="eaic-quick-links-title">🔗 <?php esc_html_e( 'Quick Links', 'easyit-ai-chat' ); ?></div>
+				<a class="eaic-quick-primary" href="<?php echo esc_url( admin_url( 'admin.php?page=eaic-test-chat' ) ); ?>">
+					💬 <?php esc_html_e( 'Test Chat', 'easyit-ai-chat' ); ?>
 				</a>
-				<a href="<?php echo esc_url( admin_url( 'admin.php?page=wpeasyai' ) ); ?>" style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:#f3f4f6;color:#374151;border-radius:8px;text-decoration:none;font-size:13px;font-weight:500">
-					⚙️ <?php esc_html_e( 'Settings', 'wpeasyai' ); ?>
+				<a class="eaic-quick-secondary" href="<?php echo esc_url( admin_url( 'admin.php?page=eaic' ) ); ?>">
+					⚙️ <?php esc_html_e( 'Settings', 'easyit-ai-chat' ); ?>
 				</a>
 			</div>
-			<div style="background:#fffbeb;border:1px solid #fde68a;border-radius:10px;padding:14px">
-				<div style="font-size:12px;font-weight:700;color:#92400e;margin-bottom:6px">💡 <?php esc_html_e( 'Tips', 'wpeasyai' ); ?></div>
-				<div style="font-size:12px;color:#78350f;line-height:1.6">
-					&bull; <?php esc_html_e( 'Use provider="ollama" on any shortcode to override the default.', 'wpeasyai' ); ?><br>
-					&bull; <?php esc_html_e( 'Set a system prompt to give your AI a persona.', 'wpeasyai' ); ?><br>
-					&bull; <?php esc_html_e( 'Ollama is free — just install it locally.', 'wpeasyai' ); ?>
+
+			<div class="eaic-tips-card">
+				<div class="eaic-tips-title">💡 <?php esc_html_e( 'Tips', 'easyit-ai-chat' ); ?></div>
+				<div class="eaic-tips-body">
+					• <?php esc_html_e( 'Use provider="ollama" on any shortcode to override the default.', 'easyit-ai-chat' ); ?><br>
+					• <?php esc_html_e( 'Set a system prompt to give your AI a persona.', 'easyit-ai-chat' ); ?><br>
+					• <?php esc_html_e( 'Ollama is free — just install it locally.', 'easyit-ai-chat' ); ?>
 				</div>
 			</div>
-		</div><!-- /.weai-settings-aside -->
-		</div><!-- /.weai-settings-layout -->
+		</div><!-- /.eaic-settings-aside -->
 
+		</div><!-- /.eaic-settings-layout -->
 	</form>
 </div>
-
-<script>
-(function () {
-	var tabs   = document.querySelectorAll('.weai-tab-btn');
-	var panels = document.querySelectorAll('.weai-panel');
-	tabs.forEach(function (btn) {
-		btn.addEventListener('click', function () {
-			var tab = btn.dataset.tab;
-			tabs.forEach(function (b) { b.classList.remove('active'); });
-			panels.forEach(function (p) { p.classList.remove('active'); });
-			btn.classList.add('active');
-			var panel = document.getElementById('weai-panel-' + tab);
-			if (panel) panel.classList.add('active');
-			if (history.replaceState) history.replaceState(null, '', '#' + tab);
-		});
-	});
-	var hash = location.hash.replace('#', '');
-	if (hash) {
-		var btn = document.querySelector('.weai-tab-btn[data-tab="' + hash + '"]');
-		if (btn) btn.click();
-	}
-	document.querySelectorAll('.weai-sc-item').forEach(function (el) {
-		el.addEventListener('click', function () {
-			var text = el.textContent.trim();
-			if (navigator.clipboard) {
-				navigator.clipboard.writeText(text).then(function () {
-					var orig = el.textContent;
-					el.textContent = '\u2705 Copied!';
-					setTimeout(function () { el.textContent = orig; }, 1400);
-				});
-			}
-		});
-	});
-}());
-</script>

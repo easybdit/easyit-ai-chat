@@ -1,0 +1,196 @@
+<?php
+/**
+ * Public-facing shortcode and assets.
+ *
+ * @package EasyIT_AI_Chat
+ * @since   1.0.0
+ */
+
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
+/**
+ * Renders the [easyai] shortcode and enqueues frontend assets.
+ */
+class EAIC_Public {
+
+	/**
+	 * Boot hooks.
+	 */
+	public function __construct() {
+		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_assets' ) );
+		add_shortcode( 'easyai', array( $this, 'render_shortcode' ) );
+		add_filter( 'body_class', array( $this, 'body_class' ) );
+	}
+
+	/**
+	 * Adds a body class on pages containing the shortcode, so we can apply
+	 * full-width overrides for the chat layout.
+	 *
+	 * @param array $classes Existing classes.
+	 * @return array
+	 */
+	public function body_class( $classes ) {
+		global $post;
+		if ( ! is_array( $classes ) ) {
+			$classes = array();
+		}
+		if ( $post && has_shortcode( $post->post_content, 'easyai' ) ) {
+			$classes[] = 'eaic-chat-page';
+		}
+		return $classes;
+	}
+
+	/**
+	 * Enqueue CSS/JS on the frontend.
+	 *
+	 * @return void
+	 */
+	public function enqueue_assets() {
+		wp_enqueue_style(
+			'eaic-public',
+			EAIC_URL . 'public/css/chat.css',
+			array(),
+			EAIC_VERSION
+		);
+		wp_enqueue_script(
+			'eaic-public',
+			EAIC_URL . 'public/js/chat.js',
+			array(),
+			EAIC_VERSION,
+			true
+		);
+
+		$opts = EAIC_Options::all();
+
+		// Reuse the admin's i18n strings to keep them in sync.
+		$admin_i18n = array();
+		if ( class_exists( 'EAIC_Admin' ) ) {
+			$admin     = new EAIC_Admin();
+			$admin_i18n = $admin->frontend_i18n();
+		}
+
+		wp_localize_script(
+			'eaic-public',
+			'EAICConfig',
+			array(
+				'ajax_url'            => admin_url( 'admin-ajax.php' ),
+				'nonce'               => wp_create_nonce( 'eaic_nonce' ),
+				'default_provider'    => $opts['default_provider'],
+				'show_provider_badge' => (bool) $opts['show_provider_badge'],
+				'privacy_notice'      => (bool) $opts['privacy_notice'],
+				'is_logged_in'        => is_user_logged_in(),
+				'i18n'                => $admin_i18n,
+			)
+		);
+	}
+
+	/**
+	 * Render [easyai] shortcode.
+	 *
+	 * @param array|string $atts Shortcode attributes.
+	 * @return string
+	 */
+	public function render_shortcode( $atts ) {
+		$opts = EAIC_Options::all();
+		$atts = shortcode_atts(
+			array(
+				'provider'      => $opts['default_provider'],
+				'title'         => $opts['chat_title'],
+				'placeholder'   => $opts['placeholder_text'],
+				'system_prompt' => $opts['system_prompt'],
+				'height'        => 600,
+			),
+			$atts,
+			'easyai'
+		);
+
+		$provider      = sanitize_key( $atts['provider'] );
+		$title         = sanitize_text_field( $atts['title'] );
+		$placeholder   = sanitize_text_field( $atts['placeholder'] );
+		$system_prompt = sanitize_textarea_field( $atts['system_prompt'] );
+		$height        = max( 300, absint( $atts['height'] ) );
+
+		$providers = array(
+			'ollama'    => 'Ollama',
+			'openai'    => 'OpenAI',
+			'anthropic' => 'Anthropic',
+			'deepseek'  => 'DeepSeek',
+		);
+
+		ob_start();
+		?>
+<div class="eaic-page-wrap">
+	<div class="eaic-widget"
+		data-provider="<?php echo esc_attr( $provider ); ?>"
+		data-system-prompt="<?php echo esc_attr( $system_prompt ); ?>"
+		data-msg-height="<?php echo esc_attr( (string) $height ); ?>">
+
+		<div class="eaic-sidebar">
+			<div class="eaic-sidebar-header">
+				<button class="eaic-new-chat-btn" type="button">
+					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+					<?php esc_html_e( 'New Chat', 'easyit-ai-chat' ); ?>
+				</button>
+			</div>
+			<div class="eaic-sessions-list"></div>
+			<div class="eaic-sidebar-footer">
+				<select class="eaic-provider-select" aria-label="<?php esc_attr_e( 'AI Provider', 'easyit-ai-chat' ); ?>">
+					<?php foreach ( $providers as $slug => $label ) : ?>
+						<option value="<?php echo esc_attr( $slug ); ?>" <?php selected( $provider, $slug ); ?>>
+							<?php echo esc_html( $label ); ?>
+						</option>
+					<?php endforeach; ?>
+				</select>
+			</div>
+		</div>
+
+		<div class="eaic-main">
+			<div class="eaic-topbar">
+				<button class="eaic-toggle-sidebar" type="button" title="<?php esc_attr_e( 'Toggle sidebar', 'easyit-ai-chat' ); ?>">
+					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18" aria-hidden="true"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+				</button>
+				<span class="eaic-session-title"><?php echo esc_html( $title ); ?></span>
+				<button class="eaic-delete-session-btn" type="button" title="<?php esc_attr_e( 'Delete conversation', 'easyit-ai-chat' ); ?>">
+					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16" aria-hidden="true"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+				</button>
+			</div>
+
+			<div class="eaic-messages" role="log" aria-live="polite">
+				<div class="eaic-welcome">
+					<div class="eaic-welcome-icon">🤖</div>
+					<h3 class="eaic-welcome-title"><?php echo esc_html( $title ); ?></h3>
+					<p class="eaic-welcome-sub"><?php esc_html_e( 'How can I help you today?', 'easyit-ai-chat' ); ?></p>
+				</div>
+			</div>
+
+			<?php if ( ! empty( $opts['privacy_notice'] ) ) : ?>
+				<div class="eaic-privacy">
+					🔒 <?php esc_html_e( 'Conversations are saved. See our', 'easyit-ai-chat' ); ?>
+					<a href="<?php echo esc_url( get_privacy_policy_url() ? get_privacy_policy_url() : '#' ); ?>" target="_blank" rel="noopener noreferrer">
+						<?php esc_html_e( 'Privacy Policy', 'easyit-ai-chat' ); ?>
+					</a>.
+				</div>
+			<?php endif; ?>
+
+			<div class="eaic-input-area">
+				<div class="eaic-input-wrap">
+					<textarea class="eaic-input" rows="1" maxlength="4000"
+						placeholder="<?php echo esc_attr( $placeholder ); ?>"
+						aria-label="<?php echo esc_attr( $placeholder ); ?>"></textarea>
+					<button class="eaic-send-btn" type="button" disabled
+						aria-label="<?php esc_attr_e( 'Send', 'easyit-ai-chat' ); ?>">
+						<svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18" aria-hidden="true"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+					</button>
+				</div>
+				<p class="eaic-hint"><?php esc_html_e( 'Enter to send · Shift+Enter for new line', 'easyit-ai-chat' ); ?></p>
+			</div>
+		</div>
+
+	</div>
+</div>
+		<?php
+		return ob_get_clean();
+	}
+}

@@ -1,281 +1,674 @@
-/* global WPEasyAIConfig */
-(function () {
+/**
+ * EasyIT AI Chat — frontend logic.
+ *
+ * Reads its runtime config from window.EAICConfig (localised in
+ * EAIC_Public::enqueue_assets()) and drives every .eaic-widget instance
+ * present on the page.
+ *
+ * No external dependencies (no jQuery, no markdown library, no XHR libs).
+ *
+ * @package EasyIT_AI_Chat
+ */
+( function () {
 	'use strict';
 
-	var cfg  = window.WPEasyAIConfig || {};
-	var i18n = cfg.i18n || {};
-
-	/* ── Markdown renderer ── */
-	function esc(s) {
-		return String(s)
-			.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
-			.replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+	if ( typeof window.EAICConfig === 'undefined' ) {
+		return;
 	}
 
-	function md(text) {
-		text = text.replace(/```(\w*)\n?([\s\S]*?)```/g, function (_, lang, code) {
-			var label = lang || 'code';
-			return '<div class="weai-code-block">'
-				+ '<div class="weai-code-header"><span>' + esc(label) + '</span>'
-				+ '<button class="weai-code-copy" data-code="' + esc(code.trimEnd()) + '">' + (i18n.copy || 'Copy') + '</button></div>'
-				+ '<pre>' + esc(code.trimEnd()) + '</pre></div>';
-		});
-		text = text.replace(/`([^`]+)`/g, function (_, c) { return '<code>' + esc(c) + '</code>'; });
-		text = text.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
-		text = text.replace(/\*([^*]+)\*/g, '<em>$1</em>');
-		text = text.replace(/^### (.+)$/gm, '<h3>$1</h3>');
-		text = text.replace(/^## (.+)$/gm,  '<h2>$1</h2>');
-		text = text.replace(/^# (.+)$/gm,   '<h1>$1</h1>');
-		text = text.replace(/((?:^[-*] .+\n?)+)/gm, function (block) {
-			var items = block.trim().split('\n').map(function (l) { return '<li>' + l.replace(/^[-*] /, '') + '</li>'; }).join('');
-			return '<ul>' + items + '</ul>';
-		});
-		text = text.replace(/((?:^\d+\. .+\n?)+)/gm, function (block) {
-			var items = block.trim().split('\n').map(function (l) { return '<li>' + l.replace(/^\d+\. /, '') + '</li>'; }).join('');
-			return '<ol>' + items + '</ol>';
-		});
-		text = text.split(/\n{2,}/).map(function (p) {
-			p = p.trim();
-			if (!p || /^<[houpl]/.test(p)) return p;
-			return '<p>' + p.replace(/\n/g, '<br>') + '</p>';
-		}).join('\n');
+	var CFG = window.EAICConfig;
+	var I18N = ( CFG && CFG.i18n ) || {};
+
+	/* ------------------------------------------------------------------ *
+	 * Small helpers
+	 * ------------------------------------------------------------------ */
+
+	function t( key, fallback ) {
+		return Object.prototype.hasOwnProperty.call( I18N, key ) ? I18N[ key ] : fallback;
+	}
+
+	function escapeHtml( str ) {
+		return String( str )
+			.replace( /&/g, '&amp;' )
+			.replace( /</g, '&lt;' )
+			.replace( />/g, '&gt;' )
+			.replace( /"/g, '&quot;' )
+			.replace( /'/g, '&#039;' );
+	}
+
+	function escapeAttr( str ) {
+		return escapeHtml( str );
+	}
+
+	/**
+	 * Very small markdown renderer.
+	 *
+	 * Supports: fenced code blocks, inline code, bold, italic, links,
+	 * unordered/ordered lists, headings, paragraphs, line breaks.
+	 * Anything more complex is left as paragraphs.
+	 *
+	 * @param {string} src Raw assistant text.
+	 * @return {string} Sanitised HTML.
+	 */
+	function renderMarkdown( src ) {
+		if ( ! src ) {
+			return '';
+		}
+		var text = String( src );
+
+		// 1. Extract fenced code blocks first so their contents aren't touched.
+		var codeBlocks = [];
+		text = text.replace( /```(\w+)?\n?([\s\S]*?)```/g, function ( _m, lang, code ) {
+			codeBlocks.push( { lang: ( lang || '' ).toLowerCase(), code: code.replace( /\n$/, '' ) } );
+			return '\u0000CODEBLOCK' + ( codeBlocks.length - 1 ) + '\u0000';
+		} );
+
+		// 2. Escape the rest.
+		text = escapeHtml( text );
+
+		// 3. Inline code.
+		text = text.replace( /`([^`\n]+?)`/g, '<code class="eaic-inline-code">$1</code>' );
+
+		// 4. Bold / italic.
+		text = text.replace( /\*\*([^*]+)\*\*/g, '<strong>$1</strong>' );
+		text = text.replace( /(^|[^*])\*([^*\n]+)\*/g, '$1<em>$2</em>' );
+
+		// 5. Links [label](url) — only http(s) allowed.
+		text = text.replace( /\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, function ( _m, label, url ) {
+			return '<a href="' + url + '" target="_blank" rel="noopener noreferrer">' + label + '</a>';
+		} );
+
+		// 6. Headings.
+		text = text.replace( /^###\s+(.+)$/gm, '<h3>$1</h3>' );
+		text = text.replace( /^##\s+(.+)$/gm,  '<h2>$1</h2>' );
+		text = text.replace( /^#\s+(.+)$/gm,   '<h1>$1</h1>' );
+
+		// 7. Lists — group consecutive list lines.
+		text = text.replace( /(?:^|\n)((?:[ \t]*[-*][ \t].+(?:\n|$))+)/g, function ( _m, block ) {
+			var items = block.trim().split( /\n/ ).map( function ( line ) {
+				return '<li>' + line.replace( /^[ \t]*[-*][ \t]/, '' ) + '</li>';
+			} ).join( '' );
+			return '\n<ul>' + items + '</ul>\n';
+		} );
+		text = text.replace( /(?:^|\n)((?:[ \t]*\d+\.[ \t].+(?:\n|$))+)/g, function ( _m, block ) {
+			var items = block.trim().split( /\n/ ).map( function ( line ) {
+				return '<li>' + line.replace( /^[ \t]*\d+\.[ \t]/, '' ) + '</li>';
+			} ).join( '' );
+			return '\n<ol>' + items + '</ol>\n';
+		} );
+
+		// 8. Paragraphs from blank-line separated blocks.
+		var parts = text.split( /\n{2,}/ ).map( function ( block ) {
+			block = block.trim();
+			if ( ! block ) {
+				return '';
+			}
+			if ( /^<(h\d|ul|ol|pre|blockquote)/.test( block ) ) {
+				return block;
+			}
+			return '<p>' + block.replace( /\n/g, '<br>' ) + '</p>';
+		} );
+		text = parts.join( '\n' );
+
+		// 9. Restore fenced code blocks with copy buttons.
+		text = text.replace( /\u0000CODEBLOCK(\d+)\u0000/g, function ( _m, i ) {
+			var block = codeBlocks[ Number( i ) ];
+			var langAttr = block.lang ? ' data-lang="' + escapeAttr( block.lang ) + '"' : '';
+			var langLabel = block.lang ? '<span class="eaic-code-lang">' + escapeHtml( block.lang ) + '</span>' : '<span class="eaic-code-lang"></span>';
+			return (
+				'<div class="eaic-code-block"' + langAttr + '>' +
+					'<div class="eaic-code-header">' +
+						langLabel +
+						'<button type="button" class="eaic-copy-code">' +
+							escapeHtml( t( 'copy', 'Copy' ) ) +
+						'</button>' +
+					'</div>' +
+					'<pre><code>' + escapeHtml( block.code ) + '</code></pre>' +
+				'</div>'
+			);
+		} );
+
 		return text;
 	}
 
-	/* ── Widget init ── */
-	function initWidget(widget) {
-		var provider     = widget.dataset.provider || cfg.default_provider || 'ollama';
-		var systemPrompt = widget.dataset.systemPrompt || '';
-		var sessionUuid  = null;
-
-		var sessionsList = widget.querySelector('.weai-sessions-list');
-		var messages     = widget.querySelector('.weai-messages');
-		var input        = widget.querySelector('.weai-input');
-		var sendBtn      = widget.querySelector('.weai-send-btn');
-		var newChatBtn   = widget.querySelector('.weai-new-chat-btn');
-		var provSelect   = widget.querySelector('.weai-provider-select');
-		var toggleBtn    = widget.querySelector('.weai-toggle-sidebar');
-		var deleteBtn    = widget.querySelector('.weai-delete-session-btn');
-		var titleEl      = widget.querySelector('.weai-session-title');
-
-		if (!messages || !input || !sendBtn) return;
-
-		/* Sessions */
-		function loadSessions() {
-			ajax('wpeasyai_sessions', {}, function (res) {
-				if (res.success) renderSessions(res.data.sessions || []);
-			});
+	function formatDateGroup( iso ) {
+		if ( ! iso ) {
+			return t( 'earlier', 'Earlier' );
 		}
-
-		function renderSessions(sessions) {
-			if (!sessions.length) {
-				sessionsList.innerHTML = '<div style="padding:12px 10px;font-size:12px;color:rgba(255,255,255,.3)">' + (i18n.no_sessions || 'No conversations yet.') + '</div>';
-				return;
-			}
-			var groups = { today: [], yesterday: [], older: [] };
-			var now = new Date(), today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-			var yesterday = new Date(today); yesterday.setDate(yesterday.getDate() - 1);
-			sessions.forEach(function (s) {
-				var d = new Date(s.updated_at.replace(' ', 'T'));
-				if (d >= today) groups.today.push(s);
-				else if (d >= yesterday) groups.yesterday.push(s);
-				else groups.older.push(s);
-			});
-			var html = '';
-			function renderGroup(label, list) {
-				if (!list.length) return;
-				html += '<div class="weai-session-group-label">' + esc(label) + '</div>';
-				list.forEach(function (s) {
-					var active = s.uuid === sessionUuid ? ' weai-active' : '';
-					html += '<div class="weai-session-item' + active + '" data-uuid="' + esc(s.uuid) + '">'
-						+ '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13" style="flex-shrink:0"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>'
-						+ '<span class="weai-session-title-text">' + esc(s.title) + '</span>'
-						+ '<button class="weai-session-del" data-uuid="' + esc(s.uuid) + '" title="Delete">'
-						+ '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg>'
-						+ '</button></div>';
-				});
-			}
-			renderGroup(i18n.today || 'Today', groups.today);
-			renderGroup(i18n.yesterday || 'Yesterday', groups.yesterday);
-			renderGroup('Earlier', groups.older);
-			sessionsList.innerHTML = html;
+		// MySQL DATETIME is "YYYY-MM-DD HH:MM:SS" in UTC for the DB —
+		// but stored via CURRENT_TIMESTAMP (server time). Parse leniently.
+		var safe = iso.replace( ' ', 'T' );
+		var d = new Date( safe );
+		if ( isNaN( d.getTime() ) ) {
+			return t( 'earlier', 'Earlier' );
 		}
+		var now = new Date();
+		var startOfToday = new Date( now.getFullYear(), now.getMonth(), now.getDate() );
+		var startOfYesterday = new Date( startOfToday.getTime() - 86400000 );
+		if ( d >= startOfToday ) {
+			return t( 'today', 'Today' );
+		}
+		if ( d >= startOfYesterday ) {
+			return t( 'yesterday', 'Yesterday' );
+		}
+		return t( 'earlier', 'Earlier' );
+	}
 
-		function switchSession(uuid) {
-			sessionUuid = uuid;
-			widget.querySelectorAll('.weai-session-item').forEach(function (el) {
-				el.classList.toggle('weai-active', el.dataset.uuid === uuid);
-			});
-			clearMessages();
-			ajax('wpeasyai_history', { session: uuid }, function (res) {
-				if (!res.success) return;
-				if (res.data.provider) { provider = res.data.provider; if (provSelect) provSelect.value = provider; }
-				if (titleEl && res.data.title) titleEl.textContent = res.data.title;
-				var msgs = res.data.messages || [];
-				if (msgs.length) {
-					hideWelcome();
-					msgs.forEach(function (m) { appendMessage(m.role, m.content, null, false); });
-					scrollBottom();
-				} else {
-					showWelcome();
+	/**
+	 * POST to admin-ajax. Returns the parsed response JSON or throws.
+	 *
+	 * @param {string} action WP AJAX action (without nonce).
+	 * @param {Object} data   Extra form fields.
+	 * @return {Promise<Object>} The decoded response.
+	 */
+	function ajax( action, data ) {
+		var body = new URLSearchParams();
+		body.append( 'action', action );
+		body.append( 'nonce', CFG.nonce );
+		if ( data ) {
+			Object.keys( data ).forEach( function ( k ) {
+				if ( data[ k ] !== undefined && data[ k ] !== null ) {
+					body.append( k, data[ k ] );
 				}
-			});
+			} );
+		}
+		return fetch( CFG.ajax_url, {
+			method: 'POST',
+			credentials: 'same-origin',
+			headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
+			body: body.toString()
+		} ).then( function ( res ) {
+			return res.json().catch( function () {
+				return { success: false, data: { message: t( 'error_generic', 'Something went wrong.' ) } };
+			} );
+		} );
+	}
+
+	/* ------------------------------------------------------------------ *
+	 * Widget instance
+	 * ------------------------------------------------------------------ */
+
+	function Widget( root ) {
+		this.root           = root;
+		this.provider       = root.getAttribute( 'data-provider' ) || CFG.default_provider || 'ollama';
+		this.systemPrompt   = root.getAttribute( 'data-system-prompt' ) || '';
+		this.msgHeight      = parseInt( root.getAttribute( 'data-msg-height' ), 10 ) || 600;
+
+		this.elSidebar      = root.querySelector( '.eaic-sidebar' );
+		this.elSessionsList = root.querySelector( '.eaic-sessions-list' );
+		this.elNewBtn       = root.querySelector( '.eaic-new-chat-btn' );
+		this.elProviderSel  = root.querySelector( '.eaic-provider-select' );
+		this.elToggleSide   = root.querySelector( '.eaic-toggle-sidebar' );
+		this.elSessionTitle = root.querySelector( '.eaic-session-title' );
+		this.elDeleteBtn    = root.querySelector( '.eaic-delete-session-btn' );
+		this.elMessages     = root.querySelector( '.eaic-messages' );
+		this.elInput        = root.querySelector( '.eaic-input' );
+		this.elSendBtn      = root.querySelector( '.eaic-send-btn' );
+
+		if ( this.elMessages && this.msgHeight ) {
+			this.elMessages.style.maxHeight = this.msgHeight + 'px';
 		}
 
-		/* Messages */
-		function clearMessages() { messages.innerHTML = ''; }
+		this.currentSession = '';
+		this.sending        = false;
 
-		function showWelcome() {
-			if (!messages.querySelector('.weai-welcome')) {
-				var w = document.createElement('div');
-				w.className = 'weai-welcome';
-				w.innerHTML = '<div class="weai-welcome-icon">\uD83E\uDD16</div>'
-					+ '<h3 class="weai-welcome-title">' + esc(titleEl ? titleEl.dataset.orig || titleEl.textContent : 'AI Chat') + '</h3>'
-					+ '<p class="weai-welcome-sub">How can I help you today?</p>';
-				messages.appendChild(w);
-			}
+		this.bind();
+		this.loadSessions();
+	}
+
+	Widget.prototype.bind = function () {
+		var self = this;
+
+		if ( this.elInput ) {
+			this.elInput.addEventListener( 'input', function () {
+				self.autoresize();
+				if ( self.elSendBtn ) {
+					self.elSendBtn.disabled = self.elInput.value.trim() === '' || self.sending;
+				}
+			} );
+			this.elInput.addEventListener( 'keydown', function ( e ) {
+				if ( e.key === 'Enter' && ! e.shiftKey ) {
+					e.preventDefault();
+					self.send();
+				}
+			} );
 		}
 
-		function hideWelcome() { var w = messages.querySelector('.weai-welcome'); if (w) w.remove(); }
-
-		function appendMessage(role, content, providerLabel, scroll) {
-			hideWelcome();
-			var div = document.createElement('div');
-			div.className = 'weai-msg weai-msg--' + (role === 'user' ? 'user' : 'assistant');
-			var avatarText = role === 'user' ? (i18n.you || 'You').charAt(0) : '\uD83E\uDD16';
-			var bubble = role === 'user'
-				? '<div class="weai-msg-bubble">' + esc(content) + '</div>'
-				: '<div class="weai-msg-bubble">' + md(content) + '</div>';
-			var meta = providerLabel ? '<div class="weai-msg-meta">' + esc(providerLabel) + '</div>' : '';
-			div.innerHTML = '<div class="weai-msg-avatar">' + avatarText + '</div>'
-				+ '<div class="weai-msg-body">' + bubble + meta + '</div>';
-			div.querySelectorAll('.weai-code-copy').forEach(function (btn) {
-				btn.addEventListener('click', function () {
-					if (navigator.clipboard) {
-						navigator.clipboard.writeText(btn.dataset.code || '').then(function () {
-							btn.textContent = i18n.copied || 'Copied!';
-							setTimeout(function () { btn.textContent = i18n.copy || 'Copy'; }, 1500);
-						});
-					}
-				});
-			});
-			messages.appendChild(div);
-			if (scroll !== false) scrollBottom();
-			return div;
+		if ( this.elSendBtn ) {
+			this.elSendBtn.addEventListener( 'click', function () {
+				self.send();
+			} );
 		}
 
-		function appendTyping() {
-			var div = document.createElement('div');
-			div.className = 'weai-msg weai-msg--assistant';
-			div.innerHTML = '<div class="weai-msg-avatar">\uD83E\uDD16</div>'
-				+ '<div class="weai-msg-body"><div class="weai-msg-bubble"><div class="weai-typing">'
-				+ '<div class="weai-typing-dot"></div><div class="weai-typing-dot"></div><div class="weai-typing-dot"></div>'
-				+ '</div></div></div>';
-			messages.appendChild(div);
-			scrollBottom();
-			return div;
+		if ( this.elNewBtn ) {
+			this.elNewBtn.addEventListener( 'click', function () {
+				self.newChat();
+			} );
 		}
 
-		function scrollBottom() { messages.scrollTop = messages.scrollHeight; }
+		if ( this.elProviderSel ) {
+			this.elProviderSel.addEventListener( 'change', function () {
+				self.provider = self.elProviderSel.value;
+				self.root.setAttribute( 'data-provider', self.provider );
+			} );
+		}
 
-		/* Send */
-		function send() {
-			var text = input.value.trim();
-			if (!text) return;
-			input.value = '';
-			input.style.height = '';
-			sendBtn.disabled = true;
-			appendMessage('user', text, null, true);
-			var typing = appendTyping();
-			ajax('wpeasyai_send', { message: text, provider: provider, session: sessionUuid || '', system: systemPrompt }, function (res) {
-				typing.remove();
-				if (!res.success) {
-					appendMessage('assistant', (res.data && res.data.message) ? res.data.message : (i18n.error_generic || 'Error'), null, true);
+		if ( this.elToggleSide ) {
+			this.elToggleSide.addEventListener( 'click', function () {
+				self.root.classList.toggle( 'eaic-sidebar-open' );
+			} );
+		}
+
+		if ( this.elDeleteBtn ) {
+			this.elDeleteBtn.addEventListener( 'click', function () {
+				self.deleteCurrent();
+			} );
+		}
+
+		// Delegated click on the messages area (copy code).
+		if ( this.elMessages ) {
+			this.elMessages.addEventListener( 'click', function ( e ) {
+				var btn = e.target.closest && e.target.closest( '.eaic-copy-code' );
+				if ( ! btn ) {
 					return;
 				}
-				sessionUuid = res.data.session;
-				var label = cfg.show_provider_badge ? (res.data.provider + (res.data.model ? ' \u00b7 ' + res.data.model : '')) : null;
-				appendMessage('assistant', res.data.reply, label, true);
-				loadSessions();
-			});
+				var block = btn.closest( '.eaic-code-block' );
+				if ( ! block ) {
+					return;
+				}
+				var codeEl = block.querySelector( 'pre code' );
+				if ( ! codeEl ) {
+					return;
+				}
+				var text = codeEl.innerText;
+				var done = function () {
+					var prev = btn.textContent;
+					btn.textContent = t( 'copied', 'Copied!' );
+					btn.classList.add( 'is-copied' );
+					setTimeout( function () {
+						btn.textContent = prev;
+						btn.classList.remove( 'is-copied' );
+					}, 1500 );
+				};
+				if ( navigator.clipboard && navigator.clipboard.writeText ) {
+					navigator.clipboard.writeText( text ).then( done ).catch( function () {
+						self.fallbackCopy( text );
+						done();
+					} );
+				} else {
+					self.fallbackCopy( text );
+					done();
+				}
+			} );
 		}
 
-		/* Events */
-		sendBtn.addEventListener('click', send);
-		input.addEventListener('keydown', function (e) {
-			if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); if (!sendBtn.disabled) send(); }
-		});
-		input.addEventListener('input', function () {
-			sendBtn.disabled = !input.value.trim();
-			input.style.height = 'auto';
-			input.style.height = Math.min(120, input.scrollHeight) + 'px';
-		});
-
-		if (newChatBtn) {
-			newChatBtn.addEventListener('click', function () {
-				sessionUuid = null;
-				clearMessages();
-				showWelcome();
-				if (titleEl) titleEl.textContent = titleEl.dataset.orig || titleEl.textContent;
-				loadSessions();
-				input.focus();
-			});
-		}
-		if (provSelect) provSelect.addEventListener('change', function () { provider = provSelect.value; });
-		if (toggleBtn)  toggleBtn.addEventListener('click', function () { widget.classList.toggle('weai-sidebar-hidden'); });
-
-		if (deleteBtn) {
-			deleteBtn.addEventListener('click', function () {
-				if (!sessionUuid) return;
-				if (!confirm(i18n.delete_confirm || 'Delete this conversation?')) return;
-				ajax('wpeasyai_delete', { session: sessionUuid }, function (res) {
-					if (res.success) { sessionUuid = null; clearMessages(); showWelcome(); loadSessions(); }
-				});
-			});
-		}
-
-		sessionsList.addEventListener('click', function (e) {
-			var delBtn = e.target.closest('.weai-session-del');
-			if (delBtn) {
-				e.stopPropagation();
-				if (!confirm(i18n.delete_confirm || 'Delete?')) return;
-				ajax('wpeasyai_delete', { session: delBtn.dataset.uuid }, function (res) {
-					if (res.success) {
-						if (delBtn.dataset.uuid === sessionUuid) { sessionUuid = null; clearMessages(); showWelcome(); }
-						loadSessions();
+		// Delegated click on the sessions list (switch / delete).
+		if ( this.elSessionsList ) {
+			this.elSessionsList.addEventListener( 'click', function ( e ) {
+				var delBtn = e.target.closest && e.target.closest( '.eaic-session-del' );
+				if ( delBtn ) {
+					e.stopPropagation();
+					var uuidDel = delBtn.getAttribute( 'data-uuid' );
+					if ( uuidDel && window.confirm( t( 'delete_confirm', 'Delete this conversation?' ) ) ) {
+						self.deleteSession( uuidDel );
 					}
-				});
+					return;
+				}
+				var item = e.target.closest && e.target.closest( '.eaic-session-item' );
+				if ( ! item ) {
+					return;
+				}
+				var uuid = item.getAttribute( 'data-uuid' );
+				if ( uuid && uuid !== self.currentSession ) {
+					self.loadHistory( uuid );
+				}
+			} );
+		}
+	};
+
+	Widget.prototype.fallbackCopy = function ( text ) {
+		try {
+			var ta = document.createElement( 'textarea' );
+			ta.value = text;
+			ta.style.position = 'fixed';
+			ta.style.opacity = '0';
+			document.body.appendChild( ta );
+			ta.select();
+			document.execCommand( 'copy' );
+			document.body.removeChild( ta );
+		} catch ( e ) {
+			// no-op
+		}
+	};
+
+	Widget.prototype.autoresize = function () {
+		if ( ! this.elInput ) {
+			return;
+		}
+		this.elInput.style.height = 'auto';
+		var max = 200;
+		this.elInput.style.height = Math.min( this.elInput.scrollHeight, max ) + 'px';
+	};
+
+	Widget.prototype.scrollToBottom = function () {
+		if ( this.elMessages ) {
+			this.elMessages.scrollTop = this.elMessages.scrollHeight;
+		}
+	};
+
+	Widget.prototype.clearWelcome = function () {
+		var w = this.elMessages && this.elMessages.querySelector( '.eaic-welcome' );
+		if ( w && w.parentNode ) {
+			w.parentNode.removeChild( w );
+		}
+	};
+
+	Widget.prototype.appendMessage = function ( role, content, opts ) {
+		if ( ! this.elMessages ) {
+			return null;
+		}
+		this.clearWelcome();
+		opts = opts || {};
+
+		var wrap = document.createElement( 'div' );
+		wrap.className = 'eaic-msg eaic-msg--' + ( role === 'user' ? 'user' : 'assistant' );
+
+		var avatar = document.createElement( 'div' );
+		avatar.className = 'eaic-msg-avatar';
+		avatar.textContent = role === 'user' ? ( t( 'you', 'You' ).charAt( 0 ) || 'U' ) : '🤖';
+
+		var body = document.createElement( 'div' );
+		body.className = 'eaic-msg-body';
+
+		var label = document.createElement( 'div' );
+		label.className = 'eaic-msg-label';
+		label.textContent = role === 'user' ? t( 'you', 'You' ) : t( 'ai', 'AI' );
+		if ( role !== 'user' && CFG.show_provider_badge && opts.provider ) {
+			var badge = document.createElement( 'span' );
+			badge.className = 'eaic-provider-badge';
+			badge.textContent = opts.provider;
+			label.appendChild( badge );
+		}
+
+		var content_el = document.createElement( 'div' );
+		content_el.className = 'eaic-msg-content';
+		if ( opts.typing ) {
+			content_el.innerHTML = '<span class="eaic-typing"><span class="eaic-typing-dot"></span><span class="eaic-typing-dot"></span><span class="eaic-typing-dot"></span></span>';
+		} else if ( role === 'user' ) {
+			content_el.innerHTML = '<p>' + escapeHtml( content ).replace( /\n/g, '<br>' ) + '</p>';
+		} else {
+			content_el.innerHTML = renderMarkdown( content );
+		}
+
+		body.appendChild( label );
+		body.appendChild( content_el );
+		wrap.appendChild( avatar );
+		wrap.appendChild( body );
+		this.elMessages.appendChild( wrap );
+		this.scrollToBottom();
+		return wrap;
+	};
+
+	Widget.prototype.replaceMessageContent = function ( node, role, content, opts ) {
+		if ( ! node ) {
+			return;
+		}
+		opts = opts || {};
+		var content_el = node.querySelector( '.eaic-msg-content' );
+		if ( ! content_el ) {
+			return;
+		}
+		if ( role === 'user' ) {
+			content_el.innerHTML = '<p>' + escapeHtml( content ).replace( /\n/g, '<br>' ) + '</p>';
+		} else {
+			content_el.innerHTML = renderMarkdown( content );
+		}
+		if ( opts.provider && CFG.show_provider_badge ) {
+			var label = node.querySelector( '.eaic-msg-label' );
+			if ( label && ! label.querySelector( '.eaic-provider-badge' ) ) {
+				var badge = document.createElement( 'span' );
+				badge.className = 'eaic-provider-badge';
+				badge.textContent = opts.provider;
+				label.appendChild( badge );
+			}
+		}
+		this.scrollToBottom();
+	};
+
+	Widget.prototype.renderError = function ( message ) {
+		this.clearWelcome();
+		var wrap = document.createElement( 'div' );
+		wrap.className = 'eaic-msg eaic-msg-error';
+		wrap.innerHTML = '<div class="eaic-msg-body"><div class="eaic-msg-content"><p>⚠️ ' + escapeHtml( message ) + '</p></div></div>';
+		this.elMessages.appendChild( wrap );
+		this.scrollToBottom();
+	};
+
+	Widget.prototype.resetMessages = function ( title ) {
+		if ( ! this.elMessages ) {
+			return;
+		}
+		this.elMessages.innerHTML = '';
+		var w = document.createElement( 'div' );
+		w.className = 'eaic-welcome';
+		w.innerHTML = '<div class="eaic-welcome-icon">🤖</div>' +
+			'<h3 class="eaic-welcome-title">' + escapeHtml( title || ( this.elSessionTitle ? this.elSessionTitle.textContent : 'AI Chat' ) ) + '</h3>' +
+			'<p class="eaic-welcome-sub">' + escapeHtml( t( 'no_sessions', '' ) || 'How can I help you today?' ) + '</p>';
+		this.elMessages.appendChild( w );
+	};
+
+	/* -------- session list -------- */
+
+	Widget.prototype.loadSessions = function () {
+		var self = this;
+		if ( ! this.elSessionsList ) {
+			return;
+		}
+		ajax( 'eaic_sessions', {} ).then( function ( res ) {
+			if ( ! res || ! res.success ) {
+				self.renderSessions( [] );
 				return;
 			}
-			var item = e.target.closest('.weai-session-item');
-			if (item && item.dataset.uuid) switchSession(item.dataset.uuid);
-		});
+			self.renderSessions( ( res.data && res.data.sessions ) || [] );
+		} ).catch( function () {
+			self.renderSessions( [] );
+		} );
+	};
 
-		if (titleEl) titleEl.dataset.orig = titleEl.textContent;
-		loadSessions();
+	Widget.prototype.renderSessions = function ( sessions ) {
+		if ( ! this.elSessionsList ) {
+			return;
+		}
+		if ( ! sessions || sessions.length === 0 ) {
+			this.elSessionsList.innerHTML = '<div class="eaic-sessions-empty">' + escapeHtml( t( 'no_sessions', 'No conversations yet.' ) ) + '</div>';
+			return;
+		}
+		var groups = {};
+		var order = [ t( 'today', 'Today' ), t( 'yesterday', 'Yesterday' ), t( 'earlier', 'Earlier' ) ];
+		order.forEach( function ( g ) { groups[ g ] = []; } );
+
+		sessions.forEach( function ( s ) {
+			var g = formatDateGroup( s.updated_at || s.created_at );
+			if ( ! groups[ g ] ) {
+				groups[ g ] = [];
+			}
+			groups[ g ].push( s );
+		} );
+
+		var html = '';
+		var self = this;
+		order.forEach( function ( g ) {
+			if ( ! groups[ g ] || groups[ g ].length === 0 ) {
+				return;
+			}
+			html += '<div class="eaic-session-group-label">' + escapeHtml( g ) + '</div>';
+			groups[ g ].forEach( function ( s ) {
+				var active = ( s.uuid === self.currentSession ) ? ' eaic-active' : '';
+				html +=
+					'<div class="eaic-session-item' + active + '" data-uuid="' + escapeAttr( s.uuid ) + '" title="' + escapeAttr( s.title || '' ) + '">' +
+						'<span class="eaic-session-name">' + escapeHtml( s.title || 'New Chat' ) + '</span>' +
+						'<button type="button" class="eaic-session-del" data-uuid="' + escapeAttr( s.uuid ) + '" aria-label="Delete">' +
+							'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14" aria-hidden="true"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg>' +
+						'</button>' +
+					'</div>';
+			} );
+		} );
+		this.elSessionsList.innerHTML = html;
+	};
+
+	Widget.prototype.markActive = function () {
+		if ( ! this.elSessionsList ) {
+			return;
+		}
+		var items = this.elSessionsList.querySelectorAll( '.eaic-session-item' );
+		var i;
+		for ( i = 0; i < items.length; i++ ) {
+			if ( items[ i ].getAttribute( 'data-uuid' ) === this.currentSession ) {
+				items[ i ].classList.add( 'eaic-active' );
+			} else {
+				items[ i ].classList.remove( 'eaic-active' );
+			}
+		}
+	};
+
+	/* -------- send / history / new / delete -------- */
+
+	Widget.prototype.send = function () {
+		if ( this.sending || ! this.elInput ) {
+			return;
+		}
+		var text = this.elInput.value.trim();
+		if ( ! text ) {
+			return;
+		}
+
+		this.sending = true;
+		if ( this.elSendBtn ) {
+			this.elSendBtn.disabled = true;
+		}
+		if ( this.elInput ) {
+			this.elInput.disabled = true;
+		}
+
+		this.appendMessage( 'user', text );
+		this.elInput.value = '';
+		this.autoresize();
+
+		var typingNode = this.appendMessage( 'assistant', '', { typing: true } );
+
+		var self = this;
+		ajax( 'eaic_send', {
+			message:  text,
+			provider: this.provider,
+			session:  this.currentSession,
+			system:   this.systemPrompt
+		} ).then( function ( res ) {
+			self.sending = false;
+			if ( self.elInput ) {
+				self.elInput.disabled = false;
+				self.elInput.focus();
+			}
+			if ( res && res.success ) {
+				var data = res.data || {};
+				self.replaceMessageContent( typingNode, 'assistant', data.reply || '', { provider: data.provider } );
+				if ( data.session && data.session !== self.currentSession ) {
+					self.currentSession = data.session;
+				}
+				self.loadSessions();
+			} else {
+				var msg = ( res && res.data && res.data.message ) ? res.data.message : t( 'error_generic', 'Something went wrong.' );
+				if ( typingNode && typingNode.parentNode ) {
+					typingNode.parentNode.removeChild( typingNode );
+				}
+				self.renderError( msg );
+			}
+		} ).catch( function () {
+			self.sending = false;
+			if ( self.elInput ) {
+				self.elInput.disabled = false;
+			}
+			if ( typingNode && typingNode.parentNode ) {
+				typingNode.parentNode.removeChild( typingNode );
+			}
+			self.renderError( t( 'error_generic', 'Something went wrong.' ) );
+		} );
+	};
+
+	Widget.prototype.newChat = function () {
+		this.currentSession = '';
+		this.resetMessages();
+		this.markActive();
+		if ( this.elInput ) {
+			this.elInput.focus();
+		}
+	};
+
+	Widget.prototype.loadHistory = function ( uuid ) {
+		var self = this;
+		ajax( 'eaic_history', { session: uuid } ).then( function ( res ) {
+			if ( ! res || ! res.success ) {
+				return;
+			}
+			var data = res.data || {};
+			self.currentSession = uuid;
+			if ( self.elSessionTitle && data.title ) {
+				self.elSessionTitle.textContent = data.title;
+			}
+			if ( data.provider && self.elProviderSel ) {
+				self.elProviderSel.value = data.provider;
+				self.provider = data.provider;
+			}
+			self.elMessages.innerHTML = '';
+			( data.messages || [] ).forEach( function ( m ) {
+				self.appendMessage( m.role, m.content, { provider: data.provider } );
+			} );
+			if ( ! data.messages || data.messages.length === 0 ) {
+				self.resetMessages( data.title );
+			}
+			self.markActive();
+		} );
+	};
+
+	Widget.prototype.deleteCurrent = function () {
+		if ( ! this.currentSession ) {
+			return;
+		}
+		if ( ! window.confirm( t( 'delete_confirm', 'Delete this conversation?' ) ) ) {
+			return;
+		}
+		this.deleteSession( this.currentSession );
+	};
+
+	Widget.prototype.deleteSession = function ( uuid ) {
+		var self = this;
+		ajax( 'eaic_delete', { session: uuid } ).then( function ( res ) {
+			if ( res && res.success ) {
+				if ( uuid === self.currentSession ) {
+					self.currentSession = '';
+					self.resetMessages();
+				}
+				self.loadSessions();
+			}
+		} );
+	};
+
+	/* ------------------------------------------------------------------ *
+	 * Boot
+	 * ------------------------------------------------------------------ */
+
+	function boot() {
+		var widgets = document.querySelectorAll( '.eaic-widget' );
+		var i;
+		for ( i = 0; i < widgets.length; i++ ) {
+			/* eslint-disable no-new */
+			new Widget( widgets[ i ] );
+			/* eslint-enable no-new */
+		}
 	}
 
-	/* ── AJAX helper ── */
-	function ajax(action, data, cb) {
-		var params = new URLSearchParams();
-		params.append('action', action);
-		params.append('nonce',  cfg.nonce || '');
-		Object.keys(data).forEach(function (k) { params.append(k, data[k]); });
-		fetch(cfg.ajax_url, {
-			method: 'POST',
-			headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-			body: params.toString(),
-		})
-		.then(function (r) { return r.json(); })
-		.then(cb)
-		.catch(function (err) {
-			console.error('WPEasyAI error:', err);
-			cb({ success: false, data: { message: i18n.error_generic || 'Error' } });
-		});
+	if ( document.readyState === 'loading' ) {
+		document.addEventListener( 'DOMContentLoaded', boot );
+	} else {
+		boot();
 	}
-
-	/* ── Boot ── */
-	document.addEventListener('DOMContentLoaded', function () {
-		document.querySelectorAll('.weai-widget').forEach(initWidget);
-	});
-}());
+}() );
