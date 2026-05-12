@@ -21,10 +21,12 @@ abstract class WPEasyAI_Provider {
 	protected function require_api_key( string $key, string $provider ): void {
 		if ( empty( trim( $key ) ) ) {
 			throw new RuntimeException(
-				sprintf(
-					/* translators: %s: provider name */
-					__( 'No API key configured for %s. Please add one in EasyIT AI Chat &rarr; Settings.', 'wpeasyai' ),
-					$provider
+				esc_html(
+					sprintf(
+						/* translators: %s: AI provider name e.g. "OpenAI" */
+						__( 'No API key configured for %s. Please add one in EasyIT AI Chat > Settings.', 'wpeasyai' ),
+						$provider
+					)
 				)
 			);
 		}
@@ -32,11 +34,21 @@ abstract class WPEasyAI_Provider {
 
 	protected function validate_url( string $url ): void {
 		if ( ! filter_var( $url, FILTER_VALIDATE_URL ) ) {
-			throw new RuntimeException( sprintf( __( 'Invalid URL: %s', 'wpeasyai' ), esc_html( $url ) ) );
+			throw new RuntimeException(
+				esc_html(
+					sprintf(
+						/* translators: %s: the invalid URL string */
+						__( 'Invalid URL: %s', 'wpeasyai' ),
+						$url
+					)
+				)
+			);
 		}
 		$scheme = wp_parse_url( $url, PHP_URL_SCHEME );
 		if ( ! in_array( $scheme, [ 'http', 'https' ], true ) ) {
-			throw new RuntimeException( __( 'Invalid URL scheme. Only http and https are allowed.', 'wpeasyai' ) );
+			throw new RuntimeException(
+				esc_html__( 'Invalid URL scheme. Only http and https are allowed.', 'wpeasyai' )
+			);
 		}
 	}
 
@@ -48,14 +60,14 @@ abstract class WPEasyAI_Provider {
 			'timeout' => $timeout,
 		] );
 		if ( is_wp_error( $response ) ) {
-			throw new RuntimeException( $response->get_error_message() );
+			throw new RuntimeException( esc_html( $response->get_error_message() ) );
 		}
 		$code = wp_remote_retrieve_response_code( $response );
 		$raw  = wp_remote_retrieve_body( $response );
 		$data = json_decode( $raw, true );
 		if ( $code >= 400 ) {
 			$msg = $data['error']['message'] ?? $data['error'] ?? "HTTP $code";
-			throw new RuntimeException( (string) $msg );
+			throw new RuntimeException( esc_html( (string) $msg ) );
 		}
 		return is_array( $data ) ? $data : [];
 	}
@@ -67,7 +79,7 @@ abstract class WPEasyAI_Provider {
 			'timeout' => $timeout,
 		] );
 		if ( is_wp_error( $response ) ) {
-			throw new RuntimeException( $response->get_error_message() );
+			throw new RuntimeException( esc_html( $response->get_error_message() ) );
 		}
 		$raw  = wp_remote_retrieve_body( $response );
 		$data = json_decode( $raw, true );

@@ -24,9 +24,11 @@ class WPEasyAI_Admin {
 			[ $this, 'render_settings' ],
 			'dashicons-format-chat', 81
 		);
-		add_submenu_page( 'wpeasyai', __( 'Settings', 'wpeasyai' ), __( 'Settings', 'wpeasyai' ),
+		add_submenu_page( 'wpeasyai',
+			__( 'Settings', 'wpeasyai' ), __( 'Settings', 'wpeasyai' ),
 			'manage_options', 'wpeasyai', [ $this, 'render_settings' ] );
-		add_submenu_page( 'wpeasyai', __( 'Test Chat', 'wpeasyai' ), __( 'Test Chat', 'wpeasyai' ),
+		add_submenu_page( 'wpeasyai',
+			__( 'Test Chat', 'wpeasyai' ), __( 'Test Chat', 'wpeasyai' ),
 			'manage_options', 'wpeasyai-test-chat', [ $this, 'render_test_chat' ] );
 	}
 
@@ -66,10 +68,14 @@ class WPEasyAI_Admin {
 	}
 
 	public function enqueue_assets( string $hook ): void {
-		$pages = [ 'toplevel_page_wpeasyai', 'wpeasyai_page_wpeasyai-test-chat' ];
-		if ( ! in_array( $hook, $pages, true ) ) return;
 
-		wp_enqueue_style(  'wpeasyai-admin', WPEASYAI_URL . 'admin/assets/admin.css', [], WPEASYAI_VERSION );
+		$is_settings  = ( 'toplevel_page_wpeasyai' === $hook );
+		$is_test_chat = ( 'wpeasyai_page_wpeasyai-test-chat' === $hook );
+
+		if ( ! $is_settings && ! $is_test_chat ) return;
+
+		// Admin styles + JS
+		wp_enqueue_style( 'wpeasyai-admin', WPEASYAI_URL . 'admin/assets/admin.css', [], WPEASYAI_VERSION );
 		wp_enqueue_script( 'wpeasyai-admin', WPEASYAI_URL . 'admin/assets/admin.js', [ 'jquery' ], WPEASYAI_VERSION, true );
 		wp_localize_script( 'wpeasyai-admin', 'WPEasyAIAdmin', [
 			'ajax_url' => admin_url( 'admin-ajax.php' ),
@@ -80,42 +86,63 @@ class WPEasyAI_Admin {
 			],
 		] );
 
-		if ( 'wpeasyai_page_wpeasyai-test-chat' === $hook ) {
+		// Chat widget assets — only on test-chat page
+		if ( $is_test_chat ) {
 			$opts = WPEasyAI_Options::all();
-			wp_enqueue_style(  'wpeasyai', WPEASYAI_URL . 'public/css/chat.css', [], WPEASYAI_VERSION );
-			wp_enqueue_script( 'wpeasyai', WPEASYAI_URL . 'public/js/chat.js', [], WPEASYAI_VERSION, true );
-			wp_localize_script( 'wpeasyai', 'WPEasyAIConfig', $this->chat_config( $opts ) );
+
+			wp_enqueue_style( 'wpeasyai-public', WPEASYAI_URL . 'public/css/chat.css', [], WPEASYAI_VERSION );
+
+			wp_add_inline_style( 'wpeasyai-public', '
+				.weai-test-chat-wrap .weai-page-wrap { margin:0!important;padding:0!important; }
+				.weai-test-chat-wrap .weai-widget {
+					max-width:100%!important;width:100%!important;
+					margin:0 0 24px!important;min-height:560px!important;border-radius:10px!important;
+				}
+				.weai-test-chat-wrap .weai-widget h1,
+				.weai-test-chat-wrap .weai-widget h2,
+				.weai-test-chat-wrap .weai-widget h3 {
+					padding:0!important;border:none!important;
+					font-size:inherit!important;color:inherit!important;margin-top:0!important;
+				}
+				.weai-test-chat-wrap .weai-widget input,
+				.weai-test-chat-wrap .weai-widget textarea,
+				.weai-test-chat-wrap .weai-widget select,
+				.weai-test-chat-wrap .weai-widget button { box-shadow:none!important; }
+			' );
+
+			wp_enqueue_script( 'wpeasyai-public', WPEASYAI_URL . 'public/js/chat.js', [], WPEASYAI_VERSION, true );
+
+			wp_localize_script( 'wpeasyai-public', 'WPEasyAIConfig', [
+				'ajax_url'            => admin_url( 'admin-ajax.php' ),
+				'nonce'               => wp_create_nonce( 'wpeasyai_nonce' ),
+				'default_provider'    => esc_js( $opts['default_provider'] ),
+				'show_provider_badge' => (bool) $opts['show_provider_badge'],
+				'privacy_notice'      => (bool) $opts['privacy_notice'],
+				'is_logged_in'        => is_user_logged_in(),
+				'i18n'                => [
+					'new_chat'       => __( 'New Chat',                                         'wpeasyai' ),
+					'thinking'       => __( 'Thinking\u2026',                                   'wpeasyai' ),
+					'error_generic'  => __( 'Something went wrong. Please try again.',          'wpeasyai' ),
+					'error_empty'    => __( 'Please type a message first.',                     'wpeasyai' ),
+					'delete_confirm' => __( 'Delete this conversation?',                        'wpeasyai' ),
+					'privacy_text'   => __( 'Conversations are saved. See our Privacy Policy.', 'wpeasyai' ),
+					'copied'         => __( 'Copied!',                                          'wpeasyai' ),
+					'copy'           => __( 'Copy',                                             'wpeasyai' ),
+					'you'            => __( 'You',                                              'wpeasyai' ),
+					'ai'             => __( 'AI',                                               'wpeasyai' ),
+					'no_sessions'    => __( 'No conversations yet.',                            'wpeasyai' ),
+					'today'          => __( 'Today',                                            'wpeasyai' ),
+					'yesterday'      => __( 'Yesterday',                                        'wpeasyai' ),
+				],
+			] );
 		}
 	}
 
-	private function chat_config( array $opts ): array {
-		return [
-			'ajax_url'            => admin_url( 'admin-ajax.php' ),
-			'nonce'               => wp_create_nonce( 'wpeasyai_nonce' ),
-			'default_provider'    => esc_js( $opts['default_provider'] ),
-			'show_provider_badge' => (bool) $opts['show_provider_badge'],
-			'privacy_notice'      => (bool) $opts['privacy_notice'],
-			'is_logged_in'        => is_user_logged_in(),
-			'i18n'                => [
-				'new_chat'       => __( 'New Chat',                                         'wpeasyai' ),
-				'thinking'       => __( 'Thinking\u2026',                                   'wpeasyai' ),
-				'error_generic'  => __( 'Something went wrong. Please try again.',          'wpeasyai' ),
-				'error_empty'    => __( 'Please type a message first.',                     'wpeasyai' ),
-				'delete_confirm' => __( 'Delete this conversation?',                        'wpeasyai' ),
-				'privacy_text'   => __( 'Conversations are saved. See our Privacy Policy.', 'wpeasyai' ),
-				'copied'         => __( 'Copied!',                                          'wpeasyai' ),
-				'copy'           => __( 'Copy',                                             'wpeasyai' ),
-				'you'            => __( 'You',                                              'wpeasyai' ),
-				'ai'             => __( 'AI',                                               'wpeasyai' ),
-				'no_sessions'    => __( 'No conversations yet.',                            'wpeasyai' ),
-				'today'          => __( 'Today',                                            'wpeasyai' ),
-				'yesterday'      => __( 'Yesterday',                                        'wpeasyai' ),
-			],
-		];
-	}
-
 	public function action_links( array $links ): array {
-		array_unshift( $links, '<a href="' . esc_url( admin_url( 'admin.php?page=wpeasyai' ) ) . '">' . esc_html__( 'Settings', 'wpeasyai' ) . '</a>' );
+		array_unshift( $links,
+			'<a href="' . esc_url( admin_url( 'admin.php?page=wpeasyai' ) ) . '">'
+			. esc_html__( 'Settings', 'wpeasyai' ) . '</a>'
+		);
 		return $links;
 	}
 

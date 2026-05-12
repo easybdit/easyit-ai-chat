@@ -5,7 +5,7 @@
  * Description:       Unified AI chatbot for WordPress. Connect Ollama, OpenAI, Anthropic (Claude) and DeepSeek with one shortcode [easyai]. Free, open-source, no tracking.
  * Version:           1.0.1
  * Requires at least: 6.0
- * Tested up to:      6.7
+ * Tested up to:      6.9
  * Requires PHP:      8.0
  * Author:            EasyIT
  * Author URI:        https://easyit.com.bd
