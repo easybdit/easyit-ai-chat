@@ -65,15 +65,22 @@ class EAIC_Engine {
 			}
 			if ( '' === $guest_token ) {
 				$guest_token = bin2hex( random_bytes( 32 ) );
+				// Use the array signature of setcookie() so we can pass SameSite.
+				// Requires PHP 7.3+; this plugin requires PHP 8.0+.
 				setcookie(
 					$cookie_name,
 					$guest_token,
-					time() + YEAR_IN_SECONDS,
-					COOKIEPATH,
-					COOKIE_DOMAIN,
-					is_ssl(),
-					true
+					array(
+						'expires'  => time() + YEAR_IN_SECONDS,
+						'path'     => COOKIEPATH,
+						'domain'   => COOKIE_DOMAIN,
+						'secure'   => is_ssl(),
+						'httponly' => true,
+						'samesite' => 'Lax',
+					)
 				);
+				// Make the just-set cookie available within the current request too.
+				$_COOKIE[ $cookie_name ] = $guest_token;
 			}
 		}
 

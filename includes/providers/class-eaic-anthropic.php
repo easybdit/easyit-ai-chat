@@ -1,6 +1,10 @@
 <?php
 /**
- * Anthropic (Claude) provider implementation.
+ * Anthropic Messages API provider implementation.
+ *
+ * This plugin is an independent client of the Anthropic Messages API.
+ * It is not affiliated with, endorsed by, or sponsored by Anthropic, PBC.
+ * "Anthropic" and "Claude" are trademarks of their respective owners.
  *
  * @package EasyIT_AI_Chat
  * @since   1.0.0
@@ -11,7 +15,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Anthropic Claude provider.
+ * Anthropic Messages API connector.
  */
 class EAIC_Anthropic extends EAIC_Provider {
 
@@ -63,11 +67,31 @@ class EAIC_Anthropic extends EAIC_Provider {
 	/**
 	 * Connectivity check.
 	 *
+	 * Uses a 1-token request to minimise API cost. Anthropic does not expose
+	 * a free "list models" endpoint, so we cannot validate the key without
+	 * billing the user something. One token is the cheapest probe possible.
+	 *
 	 * @return bool
 	 */
 	public function health() {
 		try {
-			$this->chat( array( array( 'role' => 'user', 'content' => 'Hi' ) ), '' );
+			$key = isset( $this->opts['anthropic_key'] ) ? $this->opts['anthropic_key'] : '';
+			$this->require_api_key( $key, 'Anthropic' );
+			$model = ! empty( $this->opts['anthropic_model'] ) ? $this->opts['anthropic_model'] : 'claude-3-haiku-20240307';
+
+			$this->http_post(
+				'https://api.anthropic.com/v1/messages',
+				array(
+					'model'      => $model,
+					'max_tokens' => 1,
+					'messages'   => array( array( 'role' => 'user', 'content' => 'Hi' ) ),
+				),
+				array(
+					'x-api-key'         => $key,
+					'anthropic-version' => '2023-06-01',
+				),
+				15
+			);
 			return true;
 		} catch ( Exception $e ) {
 			return false;

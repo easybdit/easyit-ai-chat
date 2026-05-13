@@ -26,6 +26,11 @@ class EAIC_DB {
 	/**
 	 * Create the plugin tables on activation.
 	 *
+	 * NOTE: We deliberately do not use ENUM for the `role` column because
+	 * dbDelta() does not reliably parse ENUM definitions and the table can
+	 * silently fail to upgrade on later releases. VARCHAR(20) is used and
+	 * the role value is enforced in PHP before every insert (see add_message()).
+	 *
 	 * @return void
 	 */
 	public static function create_tables() {
@@ -44,7 +49,7 @@ class EAIC_DB {
 			title       VARCHAR(255)    NOT NULL DEFAULT 'New Chat',
 			created_at  DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
 			updated_at  DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-			PRIMARY KEY (id),
+			PRIMARY KEY  (id),
 			UNIQUE KEY uuid (uuid),
 			KEY user_id (user_id),
 			KEY guest_token (guest_token)
@@ -53,10 +58,10 @@ class EAIC_DB {
 		$messages = "CREATE TABLE {$messages_table} (
 			id         BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
 			session_id BIGINT UNSIGNED NOT NULL,
-			role       ENUM('user','assistant') NOT NULL,
+			role       VARCHAR(20)     NOT NULL DEFAULT 'user',
 			content    LONGTEXT        NOT NULL,
 			created_at DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
-			PRIMARY KEY (id),
+			PRIMARY KEY  (id),
 			KEY session_id (session_id)
 		) {$charset_collate};";
 
@@ -293,6 +298,10 @@ class EAIC_DB {
 	/**
 	 * Insert a single message.
 	 *
+	 * The $role argument is validated here (PHP-side allow-list) because we
+	 * no longer rely on a MySQL ENUM column. Any value other than 'user' or
+	 * 'assistant' is coerced to 'user'.
+	 *
 	 * @param string $uuid    Session UUID.
 	 * @param string $role    'user' or 'assistant'.
 	 * @param string $content Message content.
@@ -300,6 +309,10 @@ class EAIC_DB {
 	 */
 	public static function add_message( $uuid, $role, $content ) {
 		global $wpdb;
+
+		// Enforce role allow-list (replaces the previous ENUM column constraint).
+		$role = in_array( $role, array( 'user', 'assistant' ), true ) ? $role : 'user';
+
 		$session = self::get_session( $uuid );
 		if ( ! $session ) {
 			return;
@@ -310,7 +323,7 @@ class EAIC_DB {
 			$wpdb->prefix . self::MESSAGES_TABLE,
 			array(
 				'session_id' => (int) $session['id'],
-				'role'       => (string) $role,
+				'role'       => $role,
 				'content'    => (string) $content,
 			),
 			array( '%d', '%s', '%s' )
