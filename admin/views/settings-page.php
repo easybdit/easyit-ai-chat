@@ -276,13 +276,14 @@ $eaic_option_key = EAIC_Options::OPTION_KEY;
 		</div><!-- /.eaic-settings-main -->
 
 		<div class="eaic-settings-aside">
-			<div class="eaic-shortcode-card">
+				<div class="eaic-shortcode-card">
 				<h4>📋 <?php esc_html_e( 'Shortcodes', 'easyit-ai-chat' ); ?></h4>
-				<div class="eaic-sc-item">[easyai]</div>
-				<div class="eaic-sc-item">[easyai provider="openai"]</div>
-				<div class="eaic-sc-item">[easyai provider="anthropic" height="600"]</div>
-				<div class="eaic-sc-item">[easyai title="Custom Title"]</div>
-			</div>
+				<div class="eaic-sc-item">[eaic_chat]</div>
+				<div class="eaic-sc-item">[eaic_chat provider="openai"]</div>
+				<div class="eaic-sc-item">[eaic_chat provider="anthropic" height="600"]</div>
+				<div class="eaic-sc-item">[eaic_chat title="Custom Title"]</div>
+				</div>
+
 
 			<div class="eaic-quick-links">
 				<div class="eaic-quick-links-title">🔗 <?php esc_html_e( 'Quick Links', 'easyit-ai-chat' ); ?></div>

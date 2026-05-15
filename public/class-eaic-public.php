@@ -11,7 +11,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Renders the [easyai] shortcode and enqueues frontend assets.
+ * Renders the [eaic_chat] shortcode and enqueues frontend assets.
  */
 class EAIC_Public {
 
@@ -20,7 +20,7 @@ class EAIC_Public {
 	 */
 	public function __construct() {
 		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_assets' ) );
-		add_shortcode( 'easyai', array( $this, 'render_shortcode' ) );
+		add_shortcode( 'eaic_chat', array( $this, 'render_shortcode' ) );
 		add_filter( 'body_class', array( $this, 'body_class' ) );
 	}
 
@@ -36,7 +36,7 @@ class EAIC_Public {
 		if ( ! is_array( $classes ) ) {
 			$classes = array();
 		}
-		if ( $post && has_shortcode( $post->post_content, 'easyai' ) ) {
+		if ( $post && has_shortcode( $post->post_content, 'eaic_chat' ) ) {
 			$classes[] = 'eaic-chat-page';
 		}
 		return $classes;
@@ -87,7 +87,7 @@ class EAIC_Public {
 	}
 
 	/**
-	 * Render [easyai] shortcode.
+	 * Render [eaic_chat] shortcode.
 	 *
 	 * @param array|string $atts Shortcode attributes.
 	 * @return string
@@ -103,7 +103,7 @@ class EAIC_Public {
 				'height'        => 600,
 			),
 			$atts,
-			'easyai'
+			'eaic_chat'
 		);
 
 		$provider      = sanitize_key( $atts['provider'] );

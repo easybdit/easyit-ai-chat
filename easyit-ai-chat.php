@@ -2,7 +2,7 @@
 /**
  * Plugin Name:       EasyIT AI Chat
  * Plugin URI:        https://github.com/easybdit/easyit-ai-chat
- * Description:       Unified AI chatbot connector for WordPress. Configure your own self-hosted or third-party AI model API and embed it with one shortcode [easyai]. Free, open source, no tracking.
+ * Description:       Unified AI chatbot for WordPress. Connect Ollama, OpenAI, Anthropic (Claude) and DeepSeek with one shortcode [eaic_chat]. Free, open-source, no tracking.
  * Version:           1.0.3
  * Requires at least: 6.0
  * Requires PHP:      8.0
@@ -64,19 +64,3 @@ function eaic_activate() {
 	update_option( 'eaic_db_version', EAIC_VERSION );
 }
 register_activation_hook( __FILE__, 'eaic_activate' );
-
-/**
- * Run dbDelta on plugin upgrade so schema changes (e.g. ENUM -> VARCHAR)
- * are applied to existing installations.
- *
- * @since 1.0.3
- * @return void
- */
-function eaic_maybe_upgrade_db() {
-	$installed = get_option( 'eaic_db_version', '' );
-	if ( $installed !== EAIC_VERSION ) {
-		EAIC_DB::create_tables();
-		update_option( 'eaic_db_version', EAIC_VERSION );
-	}
-}
-add_action( 'plugins_loaded', 'eaic_maybe_upgrade_db', 5 );
