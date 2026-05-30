@@ -37,6 +37,9 @@ class EAIC_Options {
 			'deepseek_key'        => '',
 			'deepseek_model'      => 'deepseek-chat',
 			'deepseek_timeout'    => 30,
+			'gemini_key'          => '',
+			'gemini_model'        => 'gemini-1.5-flash',
+			'gemini_timeout'      => 30,
 			'system_prompt'       => 'You are a helpful AI assistant.',
 			'temperature'         => 0.7,
 			'max_tokens'          => 1000,
@@ -49,7 +52,7 @@ class EAIC_Options {
 			'rate_limit_window'    => 60,
 			'rate_limit_max'       => 20,
 			'rate_limit_ip_max'    => 60,
-			'allowed_providers'    => array( 'ollama', 'openai', 'anthropic', 'deepseek' ),
+			'allowed_providers'    => array( 'ollama', 'openai', 'anthropic', 'deepseek', 'gemini' ),
 			'lock_system_prompt'   => false,
 		);
 	}

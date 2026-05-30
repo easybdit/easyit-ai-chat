@@ -87,9 +87,9 @@ class EAIC_Admin {
 		}
 		$current = EAIC_Options::all();
 
-		$all_known_providers = array( 'ollama', 'openai', 'anthropic', 'deepseek' );
+		$all_known_providers = array( 'ollama', 'openai', 'anthropic', 'deepseek', 'gemini' );
 
-		$default_provider = isset( $input['default_provider'] ) ? $input['default_provider'] : $current['default_provider'];
+		$default_provider = isset( $input['default_provider'] ) ? (string) $input['default_provider'] : $current['default_provider'];
 		if ( ! in_array( $default_provider, $all_known_providers, true ) ) {
 			$default_provider = $current['default_provider'];
 		}
@@ -116,6 +116,9 @@ class EAIC_Admin {
 			'deepseek_key'        => isset( $input['deepseek_key'] )        ? sanitize_text_field( $input['deepseek_key'] )                  : '',
 			'deepseek_model'      => isset( $input['deepseek_model'] )      ? sanitize_text_field( $input['deepseek_model'] )                : $current['deepseek_model'],
 			'deepseek_timeout'    => isset( $input['deepseek_timeout'] )    ? absint( $input['deepseek_timeout'] )                           : $current['deepseek_timeout'],
+			'gemini_key'          => isset( $input['gemini_key'] )          ? sanitize_text_field( $input['gemini_key'] )                    : '',
+			'gemini_model'        => isset( $input['gemini_model'] )        ? sanitize_text_field( $input['gemini_model'] )                  : $current['gemini_model'],
+			'gemini_timeout'      => isset( $input['gemini_timeout'] )      ? absint( $input['gemini_timeout'] )                             : $current['gemini_timeout'],
 			'system_prompt'       => isset( $input['system_prompt'] )       ? sanitize_textarea_field( $input['system_prompt'] )             : $current['system_prompt'],
 			'temperature'         => isset( $input['temperature'] )         ? min( 2.0, max( 0.0, (float) $input['temperature'] ) )          : $current['temperature'],
 			'max_tokens'          => isset( $input['max_tokens'] )          ? max( 100, min( 8000, absint( $input['max_tokens'] ) ) )        : $current['max_tokens'],

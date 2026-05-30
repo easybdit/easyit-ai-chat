@@ -118,6 +118,7 @@ class EAIC_Public {
 			'openai'    => 'OpenAI',
 			'anthropic' => 'Anthropic',
 			'deepseek'  => 'DeepSeek',
+			'gemini'    => 'Gemini',
 		);
 
 		ob_start();

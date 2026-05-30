@@ -133,9 +133,41 @@ class EAIC_Engine {
 				return new EAIC_Anthropic( $opts );
 			case 'deepseek':
 				return new EAIC_DeepSeek( $opts );
+			case 'gemini':
+				return new EAIC_Gemini( $opts );
 			case 'ollama':
 			default:
 				return new EAIC_Ollama( $opts );
+		}
+	}
+
+	/**
+	 * Ask the active provider to produce a short title for a new conversation.
+	 *
+	 * Sends a lightweight meta-prompt and strips any surrounding punctuation the
+	 * model may add. Falls back to a plain 50-char truncation on any error so
+	 * the extra call never breaks a chat session.
+	 *
+	 * @param string $provider_slug Provider that just replied.
+	 * @param string $first_message The user's very first message.
+	 * @return string Title (max 80 chars).
+	 */
+	private function generate_title( $provider_slug, $first_message ) {
+		$prompt = sprintf(
+			'Create a short 4-6 word title for a chat that starts with: "%s". Reply with the title only — no quotes, no trailing punctuation.',
+			mb_substr( $first_message, 0, 200 )
+		);
+
+		try {
+			$raw   = $this->get_provider( $provider_slug )->chat(
+				array( array( 'role' => 'user', 'content' => $prompt ) ),
+				''
+			);
+			$title = trim( strip_tags( (string) $raw ) );
+			$title = trim( $title, '"\'„"«»' );
+			return '' !== $title ? mb_substr( $title, 0, 80 ) : mb_substr( $first_message, 0, 50 );
+		} catch ( Exception $e ) {
+			return mb_substr( $first_message, 0, 50 );
 		}
 	}
 
@@ -232,16 +264,13 @@ class EAIC_Engine {
 			$uuid = EAIC_DB::create_session( $user_id, $guest_token, $provider, mb_substr( $message, 0, 40 ) );
 		}
 
-		$rows     = EAIC_DB::get_messages( $uuid );
-		$messages = array();
+		$rows              = EAIC_DB::get_messages( $uuid );
+		$is_first_message  = 0 === count( $rows );
+		$messages          = array();
 		foreach ( $rows as $row ) {
 			$messages[] = array( 'role' => $row['role'], 'content' => $row['content'] );
 		}
 		$messages[] = array( 'role' => 'user', 'content' => $message );
-
-		if ( 0 === count( $rows ) ) {
-			EAIC_DB::update_session_title( $uuid, mb_substr( $message, 0, 50 ) );
-		}
 
 		// --- System prompt: locked or client-supplied ---
 		if ( ! empty( $opts['lock_system_prompt'] ) ) {
@@ -265,12 +294,20 @@ class EAIC_Engine {
 		EAIC_DB::add_message( $uuid, 'user',      $message  );
 		EAIC_DB::add_message( $uuid, 'assistant', $ai_reply );
 
+		// Generate an LLM title on the first exchange; subsequent messages leave the title alone.
+		$new_title = null;
+		if ( $is_first_message ) {
+			$new_title = $this->generate_title( $provider, $message );
+			EAIC_DB::update_session_title( $uuid, $new_title );
+		}
+
 		wp_send_json_success(
 			array(
 				'reply'    => $ai_reply,
 				'session'  => $uuid,
 				'provider' => $provider,
 				'model'    => isset( $opts[ $provider . '_model' ] ) ? $opts[ $provider . '_model' ] : '',
+				'title'    => $new_title,
 			)
 		);
 	}

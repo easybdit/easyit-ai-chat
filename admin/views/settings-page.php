@@ -23,6 +23,7 @@ $eaic_provider_map = array(
 	'openai'    => '✨ OpenAI',
 	'anthropic' => '🎭 Anthropic',
 	'deepseek'  => '🔍 DeepSeek',
+	'gemini'    => '♊ Gemini',
 );
 
 $eaic_option_key = EAIC_Options::OPTION_KEY;
@@ -61,6 +62,7 @@ $eaic_option_key = EAIC_Options::OPTION_KEY;
 				<button type="button" class="eaic-tab-btn" data-tab="openai"><span class="eaic-tab-icon">✨</span> <?php esc_html_e( 'OpenAI', 'easyit-ai-chat' ); ?></button>
 				<button type="button" class="eaic-tab-btn" data-tab="anthropic"><span class="eaic-tab-icon">🎭</span> <?php esc_html_e( 'Anthropic', 'easyit-ai-chat' ); ?></button>
 				<button type="button" class="eaic-tab-btn" data-tab="deepseek"><span class="eaic-tab-icon">🔍</span> <?php esc_html_e( 'DeepSeek', 'easyit-ai-chat' ); ?></button>
+				<button type="button" class="eaic-tab-btn" data-tab="gemini"><span class="eaic-tab-icon">♊</span> <?php esc_html_e( 'Gemini', 'easyit-ai-chat' ); ?></button>
 				<button type="button" class="eaic-tab-btn" data-tab="general"><span class="eaic-tab-icon">⚙️</span> <?php esc_html_e( 'General', 'easyit-ai-chat' ); ?></button>
 				<button type="button" class="eaic-tab-btn" data-tab="ui"><span class="eaic-tab-icon">🎨</span> <?php esc_html_e( 'UI', 'easyit-ai-chat' ); ?></button>
 				<button type="button" class="eaic-tab-btn" data-tab="security"><span class="eaic-tab-icon">🔒</span> <?php esc_html_e( 'Security', 'easyit-ai-chat' ); ?></button>
@@ -189,6 +191,35 @@ $eaic_option_key = EAIC_Options::OPTION_KEY;
 					<div class="eaic-test-row">
 						<button type="button" class="eaic-test-btn-styled eaic-test-btn" data-provider="deepseek">🔌 <?php esc_html_e( 'Test Connection', 'easyit-ai-chat' ); ?></button>
 						<span class="eaic-test-result" id="eaic-test-deepseek"></span>
+					</div>
+				</div>
+			</div>
+
+			<!-- GEMINI -->
+			<div class="eaic-panel" id="eaic-panel-gemini">
+				<div class="eaic-card">
+					<div class="eaic-card-title"><span class="icon">♊</span> <?php esc_html_e( 'Google Gemini', 'easyit-ai-chat' ); ?></div>
+
+					<div class="eaic-field">
+						<label class="eaic-label" for="eaic-gemini-key"><?php esc_html_e( 'API Key', 'easyit-ai-chat' ); ?> <span class="req">*</span></label>
+						<input id="eaic-gemini-key" type="password" name="<?php echo esc_attr( $eaic_option_key ); ?>[gemini_key]" value="<?php echo esc_attr( $eaic_opts['gemini_key'] ); ?>" placeholder="AIzaSy...">
+						<div class="eaic-field-desc"><?php esc_html_e( 'Get your key at', 'easyit-ai-chat' ); ?> <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer">aistudio.google.com</a></div>
+					</div>
+
+					<div class="eaic-field">
+						<label class="eaic-label" for="eaic-gemini-model"><?php esc_html_e( 'Model', 'easyit-ai-chat' ); ?></label>
+						<input id="eaic-gemini-model" type="text" name="<?php echo esc_attr( $eaic_option_key ); ?>[gemini_model]" value="<?php echo esc_attr( $eaic_opts['gemini_model'] ); ?>" placeholder="gemini-1.5-flash">
+						<div class="eaic-field-desc"><?php esc_html_e( 'e.g.', 'easyit-ai-chat' ); ?> <code>gemini-1.5-flash</code>, <code>gemini-1.5-pro</code>, <code>gemini-2.0-flash</code></div>
+					</div>
+
+					<div class="eaic-field">
+						<label class="eaic-label" for="eaic-gemini-timeout"><?php esc_html_e( 'Timeout (seconds)', 'easyit-ai-chat' ); ?></label>
+						<input id="eaic-gemini-timeout" type="number" name="<?php echo esc_attr( $eaic_option_key ); ?>[gemini_timeout]" value="<?php echo (int) $eaic_opts['gemini_timeout']; ?>" min="10" max="120">
+					</div>
+
+					<div class="eaic-test-row">
+						<button type="button" class="eaic-test-btn-styled eaic-test-btn" data-provider="gemini">🔌 <?php esc_html_e( 'Test Connection', 'easyit-ai-chat' ); ?></button>
+						<span class="eaic-test-result" id="eaic-test-gemini"></span>
 					</div>
 				</div>
 			</div>
@@ -352,6 +383,7 @@ $eaic_option_key = EAIC_Options::OPTION_KEY;
 				<h4>📋 <?php esc_html_e( 'Shortcodes', 'easyit-ai-chat' ); ?></h4>
 				<div class="eaic-sc-item">[eaic_chat]</div>
 				<div class="eaic-sc-item">[eaic_chat provider="openai"]</div>
+				<div class="eaic-sc-item">[eaic_chat provider="gemini"]</div>
 				<div class="eaic-sc-item">[eaic_chat provider="anthropic" height="600"]</div>
 				<div class="eaic-sc-item">[eaic_chat title="Custom Title"]</div>
 				</div>

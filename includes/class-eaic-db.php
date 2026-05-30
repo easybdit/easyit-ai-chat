@@ -334,6 +334,44 @@ class EAIC_DB {
 	}
 
 	/**
+	 * Delete sessions (and their messages) not updated within $days days.
+	 *
+	 * Called by the daily wp-cron job.
+	 *
+	 * @param int $days Retention window in days (minimum 1).
+	 * @return int Number of sessions deleted.
+	 */
+	public static function delete_expired_sessions( $days ) {
+		global $wpdb;
+		$days           = max( 1, (int) $days );
+		$sessions_table = $wpdb->prefix . self::SESSIONS_TABLE;
+		$messages_table = $wpdb->prefix . self::MESSAGES_TABLE;
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$expired_ids = $wpdb->get_col(
+			$wpdb->prepare(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				"SELECT id FROM {$sessions_table} WHERE updated_at < DATE_SUB( NOW(), INTERVAL %d DAY )",
+				$days
+			)
+		);
+
+		if ( empty( $expired_ids ) ) {
+			return 0;
+		}
+
+		$id_list = implode( ',', array_map( 'absint', $expired_ids ) );
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared
+		$wpdb->query( "DELETE FROM {$messages_table} WHERE session_id IN ({$id_list})" );
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared
+		$deleted = (int) $wpdb->query( "DELETE FROM {$sessions_table} WHERE id IN ({$id_list})" );
+
+		return $deleted;
+	}
+
+	/**
 	 * Wipe data for a single user.
 	 *
 	 * @param int $user_id User ID.
