@@ -111,6 +111,7 @@ class EAIC_Public {
 		$placeholder   = sanitize_text_field( $atts['placeholder'] );
 		$system_prompt = sanitize_textarea_field( $atts['system_prompt'] );
 		$height        = max( 300, absint( $atts['height'] ) );
+		$lock_prompt   = ! empty( $opts['lock_system_prompt'] );
 
 		$providers = array(
 			'ollama'    => 'Ollama',
@@ -124,7 +125,7 @@ class EAIC_Public {
 <div class="eaic-page-wrap">
 	<div class="eaic-widget"
 		data-provider="<?php echo esc_attr( $provider ); ?>"
-		data-system-prompt="<?php echo esc_attr( $system_prompt ); ?>"
+		<?php if ( ! $lock_prompt ) : ?>data-system-prompt="<?php echo esc_attr( $system_prompt ); ?>"<?php endif; ?>
 		data-msg-height="<?php echo esc_attr( (string) $height ); ?>">
 
 		<div class="eaic-sidebar">

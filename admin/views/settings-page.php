@@ -63,6 +63,7 @@ $eaic_option_key = EAIC_Options::OPTION_KEY;
 				<button type="button" class="eaic-tab-btn" data-tab="deepseek"><span class="eaic-tab-icon">🔍</span> <?php esc_html_e( 'DeepSeek', 'easyit-ai-chat' ); ?></button>
 				<button type="button" class="eaic-tab-btn" data-tab="general"><span class="eaic-tab-icon">⚙️</span> <?php esc_html_e( 'General', 'easyit-ai-chat' ); ?></button>
 				<button type="button" class="eaic-tab-btn" data-tab="ui"><span class="eaic-tab-icon">🎨</span> <?php esc_html_e( 'UI', 'easyit-ai-chat' ); ?></button>
+				<button type="button" class="eaic-tab-btn" data-tab="security"><span class="eaic-tab-icon">🔒</span> <?php esc_html_e( 'Security', 'easyit-ai-chat' ); ?></button>
 			</div>
 
 			<!-- OLLAMA -->
@@ -268,6 +269,77 @@ $eaic_option_key = EAIC_Options::OPTION_KEY;
 					</label>
 				</div>
 			</div>
+
+			<!-- SECURITY -->
+			<div class="eaic-panel" id="eaic-panel-security">
+
+				<div class="eaic-card">
+					<div class="eaic-card-title"><span class="icon">🚦</span> <?php esc_html_e( 'Rate Limiting', 'easyit-ai-chat' ); ?></div>
+
+					<div class="eaic-field-grid">
+						<div class="eaic-field">
+							<label class="eaic-label" for="eaic-rl-window"><?php esc_html_e( 'Window (seconds)', 'easyit-ai-chat' ); ?></label>
+							<input id="eaic-rl-window" type="number" min="10" max="3600"
+								name="<?php echo esc_attr( $eaic_option_key ); ?>[rate_limit_window]"
+								value="<?php echo absint( $eaic_opts['rate_limit_window'] ); ?>">
+							<div class="eaic-field-desc"><?php esc_html_e( 'Rolling time window for counting requests.', 'easyit-ai-chat' ); ?></div>
+						</div>
+						<div class="eaic-field">
+							<label class="eaic-label" for="eaic-rl-max"><?php esc_html_e( 'Max Requests / User', 'easyit-ai-chat' ); ?></label>
+							<input id="eaic-rl-max" type="number" min="1" max="1000"
+								name="<?php echo esc_attr( $eaic_option_key ); ?>[rate_limit_max]"
+								value="<?php echo absint( $eaic_opts['rate_limit_max'] ); ?>">
+							<div class="eaic-field-desc"><?php esc_html_e( 'Per logged-in user or guest session.', 'easyit-ai-chat' ); ?></div>
+						</div>
+						<div class="eaic-field">
+							<label class="eaic-label" for="eaic-rl-ip"><?php esc_html_e( 'Max Requests / IP', 'easyit-ai-chat' ); ?></label>
+							<input id="eaic-rl-ip" type="number" min="1" max="1000"
+								name="<?php echo esc_attr( $eaic_option_key ); ?>[rate_limit_ip_max]"
+								value="<?php echo absint( $eaic_opts['rate_limit_ip_max'] ); ?>">
+							<div class="eaic-field-desc"><?php esc_html_e( 'Hard cap across all sessions from one IP address.', 'easyit-ai-chat' ); ?></div>
+						</div>
+					</div>
+				</div>
+
+				<div class="eaic-card">
+					<div class="eaic-card-title"><span class="icon">🛡️</span> <?php esc_html_e( 'Provider & Prompt Controls', 'easyit-ai-chat' ); ?></div>
+
+					<div class="eaic-field">
+						<label class="eaic-label"><?php esc_html_e( 'Allowed Providers', 'easyit-ai-chat' ); ?></label>
+						<div>
+							<?php
+							$eaic_allowed = isset( $eaic_opts['allowed_providers'] ) && is_array( $eaic_opts['allowed_providers'] )
+								? $eaic_opts['allowed_providers']
+								: array_keys( $eaic_provider_map );
+							foreach ( $eaic_provider_map as $eaic_slug => $eaic_label ) :
+							?>
+							<label class="eaic-check-row">
+								<input type="checkbox"
+									name="<?php echo esc_attr( $eaic_option_key ); ?>[allowed_providers][]"
+									value="<?php echo esc_attr( $eaic_slug ); ?>"
+									<?php checked( in_array( $eaic_slug, $eaic_allowed, true ) ); ?>>
+								<div>
+									<div class="eaic-check-label"><?php echo esc_html( $eaic_label ); ?></div>
+								</div>
+							</label>
+							<?php endforeach; ?>
+						</div>
+						<div class="eaic-field-desc"><?php esc_html_e( 'Visitors may only use checked providers. Server rejects requests for all others.', 'easyit-ai-chat' ); ?></div>
+					</div>
+
+					<label class="eaic-check-row">
+						<input type="checkbox"
+							name="<?php echo esc_attr( $eaic_option_key ); ?>[lock_system_prompt]"
+							value="1"
+							<?php checked( $eaic_opts['lock_system_prompt'] ); ?>>
+						<div>
+							<div class="eaic-check-label"><?php esc_html_e( 'Lock System Prompt', 'easyit-ai-chat' ); ?></div>
+							<div class="eaic-check-desc"><?php esc_html_e( 'Ignore any system prompt sent by the browser. Only the admin-configured prompt above is used. Recommended for public sites to prevent prompt-injection attacks.', 'easyit-ai-chat' ); ?></div>
+						</div>
+					</label>
+				</div>
+
+			</div><!-- /#eaic-panel-security -->
 
 			<div class="eaic-save-row">
 				<button type="submit" class="eaic-save-btn">💾 <?php esc_html_e( 'Save Settings', 'easyit-ai-chat' ); ?></button>

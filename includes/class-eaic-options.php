@@ -42,10 +42,15 @@ class EAIC_Options {
 			'max_tokens'          => 1000,
 			'chat_title'          => 'AI Chat',
 			'placeholder_text'    => 'Ask me anything...',
-			'show_provider_badge' => true,
-			'allow_guest_chat'    => true,
-			'privacy_notice'      => true,
-			'data_retention_days' => 90,
+			'show_provider_badge'  => true,
+			'allow_guest_chat'     => true,
+			'privacy_notice'       => true,
+			'data_retention_days'  => 90,
+			'rate_limit_window'    => 60,
+			'rate_limit_max'       => 20,
+			'rate_limit_ip_max'    => 60,
+			'allowed_providers'    => array( 'ollama', 'openai', 'anthropic', 'deepseek' ),
+			'lock_system_prompt'   => false,
 		);
 	}
 

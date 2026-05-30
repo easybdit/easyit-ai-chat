@@ -15,9 +15,8 @@ if ( ! defined( 'ABSPATH' ) ) {
  */
 class EAIC_Engine {
 
-	const RATE_LIMIT_WINDOW = 60;
-	const RATE_LIMIT_MAX    = 20;
-	const MAX_MESSAGE_LEN   = 4000;
+	const MAX_MESSAGE_LEN       = 4000;
+	const MAX_SYSTEM_PROMPT_LEN = 500;
 
 	/**
 	 * Hook AJAX endpoints.
@@ -90,17 +89,33 @@ class EAIC_Engine {
 	/**
 	 * Per-identity rate-limit gate.
 	 *
-	 * @param string $key Rate-limit bucket key.
+	 * @param string $key    Rate-limit bucket key.
+	 * @param int    $max    Max requests allowed.
+	 * @param int    $window Rolling window in seconds.
 	 * @return bool True when over the limit.
 	 */
-	private function is_rate_limited( $key ) {
+	private function is_rate_limited( $key, $max, $window ) {
 		$transient = 'eaic_rl_' . md5( (string) $key );
 		$count     = (int) get_transient( $transient );
-		if ( $count >= self::RATE_LIMIT_MAX ) {
+		if ( $count >= (int) $max ) {
 			return true;
 		}
-		set_transient( $transient, $count + 1, self::RATE_LIMIT_WINDOW );
+		set_transient( $transient, $count + 1, (int) $window );
 		return false;
+	}
+
+	/**
+	 * Return the caller's remote IP address.
+	 *
+	 * Uses REMOTE_ADDR only (set by the web server, not spoofable by the client).
+	 * Site owners running behind a trusted reverse proxy can override this via
+	 * the 'eaic_client_ip' filter.
+	 *
+	 * @return string
+	 */
+	private function get_client_ip() {
+		$ip = isset( $_SERVER['REMOTE_ADDR'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ) ) : '';
+		return (string) apply_filters( 'eaic_client_ip', $ip );
 	}
 
 	/**
@@ -158,8 +173,23 @@ class EAIC_Engine {
 		check_ajax_referer( 'eaic_nonce', 'nonce' );
 		list( $user_id, $guest_token ) = $this->get_identity();
 
-		$rate_key = $user_id > 0 ? 'u' . $user_id : 'g' . $guest_token;
-		if ( $this->is_rate_limited( $rate_key ) ) {
+		$opts = EAIC_Options::all();
+
+		// --- Rate limiting: per-identity ---
+		$rl_window = max( 10, (int) $opts['rate_limit_window'] );
+		$rl_max    = max( 1,  (int) $opts['rate_limit_max'] );
+		$rate_key  = $user_id > 0 ? 'u' . $user_id : 'g' . $guest_token;
+		if ( $this->is_rate_limited( $rate_key, $rl_max, $rl_window ) ) {
+			wp_send_json_error(
+				array( 'message' => __( 'Too many requests. Please wait a moment.', 'easyit-ai-chat' ) ),
+				429
+			);
+		}
+
+		// --- Rate limiting: per-IP (hard cap across all sessions from one IP) ---
+		$rl_ip_max = max( 1, (int) $opts['rate_limit_ip_max'] );
+		$client_ip = $this->get_client_ip();
+		if ( '' !== $client_ip && $this->is_rate_limited( 'ip_' . $client_ip, $rl_ip_max, $rl_window ) ) {
 			wp_send_json_error(
 				array( 'message' => __( 'Too many requests. Please wait a moment.', 'easyit-ai-chat' ) ),
 				429
@@ -167,10 +197,20 @@ class EAIC_Engine {
 		}
 
 		// Nonce verified above by check_ajax_referer().
-		$message  = isset( $_POST['message'] )  ? sanitize_textarea_field( wp_unslash( $_POST['message'] ) )  : '';
-		$provider = isset( $_POST['provider'] ) ? sanitize_key( wp_unslash( $_POST['provider'] ) )            : 'ollama';
-		$uuid     = isset( $_POST['session'] )  ? sanitize_text_field( wp_unslash( $_POST['session'] ) )      : '';
-		$system   = isset( $_POST['system'] )   ? sanitize_textarea_field( wp_unslash( $_POST['system'] ) )   : '';
+		$message  = isset( $_POST['message'] )  ? sanitize_textarea_field( wp_unslash( $_POST['message'] ) ) : '';
+		$provider = isset( $_POST['provider'] ) ? sanitize_key( wp_unslash( $_POST['provider'] ) )           : 'ollama';
+		$uuid     = isset( $_POST['session'] )  ? sanitize_text_field( wp_unslash( $_POST['session'] ) )     : '';
+
+		// --- Provider whitelist ---
+		$allowed_providers = isset( $opts['allowed_providers'] ) && is_array( $opts['allowed_providers'] )
+			? $opts['allowed_providers']
+			: array( 'ollama', 'openai', 'anthropic', 'deepseek' );
+		if ( ! in_array( $provider, $allowed_providers, true ) ) {
+			wp_send_json_error(
+				array( 'message' => __( 'Provider not allowed.', 'easyit-ai-chat' ) ),
+				400
+			);
+		}
 
 		if ( '' === $message ) {
 			wp_send_json_error( array( 'message' => __( 'Empty message.', 'easyit-ai-chat' ) ), 400 );
@@ -203,8 +243,18 @@ class EAIC_Engine {
 			EAIC_DB::update_session_title( $uuid, mb_substr( $message, 0, 50 ) );
 		}
 
-		$opts          = EAIC_Options::all();
-		$system_prompt = '' !== $system ? $system : ( isset( $opts['system_prompt'] ) ? $opts['system_prompt'] : '' );
+		// --- System prompt: locked or client-supplied ---
+		if ( ! empty( $opts['lock_system_prompt'] ) ) {
+			// Admin has locked the prompt — ignore anything the client sends.
+			$system_prompt = isset( $opts['system_prompt'] ) ? (string) $opts['system_prompt'] : '';
+		} else {
+			// Client may supply a shortcode-level override; cap length to prevent flooding.
+			$system = isset( $_POST['system'] ) ? sanitize_textarea_field( wp_unslash( $_POST['system'] ) ) : '';
+			if ( mb_strlen( $system ) > self::MAX_SYSTEM_PROMPT_LEN ) {
+				$system = mb_substr( $system, 0, self::MAX_SYSTEM_PROMPT_LEN );
+			}
+			$system_prompt = '' !== $system ? $system : ( isset( $opts['system_prompt'] ) ? $opts['system_prompt'] : '' );
+		}
 
 		try {
 			$ai_reply = $this->get_provider( $provider )->chat( $messages, $system_prompt );
@@ -247,7 +297,19 @@ class EAIC_Engine {
 
 		// Nonce verified above by check_ajax_referer().
 		$provider = isset( $_POST['provider'] ) ? sanitize_key( wp_unslash( $_POST['provider'] ) ) : 'ollama';
-		$uuid     = EAIC_DB::create_session( $user_id, $guest_token, $provider, __( 'New Chat', 'easyit-ai-chat' ) );
+
+		$opts              = EAIC_Options::all();
+		$allowed_providers = isset( $opts['allowed_providers'] ) && is_array( $opts['allowed_providers'] )
+			? $opts['allowed_providers']
+			: array( 'ollama', 'openai', 'anthropic', 'deepseek' );
+		if ( ! in_array( $provider, $allowed_providers, true ) ) {
+			wp_send_json_error(
+				array( 'message' => __( 'Provider not allowed.', 'easyit-ai-chat' ) ),
+				400
+			);
+		}
+
+		$uuid = EAIC_DB::create_session( $user_id, $guest_token, $provider, __( 'New Chat', 'easyit-ai-chat' ) );
 		wp_send_json_success( array( 'session' => $uuid ) );
 	}
 

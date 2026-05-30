@@ -87,34 +87,49 @@ class EAIC_Admin {
 		}
 		$current = EAIC_Options::all();
 
+		$all_known_providers = array( 'ollama', 'openai', 'anthropic', 'deepseek' );
+
 		$default_provider = isset( $input['default_provider'] ) ? $input['default_provider'] : $current['default_provider'];
-		if ( ! in_array( $default_provider, array( 'ollama', 'openai', 'anthropic', 'deepseek' ), true ) ) {
+		if ( ! in_array( $default_provider, $all_known_providers, true ) ) {
 			$default_provider = $current['default_provider'];
+		}
+
+		// Allowed providers: at least one must remain; fall back to current if all deselected.
+		if ( isset( $input['allowed_providers'] ) && is_array( $input['allowed_providers'] ) ) {
+			$raw_allowed       = array_intersect( array_map( 'sanitize_key', $input['allowed_providers'] ), $all_known_providers );
+			$allowed_providers = ! empty( $raw_allowed ) ? array_values( $raw_allowed ) : $current['allowed_providers'];
+		} else {
+			$allowed_providers = $current['allowed_providers'];
 		}
 
 		return array(
 			'default_provider'    => $default_provider,
-			'ollama_url'          => isset( $input['ollama_url'] )       ? esc_url_raw( $input['ollama_url'] )                         : $current['ollama_url'],
-			'ollama_model'        => isset( $input['ollama_model'] )     ? sanitize_text_field( $input['ollama_model'] )               : $current['ollama_model'],
-			'ollama_timeout'      => isset( $input['ollama_timeout'] )   ? absint( $input['ollama_timeout'] )                          : $current['ollama_timeout'],
-			'openai_key'          => isset( $input['openai_key'] )       ? sanitize_text_field( $input['openai_key'] )                 : '',
-			'openai_model'        => isset( $input['openai_model'] )     ? sanitize_text_field( $input['openai_model'] )               : $current['openai_model'],
-			'openai_timeout'      => isset( $input['openai_timeout'] )   ? absint( $input['openai_timeout'] )                          : $current['openai_timeout'],
-			'anthropic_key'       => isset( $input['anthropic_key'] )    ? sanitize_text_field( $input['anthropic_key'] )              : '',
-			'anthropic_model'     => isset( $input['anthropic_model'] )  ? sanitize_text_field( $input['anthropic_model'] )            : $current['anthropic_model'],
-			'anthropic_timeout'   => isset( $input['anthropic_timeout'] )? absint( $input['anthropic_timeout'] )                       : $current['anthropic_timeout'],
-			'deepseek_key'        => isset( $input['deepseek_key'] )     ? sanitize_text_field( $input['deepseek_key'] )               : '',
-			'deepseek_model'      => isset( $input['deepseek_model'] )   ? sanitize_text_field( $input['deepseek_model'] )             : $current['deepseek_model'],
-			'deepseek_timeout'    => isset( $input['deepseek_timeout'] ) ? absint( $input['deepseek_timeout'] )                        : $current['deepseek_timeout'],
-			'system_prompt'       => isset( $input['system_prompt'] )    ? sanitize_textarea_field( $input['system_prompt'] )          : $current['system_prompt'],
-			'temperature'         => isset( $input['temperature'] )      ? min( 2.0, max( 0.0, (float) $input['temperature'] ) )       : $current['temperature'],
-			'max_tokens'          => isset( $input['max_tokens'] )       ? max( 100, min( 8000, absint( $input['max_tokens'] ) ) )     : $current['max_tokens'],
-			'chat_title'          => isset( $input['chat_title'] )       ? sanitize_text_field( $input['chat_title'] )                 : $current['chat_title'],
-			'placeholder_text'    => isset( $input['placeholder_text'] ) ? sanitize_text_field( $input['placeholder_text'] )           : $current['placeholder_text'],
+			'ollama_url'          => isset( $input['ollama_url'] )          ? esc_url_raw( $input['ollama_url'] )                            : $current['ollama_url'],
+			'ollama_model'        => isset( $input['ollama_model'] )        ? sanitize_text_field( $input['ollama_model'] )                  : $current['ollama_model'],
+			'ollama_timeout'      => isset( $input['ollama_timeout'] )      ? absint( $input['ollama_timeout'] )                             : $current['ollama_timeout'],
+			'openai_key'          => isset( $input['openai_key'] )          ? sanitize_text_field( $input['openai_key'] )                    : '',
+			'openai_model'        => isset( $input['openai_model'] )        ? sanitize_text_field( $input['openai_model'] )                  : $current['openai_model'],
+			'openai_timeout'      => isset( $input['openai_timeout'] )      ? absint( $input['openai_timeout'] )                             : $current['openai_timeout'],
+			'anthropic_key'       => isset( $input['anthropic_key'] )       ? sanitize_text_field( $input['anthropic_key'] )                 : '',
+			'anthropic_model'     => isset( $input['anthropic_model'] )     ? sanitize_text_field( $input['anthropic_model'] )               : $current['anthropic_model'],
+			'anthropic_timeout'   => isset( $input['anthropic_timeout'] )   ? absint( $input['anthropic_timeout'] )                          : $current['anthropic_timeout'],
+			'deepseek_key'        => isset( $input['deepseek_key'] )        ? sanitize_text_field( $input['deepseek_key'] )                  : '',
+			'deepseek_model'      => isset( $input['deepseek_model'] )      ? sanitize_text_field( $input['deepseek_model'] )                : $current['deepseek_model'],
+			'deepseek_timeout'    => isset( $input['deepseek_timeout'] )    ? absint( $input['deepseek_timeout'] )                           : $current['deepseek_timeout'],
+			'system_prompt'       => isset( $input['system_prompt'] )       ? sanitize_textarea_field( $input['system_prompt'] )             : $current['system_prompt'],
+			'temperature'         => isset( $input['temperature'] )         ? min( 2.0, max( 0.0, (float) $input['temperature'] ) )          : $current['temperature'],
+			'max_tokens'          => isset( $input['max_tokens'] )          ? max( 100, min( 8000, absint( $input['max_tokens'] ) ) )        : $current['max_tokens'],
+			'chat_title'          => isset( $input['chat_title'] )          ? sanitize_text_field( $input['chat_title'] )                    : $current['chat_title'],
+			'placeholder_text'    => isset( $input['placeholder_text'] )    ? sanitize_text_field( $input['placeholder_text'] )              : $current['placeholder_text'],
 			'show_provider_badge' => ! empty( $input['show_provider_badge'] ),
 			'allow_guest_chat'    => ! empty( $input['allow_guest_chat'] ),
 			'privacy_notice'      => ! empty( $input['privacy_notice'] ),
-			'data_retention_days' => isset( $input['data_retention_days'] ) ? max( 1, absint( $input['data_retention_days'] ) )         : $current['data_retention_days'],
+			'data_retention_days' => isset( $input['data_retention_days'] ) ? max( 1, absint( $input['data_retention_days'] ) )              : $current['data_retention_days'],
+			'rate_limit_window'   => isset( $input['rate_limit_window'] )   ? max( 10, min( 3600, absint( $input['rate_limit_window'] ) ) )  : $current['rate_limit_window'],
+			'rate_limit_max'      => isset( $input['rate_limit_max'] )      ? max( 1, min( 1000, absint( $input['rate_limit_max'] ) ) )      : $current['rate_limit_max'],
+			'rate_limit_ip_max'   => isset( $input['rate_limit_ip_max'] )   ? max( 1, min( 1000, absint( $input['rate_limit_ip_max'] ) ) )   : $current['rate_limit_ip_max'],
+			'allowed_providers'   => $allowed_providers,
+			'lock_system_prompt'  => ! empty( $input['lock_system_prompt'] ),
 		);
 	}
 
