@@ -106,6 +106,25 @@ class EAIC_Engine {
 		}
 	}
 
+
+	/**
+	 * Public bridge for add-on modules (e.g. Order Status Bot).
+	 *
+	 * @param string $system   System prompt.
+	 * @param array  $messages [ ['role'=>'user','content'=>..], .. ].
+	 * @return string
+	 */
+	public function run_completion( $system, array $messages ) {
+		$slug = (string) EAIC_Options::get( 'default_provider' );
+		try {
+			return (string) $this->get_provider( $slug )->chat( $messages, (string) $system );
+		} catch ( \Throwable $e ) {
+			return '';
+		}
+	}
+
+	
+
 	// -----------------------------------------------------------------------
 	// Shared input validation / session resolution
 	// -----------------------------------------------------------------------

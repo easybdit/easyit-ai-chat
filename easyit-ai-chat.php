@@ -66,8 +66,30 @@ function eaic_activate() {
 	if ( ! wp_next_scheduled( 'eaic_daily_purge' ) ) {
 		wp_schedule_event( time(), 'daily', 'eaic_daily_purge' );
 	}
+	EAIC_Order_DB::install();
+	if ( ! wp_next_scheduled( EAIC_Order_Bot::CRON_HOOK ) ) {
+		wp_schedule_event( time(), 'daily', EAIC_Order_Bot::CRON_HOOK );
+	}
 }
 register_activation_hook( __FILE__, 'eaic_activate' );
+
+// ── Order Status Bot (WooCommerce) ─────────────────────
+require_once plugin_dir_path( __FILE__ ) . 'eaic-order-bot/eaic-order-bot.php';
+
+add_action( 'plugins_loaded', function () {
+	if ( class_exists( 'WooCommerce' ) ) {
+		EAIC_Order_Bot::boot( __FILE__ );
+	}
+}, 20 );
+
+add_filter( 'eaic_send_to_provider', function ( $default, $args ) {
+	if ( ! class_exists( 'EAIC_Engine' ) ) {
+		return $default;
+	}
+	$engine = new EAIC_Engine();
+	return $engine->run_completion( $args['system'], $args['messages'] );
+}, 10, 2 );
+
 
 /**
  * Deactivation hook — remove the scheduled cron event.
@@ -80,6 +102,7 @@ function eaic_deactivate() {
 	if ( $timestamp ) {
 		wp_unschedule_event( $timestamp, 'eaic_daily_purge' );
 	}
+	wp_clear_scheduled_hook( EAIC_Order_Bot::CRON_HOOK );
 }
 register_deactivation_hook( __FILE__, 'eaic_deactivate' );
 
