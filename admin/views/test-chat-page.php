@@ -26,6 +26,7 @@ $eaic_providers   = array(
 	'openai'    => 'OpenAI',
 	'anthropic' => 'Anthropic',
 	'deepseek'  => 'DeepSeek',
+	'gemini'    => 'Gemini',
 );
 ?>
 <div class="wrap eaic-test-page">

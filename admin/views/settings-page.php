@@ -23,7 +23,7 @@ $eaic_provider_map = array(
 	'openai'    => '✨ OpenAI',
 	'anthropic' => '🎭 Anthropic',
 	'deepseek'  => '🔍 DeepSeek',
-	'gemini'    => '♊ Gemini',
+	'gemini'    => '✦ Gemini',
 );
 
 $eaic_option_key = EAIC_Options::OPTION_KEY;
@@ -45,7 +45,7 @@ $eaic_option_key = EAIC_Options::OPTION_KEY;
 			<div class="eaic-hero-icon">🤖</div>
 			<div>
 				<div class="eaic-hero-title"><?php esc_html_e( 'EasyIT AI Chat', 'easyit-ai-chat' ); ?></div>
-				<div class="eaic-hero-sub"><?php esc_html_e( 'Unified AI chatbot — Ollama · OpenAI · Anthropic · DeepSeek', 'easyit-ai-chat' ); ?></div>
+				<div class="eaic-hero-sub"><?php esc_html_e( 'Unified AI chatbot — Ollama · OpenAI · Anthropic · DeepSeek · Gemini', 'easyit-ai-chat' ); ?></div>
 			</div>
 		</div>
 		<div class="eaic-hero-badge">v<?php echo esc_html( EAIC_VERSION ); ?></div>
@@ -62,7 +62,7 @@ $eaic_option_key = EAIC_Options::OPTION_KEY;
 				<button type="button" class="eaic-tab-btn" data-tab="openai"><span class="eaic-tab-icon">✨</span> <?php esc_html_e( 'OpenAI', 'easyit-ai-chat' ); ?></button>
 				<button type="button" class="eaic-tab-btn" data-tab="anthropic"><span class="eaic-tab-icon">🎭</span> <?php esc_html_e( 'Anthropic', 'easyit-ai-chat' ); ?></button>
 				<button type="button" class="eaic-tab-btn" data-tab="deepseek"><span class="eaic-tab-icon">🔍</span> <?php esc_html_e( 'DeepSeek', 'easyit-ai-chat' ); ?></button>
-				<button type="button" class="eaic-tab-btn" data-tab="gemini"><span class="eaic-tab-icon">♊</span> <?php esc_html_e( 'Gemini', 'easyit-ai-chat' ); ?></button>
+				<button type="button" class="eaic-tab-btn" data-tab="gemini"><span class="eaic-tab-icon">✦</span> <?php esc_html_e( 'Gemini', 'easyit-ai-chat' ); ?></button>
 				<button type="button" class="eaic-tab-btn" data-tab="general"><span class="eaic-tab-icon">⚙️</span> <?php esc_html_e( 'General', 'easyit-ai-chat' ); ?></button>
 				<button type="button" class="eaic-tab-btn" data-tab="ui"><span class="eaic-tab-icon">🎨</span> <?php esc_html_e( 'UI', 'easyit-ai-chat' ); ?></button>
 				<button type="button" class="eaic-tab-btn" data-tab="security"><span class="eaic-tab-icon">🔒</span> <?php esc_html_e( 'Security', 'easyit-ai-chat' ); ?></button>
@@ -198,11 +198,11 @@ $eaic_option_key = EAIC_Options::OPTION_KEY;
 			<!-- GEMINI -->
 			<div class="eaic-panel" id="eaic-panel-gemini">
 				<div class="eaic-card">
-					<div class="eaic-card-title"><span class="icon">♊</span> <?php esc_html_e( 'Google Gemini', 'easyit-ai-chat' ); ?></div>
+					<div class="eaic-card-title"><span class="icon">✦</span> <?php esc_html_e( 'Google Gemini', 'easyit-ai-chat' ); ?></div>
 
 					<div class="eaic-field">
 						<label class="eaic-label" for="eaic-gemini-key"><?php esc_html_e( 'API Key', 'easyit-ai-chat' ); ?> <span class="req">*</span></label>
-						<input id="eaic-gemini-key" type="password" name="<?php echo esc_attr( $eaic_option_key ); ?>[gemini_key]" value="<?php echo esc_attr( $eaic_opts['gemini_key'] ); ?>" placeholder="AIzaSy...">
+						<input id="eaic-gemini-key" type="password" name="<?php echo esc_attr( $eaic_option_key ); ?>[gemini_key]" value="<?php echo esc_attr( $eaic_opts['gemini_key'] ); ?>" placeholder="AIza...">
 						<div class="eaic-field-desc"><?php esc_html_e( 'Get your key at', 'easyit-ai-chat' ); ?> <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer">aistudio.google.com</a></div>
 					</div>
 
@@ -251,7 +251,7 @@ $eaic_option_key = EAIC_Options::OPTION_KEY;
 					<div class="eaic-field">
 						<label class="eaic-label" for="eaic-retention"><?php esc_html_e( 'Data Retention (days)', 'easyit-ai-chat' ); ?></label>
 						<input id="eaic-retention" type="number" min="1" max="3650" name="<?php echo esc_attr( $eaic_option_key ); ?>[data_retention_days]" value="<?php echo (int) $eaic_opts['data_retention_days']; ?>">
-						<div class="eaic-field-desc"><?php esc_html_e( 'Auto-delete conversations older than this many days.', 'easyit-ai-chat' ); ?></div>
+						<div class="eaic-field-desc"><?php esc_html_e( 'Auto-delete conversations older than this many days. Requires cron to be running.', 'easyit-ai-chat' ); ?></div>
 					</div>
 				</div>
 
@@ -303,30 +303,23 @@ $eaic_option_key = EAIC_Options::OPTION_KEY;
 
 			<!-- SECURITY -->
 			<div class="eaic-panel" id="eaic-panel-security">
-
 				<div class="eaic-card">
 					<div class="eaic-card-title"><span class="icon">🚦</span> <?php esc_html_e( 'Rate Limiting', 'easyit-ai-chat' ); ?></div>
 
 					<div class="eaic-field-grid">
 						<div class="eaic-field">
 							<label class="eaic-label" for="eaic-rl-window"><?php esc_html_e( 'Window (seconds)', 'easyit-ai-chat' ); ?></label>
-							<input id="eaic-rl-window" type="number" min="10" max="3600"
-								name="<?php echo esc_attr( $eaic_option_key ); ?>[rate_limit_window]"
-								value="<?php echo absint( $eaic_opts['rate_limit_window'] ); ?>">
-							<div class="eaic-field-desc"><?php esc_html_e( 'Rolling time window for counting requests.', 'easyit-ai-chat' ); ?></div>
+							<input id="eaic-rl-window" type="number" min="10" max="3600" name="<?php echo esc_attr( $eaic_option_key ); ?>[rate_limit_window]" value="<?php echo (int) $eaic_opts['rate_limit_window']; ?>">
+							<div class="eaic-field-desc"><?php esc_html_e( 'Rolling time window for rate limits.', 'easyit-ai-chat' ); ?></div>
 						</div>
 						<div class="eaic-field">
-							<label class="eaic-label" for="eaic-rl-max"><?php esc_html_e( 'Max Requests / User', 'easyit-ai-chat' ); ?></label>
-							<input id="eaic-rl-max" type="number" min="1" max="1000"
-								name="<?php echo esc_attr( $eaic_option_key ); ?>[rate_limit_max]"
-								value="<?php echo absint( $eaic_opts['rate_limit_max'] ); ?>">
-							<div class="eaic-field-desc"><?php esc_html_e( 'Per logged-in user or guest session.', 'easyit-ai-chat' ); ?></div>
+							<label class="eaic-label" for="eaic-rl-max"><?php esc_html_e( 'Max per user/session', 'easyit-ai-chat' ); ?></label>
+							<input id="eaic-rl-max" type="number" min="1" max="1000" name="<?php echo esc_attr( $eaic_option_key ); ?>[rate_limit_max]" value="<?php echo (int) $eaic_opts['rate_limit_max']; ?>">
+							<div class="eaic-field-desc"><?php esc_html_e( 'Max requests per logged-in user or guest cookie.', 'easyit-ai-chat' ); ?></div>
 						</div>
 						<div class="eaic-field">
-							<label class="eaic-label" for="eaic-rl-ip"><?php esc_html_e( 'Max Requests / IP', 'easyit-ai-chat' ); ?></label>
-							<input id="eaic-rl-ip" type="number" min="1" max="1000"
-								name="<?php echo esc_attr( $eaic_option_key ); ?>[rate_limit_ip_max]"
-								value="<?php echo absint( $eaic_opts['rate_limit_ip_max'] ); ?>">
+							<label class="eaic-label" for="eaic-rl-ip"><?php esc_html_e( 'Max per IP', 'easyit-ai-chat' ); ?></label>
+							<input id="eaic-rl-ip" type="number" min="1" max="1000" name="<?php echo esc_attr( $eaic_option_key ); ?>[rate_limit_ip_max]" value="<?php echo (int) $eaic_opts['rate_limit_ip_max']; ?>">
 							<div class="eaic-field-desc"><?php esc_html_e( 'Hard cap across all sessions from one IP address.', 'easyit-ai-chat' ); ?></div>
 						</div>
 					</div>
@@ -383,11 +376,10 @@ $eaic_option_key = EAIC_Options::OPTION_KEY;
 				<h4>📋 <?php esc_html_e( 'Shortcodes', 'easyit-ai-chat' ); ?></h4>
 				<div class="eaic-sc-item">[eaic_chat]</div>
 				<div class="eaic-sc-item">[eaic_chat provider="openai"]</div>
-				<div class="eaic-sc-item">[eaic_chat provider="gemini"]</div>
 				<div class="eaic-sc-item">[eaic_chat provider="anthropic" height="600"]</div>
+				<div class="eaic-sc-item">[eaic_chat provider="gemini"]</div>
 				<div class="eaic-sc-item">[eaic_chat title="Custom Title"]</div>
 				</div>
-
 
 			<div class="eaic-quick-links">
 				<div class="eaic-quick-links-title">🔗 <?php esc_html_e( 'Quick Links', 'easyit-ai-chat' ); ?></div>
@@ -402,7 +394,7 @@ $eaic_option_key = EAIC_Options::OPTION_KEY;
 			<div class="eaic-tips-card">
 				<div class="eaic-tips-title">💡 <?php esc_html_e( 'Tips', 'easyit-ai-chat' ); ?></div>
 				<div class="eaic-tips-body">
-					• <?php esc_html_e( 'Use provider="ollama" on any shortcode to override the default.', 'easyit-ai-chat' ); ?><br>
+					• <?php esc_html_e( 'Use provider="gemini" on any shortcode to use Google Gemini.', 'easyit-ai-chat' ); ?><br>
 					• <?php esc_html_e( 'Set a system prompt to give your AI a persona.', 'easyit-ai-chat' ); ?><br>
 					• <?php esc_html_e( 'Ollama is free — just install it locally.', 'easyit-ai-chat' ); ?>
 				</div>
