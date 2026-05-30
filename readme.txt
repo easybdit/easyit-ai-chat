@@ -1,18 +1,18 @@
-=== EasyIT AI Chat — Chatbot for OpenAI, Claude, DeepSeek, Grok & Ollama ===
-Contributors: muradbd
-Tags: chatbot, ai chatbot, chatgpt, openai, claude
+=== EasyIT AI Chat — Chatbot for OpenAI, Claude, DeepSeek, Gemini & Ollama ===
+Contributors: easyit
+Tags: chatbot, ai chatbot, openai, claude, gemini
 Requires at least: 6.0
 Tested up to: 7.0
 Requires PHP: 8.0
-Stable tag: 1.0.3
+Stable tag: 1.0.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-AI chatbot for WordPress — add ChatGPT, Claude, DeepSeek, Grok or local Ollama to any page with one shortcode. Bring your own API keys.
+AI chatbot for WordPress — add ChatGPT, Claude, Gemini, DeepSeek or local Ollama to any page with one shortcode. Bring your own API keys.
 
 == Description ==
 
-**EasyIT AI Chat** is the easiest way to add an AI chatbot to any WordPress page or post. Add a ChatGPT-style assistant powered by OpenAI, Anthropic Claude, DeepSeek, Grok, or a free local Ollama model — just drop in `[eaic_chat]`, no coding required.
+**EasyIT AI Chat** is the easiest way to add an AI chatbot to any WordPress page or post. Add a ChatGPT-style assistant powered by OpenAI, Anthropic Claude, Google Gemini, DeepSeek, or a free local Ollama model — just drop in `[eaic_chat]`, no coding required.
 
 Choose from the world's best AI providers, or run a local model for free with Ollama. You own your data, you control your keys. No tracking, no telemetry.
 
@@ -26,16 +26,19 @@ Choose from the world's best AI providers, or run a local model for free with Ol
 * 🤖 **OpenAI (ChatGPT)** — GPT-4o, GPT-4o-mini, GPT-4-turbo, GPT-3.5-turbo.
 * 🧠 **Anthropic (Claude)** — Claude 3.5 Sonnet, Claude 3.5 Haiku, Claude 3 Opus.
 * 🔍 **DeepSeek** — DeepSeek-Chat, DeepSeek-Reasoner.
-* ⚡ **Grok** — xAI's powerful Grok models.
+* ✦ **Google Gemini** — Gemini 1.5 Flash, Gemini 1.5 Pro, Gemini 2.0 Flash.
 
 = 🚀 Key Features =
 
-* **One shortcode, any provider** — Switch provider with a single attribute: `[eaic_chat provider="anthropic"]`
+* **One shortcode, any provider** — Switch provider with a single attribute: `[eaic_chat provider="gemini"]`
 * **ChatGPT-style UI** — Sidebar with conversation history, code blocks with copy button, markdown rendering, dark-mode friendly
+* **Auto-title sessions** — First message automatically generates a meaningful conversation title via the AI
 * **Conversation memory** — Sessions saved per logged-in user or per guest (cookie-scoped, never cross-user)
 * **Custom system prompt** — Set a global prompt in settings or override per shortcode
+* **Lock system prompt** — Prevent front-end prompt injection; admin-configured prompt only
 * **Test Connection** button — Verify your API key or Ollama URL before going live
-* **Rate limiting** — Built-in per-user / per-guest throttle to prevent abuse
+* **Rate limiting** — Per-user, per-session, and per-IP throttle to prevent abuse
+* **Data retention** — Auto-purge old conversations after a configurable number of days
 * **Privacy notice** — Optional configurable notice linking to your Privacy Policy
 * **Lightweight** — Assets load only on pages using the shortcode (~25 KB CSS + ~15 KB JS)
 * **No telemetry** — Zero external calls except to the AI provider you choose
@@ -47,7 +50,7 @@ Choose from the world's best AI providers, or run a local model for free with Ol
 `[eaic_chat]`
 
 **With a specific provider:**
-`[eaic_chat provider="openai" title="Support Bot" height="500"]`
+`[eaic_chat provider="gemini" title="Support Bot" height="500"]`
 
 **With a custom system prompt:**
 `[eaic_chat provider="ollama" system_prompt="You are a helpful gardening assistant."]`
@@ -65,6 +68,7 @@ Depending on which provider you configure, user messages may be sent to:
 * **OpenAI** — [Terms](https://openai.com/policies/row-terms-of-use) · [Privacy](https://openai.com/policies/row-privacy-policy)
 * **Anthropic** — [Terms](https://www.anthropic.com/legal/consumer-terms) · [Privacy](https://www.anthropic.com/legal/privacy)
 * **DeepSeek** — [Terms](https://chat.deepseek.com/downloads/DeepSeek%20Terms%20of%20Use.html) · [Privacy](https://chat.deepseek.com/downloads/DeepSeek%20Privacy%20Policy.html)
+* **Google Gemini** — [Terms](https://ai.google.dev/gemini-api/terms) · [Privacy](https://policies.google.com/privacy)
 * **Ollama** — Calls your own self-hosted Ollama server. No third party involved by default.
 
 No data is transmitted unless you have configured a provider and a user sends a message.
@@ -95,13 +99,14 @@ No data is transmitted unless you have configured a provider and a user sends a 
 
 = Do I need an API key? =
 
-For **OpenAI**, **Anthropic**, **DeepSeek**, and **Grok** — yes, you need your own API key. For **Ollama** — no key needed, just a running Ollama server.
+For **OpenAI**, **Anthropic**, **DeepSeek**, and **Google Gemini** — yes, you need your own API key. For **Ollama** — no key needed, just a running Ollama server.
 
 = How do I get an API key? =
 
 * OpenAI: [platform.openai.com](https://platform.openai.com)
 * Anthropic: [console.anthropic.com](https://console.anthropic.com)
 * DeepSeek: [platform.deepseek.com](https://platform.deepseek.com)
+* Google Gemini: [aistudio.google.com](https://aistudio.google.com/app/apikey)
 
 = Where can I run Ollama? =
 
@@ -121,7 +126,7 @@ No. Frontend assets (~25 KB CSS + ~15 KB JS) only load on pages where the `[eaic
 
 = Can I use multiple providers on the same site? =
 
-Yes — use the `provider` attribute to specify different providers on different pages: `[eaic_chat provider="openai"]` on one page and `[eaic_chat provider="ollama"]` on another.
+Yes — use the `provider` attribute to specify different providers on different pages: `[eaic_chat provider="openai"]` on one page and `[eaic_chat provider="gemini"]` on another.
 
 = Is this plugin really free? =
 
@@ -138,10 +143,19 @@ Yes — GPL-2.0-or-later. The only costs are to your chosen AI provider. Ollama 
 == Screenshots ==
 
 1. The chat interface — conversation history sidebar, user and AI messages, and a clean ChatGPT-style layout.
-2. Settings page — provider tabs (Ollama, OpenAI, Anthropic, DeepSeek), server URL, model, and Test Connection button.
+2. Settings page — provider tabs (Ollama, OpenAI, Anthropic, DeepSeek, Gemini), server URL, model, and Test Connection button.
 3. Adding the chatbot to any page — just drop the [eaic_chat] shortcode into a block.
 
 == Changelog ==
+
+= 1.0.4 =
+* Added Google Gemini provider (Gemini 1.5 Flash, Gemini 1.5 Pro, Gemini 2.0 Flash).
+* Added auto-title generation — first message generates a meaningful session title via the active AI provider.
+* Added data retention cron — sessions older than the configured number of days are purged automatically.
+* Added per-IP rate limiting as a secondary hard cap alongside the existing per-user/session limit.
+* Added Lock System Prompt setting to prevent front-end prompt injection on public sites.
+* Improved guest cookie security: SameSite=Lax attribute now set via PHP 8.0 array signature.
+* Rate limit window and max values are now configurable in Settings → Security.
 
 = 1.0.3 =
 * Renamed shortcode from `[easyai]` to `[eaic_chat]` to use the plugin's `eaic` prefix (WordPress.org review feedback).
@@ -159,6 +173,9 @@ Yes — GPL-2.0-or-later. The only costs are to your chosen AI provider. Ollama 
 * Initial public release.
 
 == Upgrade Notice ==
+
+= 1.0.4 =
+Adds Google Gemini support, auto-title sessions, data retention cron, and per-IP rate limiting. Recommended for all users.
 
 = 1.0.3 =
 The shortcode has been renamed from `[easyai]` to `[eaic_chat]`. If you used `[easyai]` on any pages, please update them after upgrading.

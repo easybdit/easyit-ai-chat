@@ -27,7 +27,7 @@ class EAIC_Options {
 			'default_provider'    => 'ollama',
 			'ollama_url'          => 'http://localhost:11434',
 			'ollama_model'        => 'qwen2:1.5b',
-			'ollama_timeout'      => 60,
+			'ollama_timeout'      => 300,
 			'openai_key'          => '',
 			'openai_model'        => 'gpt-3.5-turbo',
 			'openai_timeout'      => 30,

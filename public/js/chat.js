@@ -1,27 +1,19 @@
 /**
- * EasyIT AI Chat — frontend logic.
- *
- * Reads its runtime config from window.EAICConfig (localised in
- * EAIC_Public::enqueue_assets()) and drives every .eaic-widget instance
- * present on the page.
- *
- * No external dependencies (no jQuery, no markdown library, no XHR libs).
+ * EasyIT AI Chat — frontend logic (streaming).
  *
  * @package EasyIT_AI_Chat
  */
 ( function () {
 	'use strict';
 
-	if ( typeof window.EAICConfig === 'undefined' ) {
-		return;
-	}
+	if ( typeof window.EAICConfig === 'undefined' ) { return; }
 
-	var CFG = window.EAICConfig;
+	var CFG  = window.EAICConfig;
 	var I18N = ( CFG && CFG.i18n ) || {};
 
-	/* ------------------------------------------------------------------ *
-	 * Small helpers
-	 * ------------------------------------------------------------------ */
+	/* ------------------------------------------------------------------ */
+	/* Helpers                                                              */
+	/* ------------------------------------------------------------------ */
 
 	function t( key, fallback ) {
 		return Object.prototype.hasOwnProperty.call( I18N, key ) ? I18N[ key ] : fallback;
@@ -30,60 +22,40 @@
 	function escapeHtml( str ) {
 		return String( str )
 			.replace( /&/g, '&amp;' )
-			.replace( /</g, '&lt;' )
-			.replace( />/g, '&gt;' )
-			.replace( /"/g, '&quot;' )
-			.replace( /'/g, '&#039;' );
+			.replace( /</g, '&lt;'  )
+			.replace( />/g, '&gt;'  )
+			.replace( /"/g, '&quot;')
+			.replace( /'/g, '&#039;');
 	}
 
-	function escapeAttr( str ) {
-		return escapeHtml( str );
-	}
+	function escapeAttr( str ) { return escapeHtml( str ); }
 
-	/**
-	 * Very small markdown renderer.
-	 *
-	 * Supports: fenced code blocks, inline code, bold, italic, links,
-	 * unordered/ordered lists, headings, paragraphs, line breaks.
-	 * Anything more complex is left as paragraphs.
-	 *
-	 * @param {string} src Raw assistant text.
-	 * @return {string} Sanitised HTML.
-	 */
+	/* ------------------------------------------------------------------ */
+	/* Markdown renderer (unchanged)                                        */
+	/* ------------------------------------------------------------------ */
+
 	function renderMarkdown( src ) {
-		if ( ! src ) {
-			return '';
-		}
+		if ( ! src ) { return ''; }
 		var text = String( src );
 
-		// 1. Extract fenced code blocks first so their contents aren't touched.
 		var codeBlocks = [];
 		text = text.replace( /```(\w+)?\n?([\s\S]*?)```/g, function ( _m, lang, code ) {
 			codeBlocks.push( { lang: ( lang || '' ).toLowerCase(), code: code.replace( /\n$/, '' ) } );
 			return '\u0000CODEBLOCK' + ( codeBlocks.length - 1 ) + '\u0000';
 		} );
 
-		// 2. Escape the rest.
 		text = escapeHtml( text );
-
-		// 3. Inline code.
 		text = text.replace( /`([^`\n]+?)`/g, '<code class="eaic-inline-code">$1</code>' );
-
-		// 4. Bold / italic.
 		text = text.replace( /\*\*([^*]+)\*\*/g, '<strong>$1</strong>' );
 		text = text.replace( /(^|[^*])\*([^*\n]+)\*/g, '$1<em>$2</em>' );
-
-		// 5. Links [label](url) — only http(s) allowed.
 		text = text.replace( /\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, function ( _m, label, url ) {
 			return '<a href="' + url + '" target="_blank" rel="noopener noreferrer">' + label + '</a>';
 		} );
 
-		// 6. Headings.
 		text = text.replace( /^###\s+(.+)$/gm, '<h3>$1</h3>' );
 		text = text.replace( /^##\s+(.+)$/gm,  '<h2>$1</h2>' );
 		text = text.replace( /^#\s+(.+)$/gm,   '<h1>$1</h1>' );
 
-		// 7. Lists — group consecutive list lines.
 		text = text.replace( /(?:^|\n)((?:[ \t]*[-*][ \t].+(?:\n|$))+)/g, function ( _m, block ) {
 			var items = block.trim().split( /\n/ ).map( function ( line ) {
 				return '<li>' + line.replace( /^[ \t]*[-*][ \t]/, '' ) + '</li>';
@@ -97,31 +69,28 @@
 			return '\n<ol>' + items + '</ol>\n';
 		} );
 
-		// 8. Paragraphs from blank-line separated blocks.
+		// Merge sibling <ol> tags split by intervening <ul> sub-lists so
+		// numbering continues (1, 2, 3…) instead of resetting to 1 each time.
+		text = text.replace( /<\/ol>((?:\s*<ul>[\s\S]*?<\/ul>)*\s*)<ol>/g, '$1' );
+
 		var parts = text.split( /\n{2,}/ ).map( function ( block ) {
 			block = block.trim();
-			if ( ! block ) {
-				return '';
-			}
-			if ( /^<(h\d|ul|ol|pre|blockquote)/.test( block ) ) {
-				return block;
-			}
+			if ( ! block ) { return ''; }
+			if ( /^<(h\d|ul|ol|pre|blockquote)/.test( block ) ) { return block; }
 			return '<p>' + block.replace( /\n/g, '<br>' ) + '</p>';
 		} );
 		text = parts.join( '\n' );
 
-		// 9. Restore fenced code blocks with copy buttons.
 		text = text.replace( /\u0000CODEBLOCK(\d+)\u0000/g, function ( _m, i ) {
-			var block = codeBlocks[ Number( i ) ];
+			var block    = codeBlocks[ Number( i ) ];
 			var langAttr = block.lang ? ' data-lang="' + escapeAttr( block.lang ) + '"' : '';
-			var langLabel = block.lang ? '<span class="eaic-code-lang">' + escapeHtml( block.lang ) + '</span>' : '<span class="eaic-code-lang"></span>';
+			var langLbl  = block.lang
+				? '<span class="eaic-code-lang">' + escapeHtml( block.lang ) + '</span>'
+				: '<span class="eaic-code-lang"></span>';
 			return (
 				'<div class="eaic-code-block"' + langAttr + '>' +
-					'<div class="eaic-code-header">' +
-						langLabel +
-						'<button type="button" class="eaic-copy-code">' +
-							escapeHtml( t( 'copy', 'Copy' ) ) +
-						'</button>' +
+					'<div class="eaic-code-header">' + langLbl +
+						'<button type="button" class="eaic-copy-code">' + escapeHtml( t( 'copy', 'Copy' ) ) + '</button>' +
 					'</div>' +
 					'<pre><code>' + escapeHtml( block.code ) + '</code></pre>' +
 				'</div>'
@@ -131,40 +100,30 @@
 		return text;
 	}
 
+	/* ------------------------------------------------------------------ */
+	/* Date groups                                                          */
+	/* ------------------------------------------------------------------ */
+
 	function formatDateGroup( iso ) {
-		if ( ! iso ) {
-			return t( 'earlier', 'Earlier' );
-		}
-		// MySQL DATETIME is "YYYY-MM-DD HH:MM:SS" in UTC for the DB —
-		// but stored via CURRENT_TIMESTAMP (server time). Parse leniently.
-		var safe = iso.replace( ' ', 'T' );
-		var d = new Date( safe );
-		if ( isNaN( d.getTime() ) ) {
-			return t( 'earlier', 'Earlier' );
-		}
-		var now = new Date();
-		var startOfToday = new Date( now.getFullYear(), now.getMonth(), now.getDate() );
-		var startOfYesterday = new Date( startOfToday.getTime() - 86400000 );
-		if ( d >= startOfToday ) {
-			return t( 'today', 'Today' );
-		}
-		if ( d >= startOfYesterday ) {
-			return t( 'yesterday', 'Yesterday' );
-		}
+		if ( ! iso ) { return t( 'earlier', 'Earlier' ); }
+		var d = new Date( iso.replace( ' ', 'T' ) );
+		if ( isNaN( d.getTime() ) ) { return t( 'earlier', 'Earlier' ); }
+		var now           = new Date();
+		var startOfToday  = new Date( now.getFullYear(), now.getMonth(), now.getDate() );
+		var startOfYest   = new Date( startOfToday.getTime() - 86400000 );
+		if ( d >= startOfToday ) { return t( 'today',     'Today' ); }
+		if ( d >= startOfYest  ) { return t( 'yesterday', 'Yesterday' ); }
 		return t( 'earlier', 'Earlier' );
 	}
 
-	/**
-	 * POST to admin-ajax. Returns the parsed response JSON or throws.
-	 *
-	 * @param {string} action WP AJAX action (without nonce).
-	 * @param {Object} data   Extra form fields.
-	 * @return {Promise<Object>} The decoded response.
-	 */
+	/* ------------------------------------------------------------------ */
+	/* Classic AJAX helper (used for non-send actions)                      */
+	/* ------------------------------------------------------------------ */
+
 	function ajax( action, data ) {
 		var body = new URLSearchParams();
 		body.append( 'action', action );
-		body.append( 'nonce', CFG.nonce );
+		body.append( 'nonce',  CFG.nonce );
 		if ( data ) {
 			Object.keys( data ).forEach( function ( k ) {
 				if ( data[ k ] !== undefined && data[ k ] !== null ) {
@@ -173,10 +132,10 @@
 			} );
 		}
 		return fetch( CFG.ajax_url, {
-			method: 'POST',
+			method:      'POST',
 			credentials: 'same-origin',
-			headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
-			body: body.toString()
+			headers:     { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
+			body:        body.toString()
 		} ).then( function ( res ) {
 			return res.json().catch( function () {
 				return { success: false, data: { message: t( 'error_generic', 'Something went wrong.' ) } };
@@ -184,9 +143,9 @@
 		} );
 	}
 
-	/* ------------------------------------------------------------------ *
-	 * Widget instance
-	 * ------------------------------------------------------------------ */
+	/* ------------------------------------------------------------------ */
+	/* Widget                                                               */
+	/* ------------------------------------------------------------------ */
 
 	function Widget( root ) {
 		this.root           = root;
@@ -211,6 +170,7 @@
 
 		this.currentSession = '';
 		this.sending        = false;
+		this._streamTimer   = null; // elapsed-time ticker
 
 		this.bind();
 		this.loadSessions();
@@ -235,15 +195,11 @@
 		}
 
 		if ( this.elSendBtn ) {
-			this.elSendBtn.addEventListener( 'click', function () {
-				self.send();
-			} );
+			this.elSendBtn.addEventListener( 'click', function () { self.send(); } );
 		}
 
 		if ( this.elNewBtn ) {
-			this.elNewBtn.addEventListener( 'click', function () {
-				self.newChat();
-			} );
+			this.elNewBtn.addEventListener( 'click', function () { self.newChat(); } );
 		}
 
 		if ( this.elProviderSel ) {
@@ -260,26 +216,18 @@
 		}
 
 		if ( this.elDeleteBtn ) {
-			this.elDeleteBtn.addEventListener( 'click', function () {
-				self.deleteCurrent();
-			} );
+			this.elDeleteBtn.addEventListener( 'click', function () { self.deleteCurrent(); } );
 		}
 
-		// Delegated click on the messages area (copy code).
+		// Copy-code buttons (delegated).
 		if ( this.elMessages ) {
 			this.elMessages.addEventListener( 'click', function ( e ) {
 				var btn = e.target.closest && e.target.closest( '.eaic-copy-code' );
-				if ( ! btn ) {
-					return;
-				}
+				if ( ! btn ) { return; }
 				var block = btn.closest( '.eaic-code-block' );
-				if ( ! block ) {
-					return;
-				}
+				if ( ! block ) { return; }
 				var codeEl = block.querySelector( 'pre code' );
-				if ( ! codeEl ) {
-					return;
-				}
+				if ( ! codeEl ) { return; }
 				var text = codeEl.innerText;
 				var done = function () {
 					var prev = btn.textContent;
@@ -292,17 +240,15 @@
 				};
 				if ( navigator.clipboard && navigator.clipboard.writeText ) {
 					navigator.clipboard.writeText( text ).then( done ).catch( function () {
-						self.fallbackCopy( text );
-						done();
+						self.fallbackCopy( text ); done();
 					} );
 				} else {
-					self.fallbackCopy( text );
-					done();
+					self.fallbackCopy( text ); done();
 				}
 			} );
 		}
 
-		// Delegated click on the sessions list (switch / delete).
+		// Session list (delegated).
 		if ( this.elSessionsList ) {
 			this.elSessionsList.addEventListener( 'click', function ( e ) {
 				var delBtn = e.target.closest && e.target.closest( '.eaic-session-del' );
@@ -315,9 +261,7 @@
 					return;
 				}
 				var item = e.target.closest && e.target.closest( '.eaic-session-item' );
-				if ( ! item ) {
-					return;
-				}
+				if ( ! item ) { return; }
 				var uuid = item.getAttribute( 'data-uuid' );
 				if ( uuid && uuid !== self.currentSession ) {
 					self.loadHistory( uuid );
@@ -326,64 +270,239 @@
 		}
 	};
 
-	Widget.prototype.fallbackCopy = function ( text ) {
-		try {
-			var ta = document.createElement( 'textarea' );
-			ta.value = text;
-			ta.style.position = 'fixed';
-			ta.style.opacity = '0';
-			document.body.appendChild( ta );
-			ta.select();
-			document.execCommand( 'copy' );
-			document.body.removeChild( ta );
-		} catch ( e ) {
-			// no-op
+	/* ------------------------------------------------------------------ */
+	/* Send — uses SSE streaming via fetch + ReadableStream                 */
+	/* ------------------------------------------------------------------ */
+
+	Widget.prototype.send = function () {
+		if ( this.sending || ! this.elInput ) { return; }
+		var text = this.elInput.value.trim();
+		if ( ! text ) { return; }
+
+		this.sending = true;
+		if ( this.elSendBtn ) { this.elSendBtn.disabled = true; }
+		if ( this.elInput   ) { this.elInput.disabled   = true; }
+
+		this.appendMessage( 'user', text );
+		this.elInput.value = '';
+		this.autoresize();
+
+		// Show thinking bubble with elapsed timer.
+		var thinkNode = this.appendThinking();
+		var elapsed   = 0;
+		var self      = this;
+
+		this._streamTimer = setInterval( function () {
+			elapsed++;
+			self.updateThinkingTimer( thinkNode, elapsed );
+		}, 1000 );
+
+		// Build POST body for streaming endpoint.
+		var body = new URLSearchParams();
+		body.append( 'action',   'eaic_stream' );
+		body.append( 'nonce',    CFG.nonce );
+		body.append( 'message',  text );
+		body.append( 'provider', this.provider );
+		body.append( 'session',  this.currentSession );
+		body.append( 'system',   this.systemPrompt );
+
+		var streamText   = '';
+		var contentEl    = null;
+		var sessionSaved = false;
+
+		fetch( CFG.ajax_url, {
+			method:      'POST',
+			credentials: 'same-origin',
+			headers:     { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
+			body:        body.toString()
+		} ).then( function ( response ) {
+			if ( ! response.ok ) {
+				throw new Error( 'HTTP ' + response.status );
+			}
+			var reader  = response.body.getReader();
+			var decoder = new TextDecoder();
+			var buffer  = '';
+
+			function pump() {
+				return reader.read().then( function ( result ) {
+					if ( result.done ) { return; }
+					buffer += decoder.decode( result.value, { stream: true } );
+
+					// Process complete SSE lines from buffer.
+					var lines = buffer.split( '\n' );
+					buffer = lines.pop(); // keep incomplete last line
+
+					var eventName = '';
+					lines.forEach( function ( line ) {
+						line = line.trim();
+						if ( 0 === line.indexOf( 'event: ' ) ) {
+							eventName = line.slice( 7 ).trim();
+						} else if ( 0 === line.indexOf( 'data: ' ) ) {
+							var json;
+							try { json = JSON.parse( line.slice( 6 ) ); } catch ( e ) { return; }
+
+							if ( 'session' === eventName && json.session ) {
+								if ( ! sessionSaved ) {
+									self.currentSession = json.session;
+									sessionSaved = true;
+								}
+							}
+
+							if ( 'chunk' === eventName && json.text ) {
+								streamText += json.text;
+								if ( ! contentEl ) {
+									// First token — replace thinking bubble with real content.
+									self.clearTimer();
+									if ( thinkNode && thinkNode.parentNode ) {
+										thinkNode.parentNode.removeChild( thinkNode );
+									}
+									var msgNode = self.appendMessage( 'assistant', '', {} );
+									contentEl   = msgNode ? msgNode.querySelector( '.eaic-msg-content' ) : null;
+								}
+								if ( contentEl ) {
+									contentEl.innerHTML = renderMarkdown( streamText );
+									// Streaming cursor.
+									var cursor = document.createElement( 'span' );
+									cursor.className = 'eaic-cursor';
+									contentEl.appendChild( cursor );
+									self.scrollToBottom();
+								}
+							}
+
+							if ( 'done' === eventName ) {
+								self.clearTimer();
+								// Remove cursor, final render.
+								if ( contentEl ) {
+									contentEl.innerHTML = renderMarkdown( streamText );
+									self.scrollToBottom();
+								}
+								// Update session title in topbar.
+								if ( json.title && self.elSessionTitle ) {
+									self.elSessionTitle.textContent = json.title;
+								}
+								self.loadSessions();
+								self.finishSend();
+							}
+
+							if ( 'error' === eventName ) {
+								self.clearTimer();
+								if ( thinkNode && thinkNode.parentNode ) {
+									thinkNode.parentNode.removeChild( thinkNode );
+								}
+								self.renderError( json.message || t( 'error_generic', 'Something went wrong.' ) );
+								self.finishSend();
+							}
+						}
+					} );
+
+					return pump();
+				} );
+			}
+
+			return pump();
+		} ).catch( function ( err ) {
+			self.clearTimer();
+			if ( thinkNode && thinkNode.parentNode ) {
+				thinkNode.parentNode.removeChild( thinkNode );
+			}
+			self.renderError( err.message || t( 'error_generic', 'Something went wrong.' ) );
+			self.finishSend();
+		} );
+	};
+
+	Widget.prototype.finishSend = function () {
+		this.sending = false;
+		if ( this.elSendBtn ) { this.elSendBtn.disabled = false; }
+		if ( this.elInput   ) {
+			this.elInput.disabled = false;
+			this.elInput.focus();
 		}
 	};
 
-	Widget.prototype.autoresize = function () {
-		if ( ! this.elInput ) {
-			return;
-		}
-		this.elInput.style.height = 'auto';
-		var max = 200;
-		this.elInput.style.height = Math.min( this.elInput.scrollHeight, max ) + 'px';
-	};
-
-	Widget.prototype.scrollToBottom = function () {
-		if ( this.elMessages ) {
-			this.elMessages.scrollTop = this.elMessages.scrollHeight;
+	Widget.prototype.clearTimer = function () {
+		if ( this._streamTimer ) {
+			clearInterval( this._streamTimer );
+			this._streamTimer = null;
 		}
 	};
 
-	Widget.prototype.clearWelcome = function () {
-		var w = this.elMessages && this.elMessages.querySelector( '.eaic-welcome' );
-		if ( w && w.parentNode ) {
-			w.parentNode.removeChild( w );
-		}
-	};
+	/* ------------------------------------------------------------------ */
+	/* Thinking bubble with elapsed timer                                   */
+	/* ------------------------------------------------------------------ */
 
-	Widget.prototype.appendMessage = function ( role, content, opts ) {
-		if ( ! this.elMessages ) {
-			return null;
-		}
+	Widget.prototype.appendThinking = function () {
+		if ( ! this.elMessages ) { return null; }
 		this.clearWelcome();
-		opts = opts || {};
 
 		var wrap = document.createElement( 'div' );
-		wrap.className = 'eaic-msg eaic-msg--' + ( role === 'user' ? 'user' : 'assistant' );
+		wrap.className = 'eaic-msg eaic-msg--assistant';
 
 		var avatar = document.createElement( 'div' );
 		avatar.className = 'eaic-msg-avatar';
-		avatar.textContent = role === 'user' ? ( t( 'you', 'You' ).charAt( 0 ) || 'U' ) : '🤖';
+		avatar.textContent = '🤖';
 
 		var body = document.createElement( 'div' );
 		body.className = 'eaic-msg-body';
 
 		var label = document.createElement( 'div' );
 		label.className = 'eaic-msg-label';
-		label.textContent = role === 'user' ? t( 'you', 'You' ) : t( 'ai', 'AI' );
-		if ( role !== 'user' && CFG.show_provider_badge && opts.provider ) {
+		label.textContent = t( 'ai', 'AI' );
+
+		var content = document.createElement( 'div' );
+		content.className = 'eaic-msg-content eaic-thinking-bubble';
+		content.innerHTML =
+			'<span class="eaic-thinking-icon">⏳</span>' +
+			'<span class="eaic-thinking-text">' + escapeHtml( t( 'thinking', 'Thinking…' ) ) + '</span>' +
+			'<span class="eaic-thinking-timer">0s</span>';
+
+		body.appendChild( label );
+		body.appendChild( content );
+		wrap.appendChild( avatar );
+		wrap.appendChild( body );
+		this.elMessages.appendChild( wrap );
+		this.scrollToBottom();
+		return wrap;
+	};
+
+	Widget.prototype.updateThinkingTimer = function ( node, seconds ) {
+		if ( ! node ) { return; }
+		var timerEl = node.querySelector( '.eaic-thinking-timer' );
+		var textEl  = node.querySelector( '.eaic-thinking-text' );
+		if ( timerEl ) { timerEl.textContent = seconds + 's'; }
+		if ( textEl ) {
+			if      ( seconds < 5  ) { textEl.textContent = t( 'thinking',   'Thinking…'             ); }
+			else if ( seconds < 12 ) { textEl.textContent = t( 'processing', 'Processing…'           ); }
+			else if ( seconds < 25 ) { textEl.textContent = t( 'working',    'Still working…'        ); }
+			else                     { textEl.textContent = t( 'almost',     'Almost there…'         ); }
+		}
+	};
+
+	/* ------------------------------------------------------------------ */
+	/* Message rendering                                                    */
+	/* ------------------------------------------------------------------ */
+
+	Widget.prototype.appendMessage = function ( role, content, opts ) {
+		if ( ! this.elMessages ) { return null; }
+		this.clearWelcome();
+		opts = opts || {};
+
+		var wrap = document.createElement( 'div' );
+		wrap.className = 'eaic-msg eaic-msg--' + ( 'user' === role ? 'user' : 'assistant' );
+
+		var avatar = document.createElement( 'div' );
+		avatar.className = 'eaic-msg-avatar';
+		avatar.textContent = 'user' === role
+			? ( t( 'you', 'You' ).charAt( 0 ) || 'U' )
+			: '🤖';
+
+		var body = document.createElement( 'div' );
+		body.className = 'eaic-msg-body';
+
+		var label = document.createElement( 'div' );
+		label.className = 'eaic-msg-label';
+		label.textContent = 'user' === role ? t( 'you', 'You' ) : t( 'ai', 'AI' );
+
+		if ( 'user' !== role && CFG.show_provider_badge && opts.provider ) {
 			var badge = document.createElement( 'span' );
 			badge.className = 'eaic-provider-badge';
 			badge.textContent = opts.provider;
@@ -392,11 +511,10 @@
 
 		var content_el = document.createElement( 'div' );
 		content_el.className = 'eaic-msg-content';
-		if ( opts.typing ) {
-			content_el.innerHTML = '<span class="eaic-typing"><span class="eaic-typing-dot"></span><span class="eaic-typing-dot"></span><span class="eaic-typing-dot"></span></span>';
-		} else if ( role === 'user' ) {
+
+		if ( 'user' === role ) {
 			content_el.innerHTML = '<p>' + escapeHtml( content ).replace( /\n/g, '<br>' ) + '</p>';
-		} else {
+		} else if ( content ) {
 			content_el.innerHTML = renderMarkdown( content );
 		}
 
@@ -409,32 +527,6 @@
 		return wrap;
 	};
 
-	Widget.prototype.replaceMessageContent = function ( node, role, content, opts ) {
-		if ( ! node ) {
-			return;
-		}
-		opts = opts || {};
-		var content_el = node.querySelector( '.eaic-msg-content' );
-		if ( ! content_el ) {
-			return;
-		}
-		if ( role === 'user' ) {
-			content_el.innerHTML = '<p>' + escapeHtml( content ).replace( /\n/g, '<br>' ) + '</p>';
-		} else {
-			content_el.innerHTML = renderMarkdown( content );
-		}
-		if ( opts.provider && CFG.show_provider_badge ) {
-			var label = node.querySelector( '.eaic-msg-label' );
-			if ( label && ! label.querySelector( '.eaic-provider-badge' ) ) {
-				var badge = document.createElement( 'span' );
-				badge.className = 'eaic-provider-badge';
-				badge.textContent = opts.provider;
-				label.appendChild( badge );
-			}
-		}
-		this.scrollToBottom();
-	};
-
 	Widget.prototype.renderError = function ( message ) {
 		this.clearWelcome();
 		var wrap = document.createElement( 'div' );
@@ -445,62 +537,50 @@
 	};
 
 	Widget.prototype.resetMessages = function ( title ) {
-		if ( ! this.elMessages ) {
-			return;
-		}
+		if ( ! this.elMessages ) { return; }
 		this.elMessages.innerHTML = '';
 		var w = document.createElement( 'div' );
 		w.className = 'eaic-welcome';
-		w.innerHTML = '<div class="eaic-welcome-icon">🤖</div>' +
+		w.innerHTML =
+			'<div class="eaic-welcome-icon">🤖</div>' +
 			'<h3 class="eaic-welcome-title">' + escapeHtml( title || ( this.elSessionTitle ? this.elSessionTitle.textContent : 'AI Chat' ) ) + '</h3>' +
 			'<p class="eaic-welcome-sub">' + escapeHtml( t( 'no_sessions', '' ) || 'How can I help you today?' ) + '</p>';
 		this.elMessages.appendChild( w );
 	};
 
-	/* -------- session list -------- */
+	/* ------------------------------------------------------------------ */
+	/* Session list                                                         */
+	/* ------------------------------------------------------------------ */
 
 	Widget.prototype.loadSessions = function () {
 		var self = this;
-		if ( ! this.elSessionsList ) {
-			return;
-		}
+		if ( ! this.elSessionsList ) { return; }
 		ajax( 'eaic_sessions', {} ).then( function ( res ) {
-			if ( ! res || ! res.success ) {
-				self.renderSessions( [] );
-				return;
-			}
+			if ( ! res || ! res.success ) { self.renderSessions( [] ); return; }
 			self.renderSessions( ( res.data && res.data.sessions ) || [] );
-		} ).catch( function () {
-			self.renderSessions( [] );
-		} );
+		} ).catch( function () { self.renderSessions( [] ); } );
 	};
 
 	Widget.prototype.renderSessions = function ( sessions ) {
-		if ( ! this.elSessionsList ) {
-			return;
-		}
+		if ( ! this.elSessionsList ) { return; }
 		if ( ! sessions || sessions.length === 0 ) {
-			this.elSessionsList.innerHTML = '<div class="eaic-sessions-empty">' + escapeHtml( t( 'no_sessions', 'No conversations yet.' ) ) + '</div>';
+			this.elSessionsList.innerHTML =
+				'<div class="eaic-sessions-empty">' + escapeHtml( t( 'no_sessions', 'No conversations yet.' ) ) + '</div>';
 			return;
 		}
 		var groups = {};
-		var order = [ t( 'today', 'Today' ), t( 'yesterday', 'Yesterday' ), t( 'earlier', 'Earlier' ) ];
+		var order  = [ t( 'today', 'Today' ), t( 'yesterday', 'Yesterday' ), t( 'earlier', 'Earlier' ) ];
 		order.forEach( function ( g ) { groups[ g ] = []; } );
-
 		sessions.forEach( function ( s ) {
 			var g = formatDateGroup( s.updated_at || s.created_at );
-			if ( ! groups[ g ] ) {
-				groups[ g ] = [];
-			}
+			if ( ! groups[ g ] ) { groups[ g ] = []; }
 			groups[ g ].push( s );
 		} );
 
 		var html = '';
 		var self = this;
 		order.forEach( function ( g ) {
-			if ( ! groups[ g ] || groups[ g ].length === 0 ) {
-				return;
-			}
+			if ( ! groups[ g ] || groups[ g ].length === 0 ) { return; }
 			html += '<div class="eaic-session-group-label">' + escapeHtml( g ) + '</div>';
 			groups[ g ].forEach( function ( s ) {
 				var active = ( s.uuid === self.currentSession ) ? ' eaic-active' : '';
@@ -517,9 +597,7 @@
 	};
 
 	Widget.prototype.markActive = function () {
-		if ( ! this.elSessionsList ) {
-			return;
-		}
+		if ( ! this.elSessionsList ) { return; }
 		var items = this.elSessionsList.querySelectorAll( '.eaic-session-item' );
 		var i;
 		for ( i = 0; i < items.length; i++ ) {
@@ -531,84 +609,21 @@
 		}
 	};
 
-	/* -------- send / history / new / delete -------- */
-
-	Widget.prototype.send = function () {
-		if ( this.sending || ! this.elInput ) {
-			return;
-		}
-		var text = this.elInput.value.trim();
-		if ( ! text ) {
-			return;
-		}
-
-		this.sending = true;
-		if ( this.elSendBtn ) {
-			this.elSendBtn.disabled = true;
-		}
-		if ( this.elInput ) {
-			this.elInput.disabled = true;
-		}
-
-		this.appendMessage( 'user', text );
-		this.elInput.value = '';
-		this.autoresize();
-
-		var typingNode = this.appendMessage( 'assistant', '', { typing: true } );
-
-		var self = this;
-		ajax( 'eaic_send', {
-			message:  text,
-			provider: this.provider,
-			session:  this.currentSession,
-			system:   this.systemPrompt
-		} ).then( function ( res ) {
-			self.sending = false;
-			if ( self.elInput ) {
-				self.elInput.disabled = false;
-				self.elInput.focus();
-			}
-			if ( res && res.success ) {
-				var data = res.data || {};
-				self.replaceMessageContent( typingNode, 'assistant', data.reply || '', { provider: data.provider } );
-				if ( data.session && data.session !== self.currentSession ) {
-					self.currentSession = data.session;
-				}
-				self.loadSessions();
-			} else {
-				var msg = ( res && res.data && res.data.message ) ? res.data.message : t( 'error_generic', 'Something went wrong.' );
-				if ( typingNode && typingNode.parentNode ) {
-					typingNode.parentNode.removeChild( typingNode );
-				}
-				self.renderError( msg );
-			}
-		} ).catch( function () {
-			self.sending = false;
-			if ( self.elInput ) {
-				self.elInput.disabled = false;
-			}
-			if ( typingNode && typingNode.parentNode ) {
-				typingNode.parentNode.removeChild( typingNode );
-			}
-			self.renderError( t( 'error_generic', 'Something went wrong.' ) );
-		} );
-	};
+	/* ------------------------------------------------------------------ */
+	/* Session actions                                                      */
+	/* ------------------------------------------------------------------ */
 
 	Widget.prototype.newChat = function () {
 		this.currentSession = '';
 		this.resetMessages();
 		this.markActive();
-		if ( this.elInput ) {
-			this.elInput.focus();
-		}
+		if ( this.elInput ) { this.elInput.focus(); }
 	};
 
 	Widget.prototype.loadHistory = function ( uuid ) {
 		var self = this;
 		ajax( 'eaic_history', { session: uuid } ).then( function ( res ) {
-			if ( ! res || ! res.success ) {
-				return;
-			}
+			if ( ! res || ! res.success ) { return; }
 			var data = res.data || {};
 			self.currentSession = uuid;
 			if ( self.elSessionTitle && data.title ) {
@@ -630,12 +645,8 @@
 	};
 
 	Widget.prototype.deleteCurrent = function () {
-		if ( ! this.currentSession ) {
-			return;
-		}
-		if ( ! window.confirm( t( 'delete_confirm', 'Delete this conversation?' ) ) ) {
-			return;
-		}
+		if ( ! this.currentSession ) { return; }
+		if ( ! window.confirm( t( 'delete_confirm', 'Delete this conversation?' ) ) ) { return; }
 		this.deleteSession( this.currentSession );
 	};
 
@@ -652,9 +663,43 @@
 		} );
 	};
 
-	/* ------------------------------------------------------------------ *
-	 * Boot
-	 * ------------------------------------------------------------------ */
+	/* ------------------------------------------------------------------ */
+	/* Utilities                                                            */
+	/* ------------------------------------------------------------------ */
+
+	Widget.prototype.fallbackCopy = function ( text ) {
+		try {
+			var ta = document.createElement( 'textarea' );
+			ta.value = text;
+			ta.style.position = 'fixed';
+			ta.style.opacity  = '0';
+			document.body.appendChild( ta );
+			ta.select();
+			document.execCommand( 'copy' );
+			document.body.removeChild( ta );
+		} catch ( e ) { /* no-op */ }
+	};
+
+	Widget.prototype.autoresize = function () {
+		if ( ! this.elInput ) { return; }
+		this.elInput.style.height = 'auto';
+		this.elInput.style.height = Math.min( this.elInput.scrollHeight, 200 ) + 'px';
+	};
+
+	Widget.prototype.scrollToBottom = function () {
+		if ( this.elMessages ) {
+			this.elMessages.scrollTop = this.elMessages.scrollHeight;
+		}
+	};
+
+	Widget.prototype.clearWelcome = function () {
+		var w = this.elMessages && this.elMessages.querySelector( '.eaic-welcome' );
+		if ( w && w.parentNode ) { w.parentNode.removeChild( w ); }
+	};
+
+	/* ------------------------------------------------------------------ */
+	/* Boot                                                                 */
+	/* ------------------------------------------------------------------ */
 
 	function boot() {
 		var widgets = document.querySelectorAll( '.eaic-widget' );

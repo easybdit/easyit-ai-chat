@@ -15,24 +15,15 @@ if ( ! defined( 'ABSPATH' ) ) {
  */
 abstract class EAIC_Provider {
 
-	/**
-	 * Plugin options snapshot.
-	 *
-	 * @var array<string,mixed>
-	 */
+	/** @var array<string,mixed> */
 	protected $opts;
 
-	/**
-	 * Constructor.
-	 *
-	 * @param array $opts Plugin options.
-	 */
 	public function __construct( array $opts ) {
 		$this->opts = $opts;
 	}
 
 	/**
-	 * Send messages to provider and return reply string.
+	 * Send messages and return full reply string (non-streaming).
 	 *
 	 * @param array  $messages Conversation history.
 	 * @param string $system   Optional system prompt.
@@ -41,11 +32,47 @@ abstract class EAIC_Provider {
 	abstract public function chat( array $messages, $system = '' );
 
 	/**
+	 * Stream response — echo SSE chunks then return full text.
+	 * Default falls back to non-streaming for providers that don't override.
+	 *
+	 * @param array  $messages Conversation history.
+	 * @param string $system   Optional system prompt.
+	 * @return string Full assembled reply.
+	 */
+	public function stream_chat( array $messages, $system = '' ) {
+		// Default: get full reply then emit as single chunk.
+		$reply = $this->chat( $messages, $system );
+		self::sse_send( 'chunk', array( 'text' => $reply ) );
+		return $reply;
+	}
+
+	/**
 	 * Health-check: returns true if provider responds.
 	 *
 	 * @return bool
 	 */
 	abstract public function health();
+
+	/**
+	 * Emit a single SSE event.
+	 *
+	 * @param string $event Event name.
+	 * @param array  $data  Data to JSON-encode.
+	 */
+	public static function sse_send( $event, array $data ) {
+		// 2 KB padding pushes past Apache/Nginx send-buffer thresholds so each
+		// event is delivered immediately instead of waiting for the buffer to fill.
+		// SSE comment lines (starting with ':') are valid per spec and ignored by browsers.
+		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- str_repeat produces only spaces; no user data involved.
+		echo ':' . str_repeat( ' ', 2048 ) . "\n";
+		echo 'event: ' . esc_html( $event ) . "\n";
+		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+		echo 'data: ' . wp_json_encode( $data ) . "\n\n";
+		if ( ob_get_level() > 0 ) {
+			ob_flush();
+		}
+		flush();
+	}
 
 	/**
 	 * Ensure an API key is present, otherwise throw.
@@ -91,7 +118,7 @@ abstract class EAIC_Provider {
 	}
 
 	/**
-	 * Perform a JSON POST request.
+	 * Perform a JSON POST request (blocking, returns full response).
 	 *
 	 * @param string $url     Endpoint URL.
 	 * @param array  $body    Request body.
@@ -137,6 +164,96 @@ abstract class EAIC_Provider {
 		}
 
 		return is_array( $data ) ? $data : array();
+	}
+
+	/**
+	 * Stream an HTTP POST line by line, calling $callback for each line.
+	 * Used by providers that support SSE/NDJSON streaming.
+	 *
+	 * @param string   $url      Endpoint URL.
+	 * @param array    $body     Request body (stream:true already set by caller).
+	 * @param array    $headers  Extra headers.
+	 * @param int      $timeout  Timeout in seconds.
+	 * @param callable $callback Called with each raw response line.
+	 * @return void
+	 * @throws RuntimeException On transport errors.
+	 */
+	protected function http_stream( $url, array $body, array $headers, $timeout, callable $callback ) {
+		$this->validate_url( $url );
+
+		if ( ! function_exists( 'curl_init' ) ) {
+			throw new RuntimeException( esc_html__( 'cURL extension is required for streaming.', 'easyit-ai-chat' ) );
+		}
+
+		$curl_headers = array( 'Content-Type: application/json' );
+		foreach ( $headers as $k => $v ) {
+			$curl_headers[] = $k . ': ' . $v;
+		}
+
+		$buffer      = '';
+		$http_status = 200;
+		$error_body  = '';
+
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.curl_curl_init -- wp_remote_post() buffers the full response and cannot support real-time SSE streaming.
+		$ch = curl_init();
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.curl_curl_setopt_array
+		curl_setopt_array( $ch, array(
+			CURLOPT_URL            => $url,
+			CURLOPT_POST           => true,
+			CURLOPT_POSTFIELDS     => wp_json_encode( $body ),
+			CURLOPT_HTTPHEADER     => $curl_headers,
+			CURLOPT_TIMEOUT        => (int) $timeout,
+			CURLOPT_RETURNTRANSFER => false,
+			CURLOPT_HEADERFUNCTION => function ( $ch, $header ) use ( &$http_status ) {
+				if ( preg_match( '/^HTTP\/\S+\s+(\d+)/', $header, $m ) ) {
+					$http_status = (int) $m[1];
+				}
+				return strlen( $header );
+			},
+			CURLOPT_WRITEFUNCTION  => function ( $ch, $data ) use ( $callback, &$buffer, &$http_status, &$error_body ) {
+				if ( $http_status >= 400 ) {
+					$error_body .= $data;
+					return strlen( $data );
+				}
+				$buffer .= $data;
+				while ( false !== ( $pos = strpos( $buffer, "\n" ) ) ) {
+					$line   = rtrim( substr( $buffer, 0, $pos ), "\r" );
+					$buffer = substr( $buffer, $pos + 1 );
+					if ( '' !== $line ) {
+						$callback( $line );
+						if ( ob_get_level() > 0 ) {
+							ob_flush();
+						}
+						flush();
+					}
+				}
+				return strlen( $data );
+			},
+			CURLOPT_SSL_VERIFYPEER => true,
+			CURLOPT_SSL_VERIFYHOST => 2,
+		) );
+
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.curl_curl_exec
+		curl_exec( $ch );
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.curl_curl_errno
+		$errno = curl_errno( $ch );
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.curl_curl_error
+		$error = curl_error( $ch );
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.curl_curl_close
+		curl_close( $ch );
+
+		if ( $errno ) {
+			throw new RuntimeException( esc_html( $error ) );
+		}
+
+		if ( $http_status >= 400 ) {
+			$err_data = json_decode( $error_body, true );
+			$msg      = is_array( $err_data ) && isset( $err_data['error']['message'] )
+				? $err_data['error']['message']
+				/* translators: %d: HTTP status code number */
+				: sprintf( __( 'HTTP error %d', 'easyit-ai-chat' ), $http_status );
+			throw new RuntimeException( esc_html( $msg ) );
+		}
 	}
 
 	/**

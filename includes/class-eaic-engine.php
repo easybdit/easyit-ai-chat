@@ -10,20 +10,16 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-/**
- * Wires AJAX endpoints to provider, DB and rate-limit logic.
- */
 class EAIC_Engine {
 
 	const MAX_MESSAGE_LEN       = 4000;
 	const MAX_SYSTEM_PROMPT_LEN = 500;
 
-	/**
-	 * Hook AJAX endpoints.
-	 */
 	public function __construct() {
 		add_action( 'wp_ajax_eaic_send',            array( $this, 'ajax_send' ) );
 		add_action( 'wp_ajax_nopriv_eaic_send',     array( $this, 'ajax_send' ) );
+		add_action( 'wp_ajax_eaic_stream',          array( $this, 'ajax_stream' ) );
+		add_action( 'wp_ajax_nopriv_eaic_stream',   array( $this, 'ajax_stream' ) );
 		add_action( 'wp_ajax_eaic_sessions',        array( $this, 'ajax_sessions' ) );
 		add_action( 'wp_ajax_nopriv_eaic_sessions', array( $this, 'ajax_sessions' ) );
 		add_action( 'wp_ajax_eaic_new',             array( $this, 'ajax_new_session' ) );
@@ -35,14 +31,10 @@ class EAIC_Engine {
 		add_action( 'wp_ajax_eaic_health',          array( $this, 'ajax_health' ) );
 	}
 
-	/**
-	 * Resolve the caller's identity (logged-in user or guest cookie).
-	 *
-	 * Will terminate the request if guest chat is disabled and the visitor
-	 * is not logged in.
-	 *
-	 * @return array{0:int,1:string}
-	 */
+	// -----------------------------------------------------------------------
+	// Identity & rate limiting
+	// -----------------------------------------------------------------------
+
 	private function get_identity() {
 		$user_id     = get_current_user_id();
 		$guest_token = '';
@@ -64,8 +56,6 @@ class EAIC_Engine {
 			}
 			if ( '' === $guest_token ) {
 				$guest_token = bin2hex( random_bytes( 32 ) );
-				// Use the array signature of setcookie() so we can pass SameSite.
-				// Requires PHP 7.3+; this plugin requires PHP 8.0+.
 				setcookie(
 					$cookie_name,
 					$guest_token,
@@ -78,7 +68,6 @@ class EAIC_Engine {
 						'samesite' => 'Lax',
 					)
 				);
-				// Make the just-set cookie available within the current request too.
 				$_COOKIE[ $cookie_name ] = $guest_token;
 			}
 		}
@@ -86,14 +75,6 @@ class EAIC_Engine {
 		return array( (int) $user_id, (string) $guest_token );
 	}
 
-	/**
-	 * Per-identity rate-limit gate.
-	 *
-	 * @param string $key    Rate-limit bucket key.
-	 * @param int    $max    Max requests allowed.
-	 * @param int    $window Rolling window in seconds.
-	 * @return bool True when over the limit.
-	 */
 	private function is_rate_limited( $key, $max, $window ) {
 		$transient = 'eaic_rl_' . md5( (string) $key );
 		$count     = (int) get_transient( $transient );
@@ -104,54 +85,233 @@ class EAIC_Engine {
 		return false;
 	}
 
-	/**
-	 * Return the caller's remote IP address.
-	 *
-	 * Uses REMOTE_ADDR only (set by the web server, not spoofable by the client).
-	 * Site owners running behind a trusted reverse proxy can override this via
-	 * the 'eaic_client_ip' filter.
-	 *
-	 * @return string
-	 */
 	private function get_client_ip() {
 		$ip = isset( $_SERVER['REMOTE_ADDR'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ) ) : '';
 		return (string) apply_filters( 'eaic_client_ip', $ip );
 	}
 
-	/**
-	 * Build the right provider object.
-	 *
-	 * @param string $slug Provider slug.
-	 * @return EAIC_Provider
-	 */
+	// -----------------------------------------------------------------------
+	// Provider factory
+	// -----------------------------------------------------------------------
+
 	private function get_provider( $slug ) {
 		$opts = EAIC_Options::all();
 		switch ( $slug ) {
-			case 'openai':
-				return new EAIC_OpenAI( $opts );
-			case 'anthropic':
-				return new EAIC_Anthropic( $opts );
-			case 'deepseek':
-				return new EAIC_DeepSeek( $opts );
-			case 'gemini':
-				return new EAIC_Gemini( $opts );
+			case 'openai':    return new EAIC_OpenAI( $opts );
+			case 'anthropic': return new EAIC_Anthropic( $opts );
+			case 'deepseek':  return new EAIC_DeepSeek( $opts );
+			case 'gemini':    return new EAIC_Gemini( $opts );
 			case 'ollama':
-			default:
-				return new EAIC_Ollama( $opts );
+			default:          return new EAIC_Ollama( $opts );
 		}
 	}
 
+	// -----------------------------------------------------------------------
+	// Shared input validation / session resolution
+	// -----------------------------------------------------------------------
+
 	/**
-	 * Ask the active provider to produce a short title for a new conversation.
-	 *
-	 * Sends a lightweight meta-prompt and strips any surrounding punctuation the
-	 * model may add. Falls back to a plain 50-char truncation on any error so
-	 * the extra call never breaks a chat session.
-	 *
-	 * @param string $provider_slug Provider that just replied.
-	 * @param string $first_message The user's very first message.
-	 * @return string Title (max 80 chars).
+	 * Parse + validate the common POST fields for both send & stream.
+	 * Returns array of [$message, $provider, $uuid, $system_prompt, $is_first].
+	 * Calls wp_send_json_error and exits on failure.
 	 */
+	private function resolve_request( $user_id, $guest_token ) {
+		$opts = EAIC_Options::all();
+
+		// Rate limiting.
+		$rl_window = max( 10, (int) $opts['rate_limit_window'] );
+		$rl_max    = max( 1,  (int) $opts['rate_limit_max'] );
+		$rate_key  = $user_id > 0 ? 'u' . $user_id : 'g' . $guest_token;
+		if ( $this->is_rate_limited( $rate_key, $rl_max, $rl_window ) ) {
+			wp_send_json_error( array( 'message' => __( 'Too many requests. Please wait a moment.', 'easyit-ai-chat' ) ), 429 );
+		}
+
+		$rl_ip_max = max( 1, (int) $opts['rate_limit_ip_max'] );
+		$client_ip = $this->get_client_ip();
+		if ( '' !== $client_ip && $this->is_rate_limited( 'ip_' . $client_ip, $rl_ip_max, $rl_window ) ) {
+			wp_send_json_error( array( 'message' => __( 'Too many requests. Please wait a moment.', 'easyit-ai-chat' ) ), 429 );
+		}
+
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce verified by caller (check_ajax_referer / wp_verify_nonce) before resolve_request() is invoked.
+		$message  = isset( $_POST['message'] )  ? sanitize_textarea_field( wp_unslash( $_POST['message'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing
+		$provider = isset( $_POST['provider'] ) ? sanitize_key( wp_unslash( $_POST['provider'] ) )           : 'ollama'; // phpcs:ignore WordPress.Security.NonceVerification.Missing
+		$uuid     = isset( $_POST['session'] )  ? sanitize_text_field( wp_unslash( $_POST['session'] ) )     : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing
+
+		$allowed_providers = isset( $opts['allowed_providers'] ) && is_array( $opts['allowed_providers'] )
+			? $opts['allowed_providers']
+			: array( 'ollama', 'openai', 'anthropic', 'deepseek', 'gemini' );
+		if ( ! in_array( $provider, $allowed_providers, true ) ) {
+			wp_send_json_error( array( 'message' => __( 'Provider not allowed.', 'easyit-ai-chat' ) ), 400 );
+		}
+
+		if ( '' === $message ) {
+			wp_send_json_error( array( 'message' => __( 'Empty message.', 'easyit-ai-chat' ) ), 400 );
+		}
+		if ( mb_strlen( $message ) > self::MAX_MESSAGE_LEN ) {
+			wp_send_json_error( array( 'message' => __( 'Message too long.', 'easyit-ai-chat' ) ), 400 );
+		}
+
+		// Session resolution.
+		if ( '' !== $uuid && $this->is_valid_uuid( $uuid ) ) {
+			$session = EAIC_DB::get_session( $uuid );
+			if ( ! $session || ! $this->can_access_session( $session, $user_id, $guest_token ) ) {
+				$uuid = '';
+			}
+		} else {
+			$uuid = '';
+		}
+		if ( '' === $uuid ) {
+			$uuid = EAIC_DB::create_session( $user_id, $guest_token, $provider, mb_substr( $message, 0, 40 ) );
+		}
+
+		$rows             = EAIC_DB::get_messages( $uuid );
+		$is_first_message = 0 === count( $rows );
+		$messages         = array();
+		foreach ( $rows as $row ) {
+			$messages[] = array( 'role' => $row['role'], 'content' => $row['content'] );
+		}
+		$messages[] = array( 'role' => 'user', 'content' => $message );
+
+		// System prompt.
+		if ( ! empty( $opts['lock_system_prompt'] ) ) {
+			$system_prompt = isset( $opts['system_prompt'] ) ? (string) $opts['system_prompt'] : '';
+		} else {
+			$system = isset( $_POST['system'] ) ? sanitize_textarea_field( wp_unslash( $_POST['system'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing
+			if ( mb_strlen( $system ) > self::MAX_SYSTEM_PROMPT_LEN ) {
+				$system = mb_substr( $system, 0, self::MAX_SYSTEM_PROMPT_LEN );
+			}
+			$system_prompt = '' !== $system ? $system : ( isset( $opts['system_prompt'] ) ? $opts['system_prompt'] : '' );
+		}
+
+		return array( $message, $provider, $uuid, $messages, $system_prompt, $is_first_message, $opts );
+	}
+
+	// -----------------------------------------------------------------------
+	// AJAX: classic (non-streaming) send — kept for fallback
+	// -----------------------------------------------------------------------
+
+	public function ajax_send() {
+		check_ajax_referer( 'eaic_nonce', 'nonce' );
+		list( $user_id, $guest_token ) = $this->get_identity();
+		list( $message, $provider, $uuid, $messages, $system_prompt, $is_first_message, $opts )
+			= $this->resolve_request( $user_id, $guest_token );
+
+		try {
+			$ai_reply = $this->get_provider( $provider )->chat( $messages, $system_prompt );
+		} catch ( Exception $e ) {
+			wp_send_json_error( array( 'message' => $e->getMessage() ) );
+		}
+
+		EAIC_DB::add_message( $uuid, 'user',      $message );
+		EAIC_DB::add_message( $uuid, 'assistant', $ai_reply );
+
+		$new_title = null;
+		if ( $is_first_message ) {
+			$new_title = $this->generate_title( $provider, $message );
+			EAIC_DB::update_session_title( $uuid, $new_title );
+		}
+
+		wp_send_json_success( array(
+			'reply'    => $ai_reply,
+			'session'  => $uuid,
+			'provider' => $provider,
+			'model'    => isset( $opts[ $provider . '_model' ] ) ? $opts[ $provider . '_model' ] : '',
+			'title'    => $new_title,
+		) );
+	}
+
+	// -----------------------------------------------------------------------
+	// AJAX: SSE streaming endpoint
+	// -----------------------------------------------------------------------
+
+	public function ajax_stream() {
+		// Verify nonce manually — can't use check_ajax_referer because we
+		// need to set SSE headers BEFORE any output, and nonce failure needs
+		// to emit an SSE error event, not a JSON response.
+		$nonce = isset( $_POST['nonce'] ) ? sanitize_text_field( wp_unslash( $_POST['nonce'] ) ) : '';
+		if ( ! wp_verify_nonce( $nonce, 'eaic_nonce' ) ) {
+			// Send as SSE error so JS can handle it gracefully.
+			$this->sse_headers();
+			EAIC_Provider::sse_send( 'error', array( 'message' => __( 'Security check failed.', 'easyit-ai-chat' ) ) );
+			EAIC_Provider::sse_send( 'done',  array( 'session' => '', 'title' => null ) );
+			exit;
+		}
+
+		list( $user_id, $guest_token ) = $this->get_identity();
+		list( $message, $provider, $uuid, $messages, $system_prompt, $is_first_message, $opts )
+			= $this->resolve_request( $user_id, $guest_token );
+
+		// Now we're safe — output SSE headers.
+		$this->sse_headers();
+
+		// Send session UUID immediately so JS can track the session before
+		// the first token arrives.
+		EAIC_Provider::sse_send( 'session', array( 'session' => $uuid ) );
+
+		$ai_reply = '';
+		try {
+			$ai_reply = $this->get_provider( $provider )->stream_chat( $messages, $system_prompt );
+		} catch ( Exception $e ) {
+			EAIC_Provider::sse_send( 'error', array( 'message' => $e->getMessage() ) );
+			EAIC_Provider::sse_send( 'done',  array( 'session' => $uuid, 'title' => null ) );
+			exit;
+		}
+
+		// Persist to DB.
+		EAIC_DB::add_message( $uuid, 'user',      $message );
+		EAIC_DB::add_message( $uuid, 'assistant', $ai_reply );
+
+		$new_title = null;
+		if ( $is_first_message ) {
+			$new_title = $this->generate_title( $provider, $message );
+			EAIC_DB::update_session_title( $uuid, $new_title );
+		}
+
+		// Final event — JS knows streaming is complete.
+		EAIC_Provider::sse_send( 'done', array(
+			'session'  => $uuid,
+			'provider' => $provider,
+			'model'    => isset( $opts[ $provider . '_model' ] ) ? $opts[ $provider . '_model' ] : '',
+			'title'    => $new_title,
+		) );
+
+		exit;
+	}
+
+	/**
+	 * Set SSE response headers.
+	 */
+	private function sse_headers() {
+		// Disable output buffering completely.
+		while ( ob_get_level() > 0 ) {
+			ob_end_clean();
+		}
+
+		// Prevent WP/PHP caching or compression from buffering our stream.
+		if ( function_exists( 'apache_setenv' ) ) {
+			@apache_setenv( 'no-gzip', '1' ); // phpcs:ignore
+		}
+		@ini_set( 'zlib.output_compression', '0' ); // phpcs:ignore
+		@ini_set( 'implicit_flush', '1' );           // phpcs:ignore
+		ob_implicit_flush( true );
+
+		header( 'Content-Type: text/event-stream; charset=UTF-8' );
+		header( 'Cache-Control: no-cache, no-store, must-revalidate' );
+		header( 'Content-Encoding: identity' ); // Prevent Apache mod_deflate from buffering the stream.
+		header( 'X-Accel-Buffering: no' );      // Nginx: disable proxy buffering.
+		header( 'Connection: keep-alive' );
+
+		// Prime the connection: send a padding comment immediately so the browser
+		// opens the stream and begins reading before the first real event arrives.
+		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- str_repeat produces only spaces; no user data involved.
+		echo ':' . str_repeat( ' ', 4096 ) . "\n\n";
+		flush();
+	}
+
+	// -----------------------------------------------------------------------
+	// Auto-title
+	// -----------------------------------------------------------------------
+
 	private function generate_title( $provider_slug, $first_message ) {
 		$prompt = sprintf(
 			'Create a short 4-6 word title for a chat that starts with: "%s". Reply with the title only — no quotes, no trailing punctuation.',
@@ -163,7 +323,7 @@ class EAIC_Engine {
 				array( array( 'role' => 'user', 'content' => $prompt ) ),
 				''
 			);
-			$title = trim( strip_tags( (string) $raw ) );
+			$title = trim( wp_strip_all_tags( (string) $raw ) );
 			$title = trim( $title, '"\'„"«»' );
 			return '' !== $title ? mb_substr( $title, 0, 80 ) : mb_substr( $first_message, 0, 50 );
 		} catch ( Exception $e ) {
@@ -171,24 +331,17 @@ class EAIC_Engine {
 		}
 	}
 
-	/**
-	 * Validate a UUIDv4 string.
-	 *
-	 * @param string $uuid Value to check.
-	 * @return bool
-	 */
+	// -----------------------------------------------------------------------
+	// Helpers
+	// -----------------------------------------------------------------------
+
 	private function is_valid_uuid( $uuid ) {
-		return (bool) preg_match( '/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i', (string) $uuid );
+		return (bool) preg_match(
+			'/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i',
+			(string) $uuid
+		);
 	}
 
-	/**
-	 * Ownership check for a session.
-	 *
-	 * @param array  $session     Session row.
-	 * @param int    $user_id     Current user ID.
-	 * @param string $guest_token Current guest cookie token.
-	 * @return bool
-	 */
 	private function can_access_session( array $session, $user_id, $guest_token ) {
 		if ( (int) $user_id > 0 ) {
 			return (int) $session['user_id'] === (int) $user_id;
@@ -196,170 +349,38 @@ class EAIC_Engine {
 		return '' !== (string) $guest_token && $session['guest_token'] === $guest_token;
 	}
 
-	/**
-	 * POST /eaic_send  — submit a chat message.
-	 *
-	 * @return void
-	 */
-	public function ajax_send() {
-		check_ajax_referer( 'eaic_nonce', 'nonce' );
-		list( $user_id, $guest_token ) = $this->get_identity();
+	// -----------------------------------------------------------------------
+	// Other AJAX endpoints (unchanged)
+	// -----------------------------------------------------------------------
 
-		$opts = EAIC_Options::all();
-
-		// --- Rate limiting: per-identity ---
-		$rl_window = max( 10, (int) $opts['rate_limit_window'] );
-		$rl_max    = max( 1,  (int) $opts['rate_limit_max'] );
-		$rate_key  = $user_id > 0 ? 'u' . $user_id : 'g' . $guest_token;
-		if ( $this->is_rate_limited( $rate_key, $rl_max, $rl_window ) ) {
-			wp_send_json_error(
-				array( 'message' => __( 'Too many requests. Please wait a moment.', 'easyit-ai-chat' ) ),
-				429
-			);
-		}
-
-		// --- Rate limiting: per-IP (hard cap across all sessions from one IP) ---
-		$rl_ip_max = max( 1, (int) $opts['rate_limit_ip_max'] );
-		$client_ip = $this->get_client_ip();
-		if ( '' !== $client_ip && $this->is_rate_limited( 'ip_' . $client_ip, $rl_ip_max, $rl_window ) ) {
-			wp_send_json_error(
-				array( 'message' => __( 'Too many requests. Please wait a moment.', 'easyit-ai-chat' ) ),
-				429
-			);
-		}
-
-		// Nonce verified above by check_ajax_referer().
-		$message  = isset( $_POST['message'] )  ? sanitize_textarea_field( wp_unslash( $_POST['message'] ) ) : '';
-		$provider = isset( $_POST['provider'] ) ? sanitize_key( wp_unslash( $_POST['provider'] ) )           : 'ollama';
-		$uuid     = isset( $_POST['session'] )  ? sanitize_text_field( wp_unslash( $_POST['session'] ) )     : '';
-
-		// --- Provider whitelist ---
-		$allowed_providers = isset( $opts['allowed_providers'] ) && is_array( $opts['allowed_providers'] )
-			? $opts['allowed_providers']
-			: array( 'ollama', 'openai', 'anthropic', 'deepseek' );
-		if ( ! in_array( $provider, $allowed_providers, true ) ) {
-			wp_send_json_error(
-				array( 'message' => __( 'Provider not allowed.', 'easyit-ai-chat' ) ),
-				400
-			);
-		}
-
-		if ( '' === $message ) {
-			wp_send_json_error( array( 'message' => __( 'Empty message.', 'easyit-ai-chat' ) ), 400 );
-		}
-		if ( mb_strlen( $message ) > self::MAX_MESSAGE_LEN ) {
-			wp_send_json_error( array( 'message' => __( 'Message too long.', 'easyit-ai-chat' ) ), 400 );
-		}
-
-		if ( '' !== $uuid && $this->is_valid_uuid( $uuid ) ) {
-			$session = EAIC_DB::get_session( $uuid );
-			if ( ! $session || ! $this->can_access_session( $session, $user_id, $guest_token ) ) {
-				$uuid = '';
-			}
-		} else {
-			$uuid = '';
-		}
-
-		if ( '' === $uuid ) {
-			$uuid = EAIC_DB::create_session( $user_id, $guest_token, $provider, mb_substr( $message, 0, 40 ) );
-		}
-
-		$rows              = EAIC_DB::get_messages( $uuid );
-		$is_first_message  = 0 === count( $rows );
-		$messages          = array();
-		foreach ( $rows as $row ) {
-			$messages[] = array( 'role' => $row['role'], 'content' => $row['content'] );
-		}
-		$messages[] = array( 'role' => 'user', 'content' => $message );
-
-		// --- System prompt: locked or client-supplied ---
-		if ( ! empty( $opts['lock_system_prompt'] ) ) {
-			// Admin has locked the prompt — ignore anything the client sends.
-			$system_prompt = isset( $opts['system_prompt'] ) ? (string) $opts['system_prompt'] : '';
-		} else {
-			// Client may supply a shortcode-level override; cap length to prevent flooding.
-			$system = isset( $_POST['system'] ) ? sanitize_textarea_field( wp_unslash( $_POST['system'] ) ) : '';
-			if ( mb_strlen( $system ) > self::MAX_SYSTEM_PROMPT_LEN ) {
-				$system = mb_substr( $system, 0, self::MAX_SYSTEM_PROMPT_LEN );
-			}
-			$system_prompt = '' !== $system ? $system : ( isset( $opts['system_prompt'] ) ? $opts['system_prompt'] : '' );
-		}
-
-		try {
-			$ai_reply = $this->get_provider( $provider )->chat( $messages, $system_prompt );
-		} catch ( Exception $e ) {
-			wp_send_json_error( array( 'message' => $e->getMessage() ) );
-		}
-
-		EAIC_DB::add_message( $uuid, 'user',      $message  );
-		EAIC_DB::add_message( $uuid, 'assistant', $ai_reply );
-
-		// Generate an LLM title on the first exchange; subsequent messages leave the title alone.
-		$new_title = null;
-		if ( $is_first_message ) {
-			$new_title = $this->generate_title( $provider, $message );
-			EAIC_DB::update_session_title( $uuid, $new_title );
-		}
-
-		wp_send_json_success(
-			array(
-				'reply'    => $ai_reply,
-				'session'  => $uuid,
-				'provider' => $provider,
-				'model'    => isset( $opts[ $provider . '_model' ] ) ? $opts[ $provider . '_model' ] : '',
-				'title'    => $new_title,
-			)
-		);
-	}
-
-	/**
-	 * POST /eaic_sessions  — list sessions for the caller.
-	 *
-	 * @return void
-	 */
 	public function ajax_sessions() {
 		check_ajax_referer( 'eaic_nonce', 'nonce' );
 		list( $user_id, $guest_token ) = $this->get_identity();
 		wp_send_json_success( array( 'sessions' => EAIC_DB::get_sessions( $user_id, $guest_token ) ) );
 	}
 
-	/**
-	 * POST /eaic_new  — create an empty session.
-	 *
-	 * @return void
-	 */
 	public function ajax_new_session() {
 		check_ajax_referer( 'eaic_nonce', 'nonce' );
 		list( $user_id, $guest_token ) = $this->get_identity();
 
-		// Nonce verified above by check_ajax_referer().
 		$provider = isset( $_POST['provider'] ) ? sanitize_key( wp_unslash( $_POST['provider'] ) ) : 'ollama';
 
 		$opts              = EAIC_Options::all();
 		$allowed_providers = isset( $opts['allowed_providers'] ) && is_array( $opts['allowed_providers'] )
 			? $opts['allowed_providers']
-			: array( 'ollama', 'openai', 'anthropic', 'deepseek' );
+			: array( 'ollama', 'openai', 'anthropic', 'deepseek', 'gemini' );
 		if ( ! in_array( $provider, $allowed_providers, true ) ) {
-			wp_send_json_error(
-				array( 'message' => __( 'Provider not allowed.', 'easyit-ai-chat' ) ),
-				400
-			);
+			wp_send_json_error( array( 'message' => __( 'Provider not allowed.', 'easyit-ai-chat' ) ), 400 );
 		}
 
 		$uuid = EAIC_DB::create_session( $user_id, $guest_token, $provider, __( 'New Chat', 'easyit-ai-chat' ) );
 		wp_send_json_success( array( 'session' => $uuid ) );
 	}
 
-	/**
-	 * POST /eaic_history  — fetch a session's messages.
-	 *
-	 * @return void
-	 */
 	public function ajax_history() {
 		check_ajax_referer( 'eaic_nonce', 'nonce' );
 		list( $user_id, $guest_token ) = $this->get_identity();
 
-		// Nonce verified above by check_ajax_referer().
 		$uuid = isset( $_POST['session'] ) ? sanitize_text_field( wp_unslash( $_POST['session'] ) ) : '';
 		if ( ! $this->is_valid_uuid( $uuid ) ) {
 			wp_send_json_error( array( 'message' => __( 'Invalid session.', 'easyit-ai-chat' ) ), 400 );
@@ -370,25 +391,17 @@ class EAIC_Engine {
 			wp_send_json_error( array( 'message' => __( 'Session not found.', 'easyit-ai-chat' ) ), 404 );
 		}
 
-		wp_send_json_success(
-			array(
-				'messages' => EAIC_DB::get_messages( $uuid ),
-				'provider' => $session['provider'],
-				'title'    => $session['title'],
-			)
-		);
+		wp_send_json_success( array(
+			'messages' => EAIC_DB::get_messages( $uuid ),
+			'provider' => $session['provider'],
+			'title'    => $session['title'],
+		) );
 	}
 
-	/**
-	 * POST /eaic_delete  — delete a session.
-	 *
-	 * @return void
-	 */
 	public function ajax_delete() {
 		check_ajax_referer( 'eaic_nonce', 'nonce' );
 		list( $user_id, $guest_token ) = $this->get_identity();
 
-		// Nonce verified above by check_ajax_referer().
 		$uuid = isset( $_POST['session'] ) ? sanitize_text_field( wp_unslash( $_POST['session'] ) ) : '';
 		if ( ! $this->is_valid_uuid( $uuid ) ) {
 			wp_send_json_error( array( 'message' => __( 'Invalid session.', 'easyit-ai-chat' ) ), 400 );
@@ -403,18 +416,12 @@ class EAIC_Engine {
 		wp_send_json_success( array( 'done' => true ) );
 	}
 
-	/**
-	 * POST /eaic_health  — admin-only provider connectivity test.
-	 *
-	 * @return void
-	 */
 	public function ajax_health() {
 		check_ajax_referer( 'eaic_admin_nonce', 'nonce' );
 		if ( ! current_user_can( 'manage_options' ) ) {
 			wp_send_json_error( array( 'message' => __( 'Unauthorised.', 'easyit-ai-chat' ) ), 403 );
 		}
 
-		// Nonce verified above by check_ajax_referer().
 		$provider = isset( $_POST['provider'] ) ? sanitize_key( wp_unslash( $_POST['provider'] ) ) : 'ollama';
 
 		try {
