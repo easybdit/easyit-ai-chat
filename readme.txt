@@ -1,14 +1,14 @@
 === EasyIT AI Chat — Chatbot for OpenAI, Claude, DeepSeek, Gemini & Ollama ===
 Contributors: easyit
-Tags: chatbot, ai chatbot, openai, claude, gemini
+Tags: chatbot, ai chatbot, openai, woocommerce, gemini
 Requires at least: 6.0
 Tested up to: 7.0
 Requires PHP: 8.0
-Stable tag: 1.0.4
+Stable tag: 1.0.6
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-AI chatbot for WordPress — add ChatGPT, Claude, Gemini, DeepSeek or local Ollama to any page with one shortcode. Bring your own API keys.
+AI chatbot for WordPress — add ChatGPT, Claude, Gemini, DeepSeek or local Ollama to any page with one shortcode. Includes WooCommerce Order Status Bot and Product Q&A Bot. Bring your own API keys.
 
 == Description ==
 
@@ -27,6 +27,17 @@ Choose from the world's best AI providers, or run a local model for free with Ol
 * 🧠 **Anthropic (Claude)** — Claude 3.5 Sonnet, Claude 3.5 Haiku, Claude 3 Opus.
 * 🔍 **DeepSeek** — DeepSeek-Chat, DeepSeek-Reasoner.
 * ✦ **Google Gemini** — Gemini 1.5 Flash, Gemini 1.5 Pro, Gemini 2.0 Flash.
+
+= 🛒 WooCommerce Bots (Pro Features) =
+
+**Order Status Bot** — Let customers check their own order status, items, total, and date by typing naturally. Customers verify with order number + email. Zero data leaks.
+
+`[eaic_order_chat]`
+
+**Product Q&A Bot** — AI answers questions about any product (price, stock, description, attributes). Smart keyword extraction finds the right product automatically. Works sitewide or on a specific product page.
+
+`[eaic_product_chat]`
+`[eaic_product_chat product_id="42"]`
 
 = 🚀 Key Features =
 
@@ -116,6 +127,18 @@ Locally on your server, or any machine reachable via HTTP. Visit [ollama.com](ht
 
 Yes — in two custom database tables in your own database. All data is deleted when you uninstall the plugin. Guest sessions use a cookie token and are never linked to personal data.
 
+= Does the Order Status Bot work for guests? =
+
+Yes. Guests verify ownership by entering their order number + billing email. The bot will only show data for orders that match. Logged-in users see their own orders automatically.
+
+= Can I put the Product Q&A Bot on a specific product page? =
+
+Yes — use `[eaic_product_chat product_id="42"]` to lock the bot to one product. Without the attribute, the bot searches all published products based on what the customer asks.
+
+= Do the WooCommerce bots require WooCommerce? =
+
+Yes. Both bots activate automatically when WooCommerce is installed and active. They do nothing on sites without WooCommerce.
+
 = Can I disable conversation history? =
 
 A "no-storage" mode is on the roadmap. Currently you can clear conversations using the trash icon in the chat sidebar.
@@ -148,6 +171,18 @@ Yes — GPL-2.0-or-later. The only costs are to your chosen AI provider. Ollama 
 
 == Changelog ==
 
+= 1.0.6 =
+* Added Product Q&A Bot — shortcode `[eaic_product_chat]` and `[eaic_product_chat product_id="42"]`.
+* Smart keyword extraction strips stop words before WooCommerce product search.
+* Green-accented UI matching main chat widget design language.
+* Suggestion chips on welcome screen for common product questions.
+
+= 1.0.5 =
+* Added WooCommerce Order Status Bot — shortcode `[eaic_order_chat]`.
+* Customers verify ownership via order number + billing email (or logged-in user match).
+* Fixed activation hook: `wp_eaic_order_chats` table was not being created on first activation.
+* Redesigned Order Bot UI — dark header, styled message bubbles, thinking-dots animation, SVG send button.
+
 = 1.0.4 =
 * Added Google Gemini provider (Gemini 1.5 Flash, Gemini 1.5 Pro, Gemini 2.0 Flash).
 * Added auto-title generation — first message generates a meaningful session title via the active AI provider.
@@ -173,6 +208,12 @@ Yes — GPL-2.0-or-later. The only costs are to your chosen AI provider. Ollama 
 * Initial public release.
 
 == Upgrade Notice ==
+
+= 1.0.6 =
+Adds Product Q&A Bot with smart keyword search. Requires WooCommerce for bot features.
+
+= 1.0.5 =
+Adds WooCommerce Order Status Bot. Includes activation fix — deactivate and reactivate if upgrading from 1.0.4.
 
 = 1.0.4 =
 Adds Google Gemini support, auto-title sessions, data retention cron, and per-IP rate limiting. Recommended for all users.
