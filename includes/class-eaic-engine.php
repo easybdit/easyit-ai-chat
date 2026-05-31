@@ -301,7 +301,47 @@ class EAIC_Engine {
 			'title'    => $new_title,
 		) );
 
+		// Fire webhook asynchronously (after SSE response).
+		$this->fire_webhook( $uuid, $message, $ai_reply, $provider );
+
 		exit;
+	}
+
+	/**
+	 * Send a POST request to the configured webhook URL.
+	 *
+	 * @param string $session_uuid Session UUID.
+	 * @param string $user_message User message.
+	 * @param string $ai_response  AI response.
+	 * @param string $provider     Provider slug.
+	 * @return void
+	 */
+	private function fire_webhook( $session_uuid, $user_message, $ai_response, $provider ) {
+		$url = EAIC_Options::get( 'webhook_url', '' );
+		if ( ! $url ) { return; }
+
+		$payload = wp_json_encode( array(
+			'session_uuid' => $session_uuid,
+			'user_message' => $user_message,
+			'ai_response'  => $ai_response,
+			'provider'     => $provider,
+			'timestamp'    => gmdate( 'c' ),
+			'site_url'     => get_site_url(),
+		) );
+
+		$headers = array( 'Content-Type' => 'application/json' );
+
+		$secret = EAIC_Options::get( 'webhook_secret', '' );
+		if ( $secret ) {
+			$headers['X-EAIC-Signature'] = 'sha256=' . hash_hmac( 'sha256', $payload, $secret );
+		}
+
+		wp_remote_post( $url, array(
+			'body'      => $payload,
+			'headers'   => $headers,
+			'timeout'   => 5,
+			'blocking'  => false, // fire and forget
+		) );
 	}
 
 	/**

@@ -4,7 +4,7 @@ Tags: chatbot, ai chatbot, openai, gemini, ollama
 Requires at least: 6.0
 Tested up to: 7.0
 Requires PHP: 8.0
-Stable tag: 1.0.30
+Stable tag: 1.0.31
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -183,6 +183,9 @@ WooCommerce-specific bots (Order Status Bot, Product Q&A Bot, Floating Widget) a
 
 == Changelog ==
 
+= 1.0.31 =
+* Added Webhook Support — configure a webhook URL in Settings → Webhook. After each AI response, the plugin sends a non-blocking POST to your URL with JSON payload: session_uuid, user_message, ai_response, provider, timestamp. Optional HMAC-SHA256 secret key adds an X-EAIC-Signature header for verification. Compatible with Zapier, Make (Integromat), n8n, and any HTTP endpoint.
+
 = 1.0.30 =
 * Added Multiple Bot Profiles — create named configurations (slug, name, provider, title, system prompt) in Settings → Profiles. Load any profile with `[eaic_chat profile="your-slug"]`. Profiles appear in the Shortcode Builder for one-click selection.
 
@@ -288,6 +291,9 @@ WooCommerce-specific bots (Order Status Bot, Product Q&A Bot, Floating Widget) a
 * Initial public release.
 
 == Upgrade Notice ==
+
+= 1.0.31 =
+New: Webhook support — POST to any URL after each AI response. JSON payload + optional HMAC signature. Settings → Webhook.
 
 = 1.0.30 =
 New: Multiple Bot Profiles — named configurations loaded via profile="slug" shortcode attribute.

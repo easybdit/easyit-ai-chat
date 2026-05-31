@@ -67,6 +67,7 @@ $eaic_option_key = EAIC_Options::OPTION_KEY;
 				<button type="button" class="eaic-tab-btn" data-tab="ui"><span class="eaic-tab-icon">🎨</span> <?php esc_html_e( 'UI', 'easyit-ai-chat' ); ?></button>
 				<button type="button" class="eaic-tab-btn" data-tab="security"><span class="eaic-tab-icon">🔒</span> <?php esc_html_e( 'Security', 'easyit-ai-chat' ); ?></button>
 				<button type="button" class="eaic-tab-btn" data-tab="profiles"><span class="eaic-tab-icon">🤖</span> <?php esc_html_e( 'Profiles', 'easyit-ai-chat' ); ?></button>
+				<button type="button" class="eaic-tab-btn" data-tab="webhook"><span class="eaic-tab-icon">🔗</span> <?php esc_html_e( 'Webhook', 'easyit-ai-chat' ); ?></button>
 			</div>
 
 			<!-- OLLAMA -->
@@ -514,6 +515,26 @@ $eaic_option_key = EAIC_Options::OPTION_KEY;
 				</div>
 
 			</div><!-- /#eaic-panel-security -->
+
+			<!-- WEBHOOK -->
+			<div class="eaic-panel" id="eaic-panel-webhook">
+				<div class="eaic-card">
+					<div class="eaic-card-title"><span class="icon">🔗</span> <?php esc_html_e( 'Webhook', 'easyit-ai-chat' ); ?></div>
+					<p class="eaic-field-desc" style="margin-bottom:12px"><?php esc_html_e( 'Send a POST request to a URL every time an AI response completes. Useful for logging, CRM integration, or Zapier/Make automation.', 'easyit-ai-chat' ); ?></p>
+
+					<div class="eaic-field">
+						<label class="eaic-label" for="eaic-webhook-url"><?php esc_html_e( 'Webhook URL', 'easyit-ai-chat' ); ?></label>
+						<input id="eaic-webhook-url" type="url" name="<?php echo esc_attr( EAIC_Options::OPTION_KEY ); ?>[webhook_url]" value="<?php echo esc_url( $eaic_opts['webhook_url'] ); ?>" placeholder="https://your-site.com/webhook" style="max-width:500px;width:100%">
+						<div class="eaic-field-desc"><?php esc_html_e( 'Leave empty to disable. POST payload: session_uuid, user_message, ai_response, provider, timestamp.', 'easyit-ai-chat' ); ?></div>
+					</div>
+
+					<div class="eaic-field">
+						<label class="eaic-label" for="eaic-webhook-secret"><?php esc_html_e( 'Secret Key (optional)', 'easyit-ai-chat' ); ?></label>
+						<input id="eaic-webhook-secret" type="text" name="<?php echo esc_attr( EAIC_Options::OPTION_KEY ); ?>[webhook_secret]" value="<?php echo esc_attr( $eaic_opts['webhook_secret'] ); ?>" placeholder="<?php esc_attr_e( 'Optional HMAC secret', 'easyit-ai-chat' ); ?>" style="max-width:400px;width:100%">
+						<div class="eaic-field-desc"><?php esc_html_e( 'If set, a HMAC-SHA256 signature of the payload is sent in the X-EAIC-Signature header.', 'easyit-ai-chat' ); ?></div>
+					</div>
+				</div>
+			</div><!-- /#eaic-panel-webhook -->
 
 			<!-- BOT PROFILES -->
 			<div class="eaic-panel" id="eaic-panel-profiles">

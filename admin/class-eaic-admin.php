@@ -170,6 +170,8 @@ class EAIC_Admin {
 			'bot_profiles'                => $this->sanitize_bot_profiles( isset( $input['bot_profiles'] )
 				? ( is_string( $input['bot_profiles'] ) ? json_decode( wp_unslash( $input['bot_profiles'] ), true ) : $input['bot_profiles'] )
 				: $current['bot_profiles'] ),
+			'webhook_url'                 => isset( $input['webhook_url'] )    ? esc_url_raw( $input['webhook_url'] )          : $current['webhook_url'],
+			'webhook_secret'              => isset( $input['webhook_secret'] ) ? sanitize_text_field( $input['webhook_secret'] ) : $current['webhook_secret'],
 		);
 	}
 
