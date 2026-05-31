@@ -4,7 +4,7 @@ Tags: chatbot, ai chatbot, openai, gemini, ollama
 Requires at least: 6.0
 Tested up to: 7.0
 Requires PHP: 8.0
-Stable tag: 1.0.15
+Stable tag: 1.0.16
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -183,6 +183,9 @@ WooCommerce-specific bots (Order Status Bot, Product Q&A Bot, Floating Widget) a
 
 == Changelog ==
 
+= 1.0.16 =
+* Added Conversation Export — a download button in the chat topbar lets users save the current conversation as a .txt file. Enable in Settings → UI.
+
 = 1.0.15 =
 * Added Voice Input — enable a microphone button in the input area. Uses the browser's Web Speech API (Chrome, Edge, Safari). Speech is transcribed directly into the text field. Enable in Settings → UI. Requires HTTPS.
 
@@ -243,6 +246,9 @@ WooCommerce-specific bots (Order Status Bot, Product Q&A Bot, Floating Widget) a
 * Initial public release.
 
 == Upgrade Notice ==
+
+= 1.0.16 =
+New feature: Conversation Export — download button saves current chat as a .txt file.
 
 = 1.0.15 =
 New feature: Voice Input — microphone button with Web Speech API, transcribes speech into the chat input.

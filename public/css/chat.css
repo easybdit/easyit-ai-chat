@@ -211,6 +211,21 @@
 }
 .eaic-widget .eaic-toggle-sidebar:hover     { background:#f3f4f6 !important; color:#111827 !important; }
 .eaic-widget .eaic-delete-session-btn:hover { background:rgba(239,68,68,.08) !important; color:#ef4444 !important; }
+.eaic-widget .eaic-export-btn {
+	background:    transparent !important;
+	border:        none !important;
+	cursor:        pointer !important;
+	color:         var(--c-muted) !important;
+	padding:       6px !important;
+	border-radius: 6px !important;
+	display:       flex !important;
+	align-items:   center !important;
+	justify-content:center !important;
+	box-shadow:    none !important;
+	flex-shrink:   0 !important;
+	transition:    background .12s, color .12s !important;
+}
+.eaic-widget .eaic-export-btn:hover { background:#f3f4f6 !important; color:#111827 !important; }
 
 /* ---- Messages area ---- */
 .eaic-widget .eaic-messages {

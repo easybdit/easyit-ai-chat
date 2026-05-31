@@ -182,6 +182,7 @@
 		this.elMessages     = root.querySelector( '.eaic-messages' );
 		this.elInput        = root.querySelector( '.eaic-input' );
 		this.elSendBtn      = root.querySelector( '.eaic-send-btn' );
+		this.elExportBtn    = root.querySelector( '.eaic-export-btn' );
 
 		if ( this.elMessages && this.msgHeight ) {
 			this.elMessages.style.maxHeight = this.msgHeight + 'px';
@@ -237,6 +238,10 @@
 
 		if ( this.elDeleteBtn ) {
 			this.elDeleteBtn.addEventListener( 'click', function () { self.deleteCurrent(); } );
+		}
+
+		if ( this.elExportBtn ) {
+			this.elExportBtn.addEventListener( 'click', function () { self.exportConversation(); } );
 		}
 
 		// Copy-code buttons (delegated).
@@ -785,6 +790,45 @@
 		if ( wrap.children.length > 0 ) {
 			this.elMessages.appendChild( wrap );
 		}
+	};
+
+	/* ------------------------------------------------------------------ */
+	/* Export conversation                                                  */
+	/* ------------------------------------------------------------------ */
+
+	Widget.prototype.exportConversation = function () {
+		if ( ! this.elMessages ) { return; }
+		var rows = this.elMessages.querySelectorAll( '.eaic-msg--user, .eaic-msg--assistant' );
+		if ( ! rows || ! rows.length ) { return; }
+
+		var title = ( this.elSessionTitle && this.elSessionTitle.textContent.trim() ) || 'Chat';
+		var lines = [];
+		lines.push( '=== ' + title + ' ===' );
+		lines.push( 'Exported: ' + new Date().toLocaleString() );
+		lines.push( '' );
+
+		rows.forEach( function ( msg ) {
+			if ( msg.classList.contains( 'eaic-welcome-bubble' ) ) { return; }
+			var isUser   = msg.classList.contains( 'eaic-msg--user' );
+			var content  = msg.querySelector( '.eaic-msg-content' );
+			if ( ! content ) { return; }
+			var text = ( content.innerText || content.textContent || '' ).trim();
+			if ( ! text ) { return; }
+			lines.push( ( isUser ? 'You' : 'AI' ) + ': ' + text );
+			lines.push( '' );
+		} );
+
+		if ( lines.length <= 3 ) { return; }
+
+		var blob = new Blob( [ lines.join( '\n' ) ], { type: 'text/plain;charset=utf-8' } );
+		var url  = URL.createObjectURL( blob );
+		var a    = document.createElement( 'a' );
+		a.href     = url;
+		a.download = title.replace( /[^a-z0-9\-_ ]/gi, '' ).trim().replace( /\s+/g, '-' ).toLowerCase() + '.txt';
+		document.body.appendChild( a );
+		a.click();
+		document.body.removeChild( a );
+		URL.revokeObjectURL( url );
 	};
 
 	/* ------------------------------------------------------------------ */

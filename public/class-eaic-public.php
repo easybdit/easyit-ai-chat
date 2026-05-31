@@ -85,6 +85,7 @@ class EAIC_Public {
 				'welcome_message_text'        => $opts['welcome_message_text'],
 				'ai_avatar_url'               => $opts['ai_avatar_url'],
 				'voice_input_enabled'         => (bool) $opts['voice_input_enabled'],
+				'export_enabled'              => (bool) $opts['export_enabled'],
 				'suggested_questions_enabled' => (bool) $opts['suggested_questions_enabled'],
 				'suggested_questions'         => array_slice(
 					array_values( array_filter( array_map( 'trim', explode( "\n", $opts['suggested_questions'] ) ) ) ),
@@ -178,6 +179,11 @@ class EAIC_Public {
 				<button class="eaic-delete-session-btn" type="button" title="<?php esc_attr_e( 'Delete conversation', 'easyit-ai-chat' ); ?>">
 					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16" aria-hidden="true"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
 				</button>
+				<?php if ( ! empty( $opts['export_enabled'] ) ) : ?>
+				<button class="eaic-export-btn" type="button" title="<?php esc_attr_e( 'Export conversation', 'easyit-ai-chat' ); ?>" aria-label="<?php esc_attr_e( 'Export conversation', 'easyit-ai-chat' ); ?>">
+					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+				</button>
+				<?php endif; ?>
 			</div>
 
 			<div class="eaic-messages" role="log" aria-live="polite">

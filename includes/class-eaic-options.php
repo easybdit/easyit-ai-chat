@@ -63,6 +63,7 @@ class EAIC_Options {
 			'color_user_bg'                => '#1a56db',
 			'color_bot_bg'                 => '#f3f4f6',
 			'voice_input_enabled'          => false,
+			'export_enabled'               => false,
 		);
 	}
 
