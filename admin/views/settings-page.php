@@ -331,6 +331,36 @@ $eaic_option_key = EAIC_Options::OPTION_KEY;
 				</div>
 
 				<div class="eaic-card">
+					<div class="eaic-card-title"><span class="icon">🎨</span> <?php esc_html_e( 'Colors', 'easyit-ai-chat' ); ?></div>
+					<div class="eaic-field-grid">
+						<div class="eaic-field">
+							<label class="eaic-label" for="eaic-color-accent"><?php esc_html_e( 'Accent / Primary Color', 'easyit-ai-chat' ); ?></label>
+							<div style="display:flex;align-items:center;gap:8px;">
+								<input type="color" id="eaic-color-accent" name="<?php echo esc_attr( $eaic_option_key ); ?>[color_accent]" value="<?php echo esc_attr( $eaic_opts['color_accent'] ); ?>">
+								<button type="button" class="button eaic-color-reset" data-target="eaic-color-accent" data-default="#4f46e5"><?php esc_html_e( 'Reset', 'easyit-ai-chat' ); ?></button>
+							</div>
+							<div class="eaic-field-desc"><?php esc_html_e( 'Send button, chips, borders, focus rings.', 'easyit-ai-chat' ); ?></div>
+						</div>
+						<div class="eaic-field">
+							<label class="eaic-label" for="eaic-color-user-bg"><?php esc_html_e( 'User Message Color', 'easyit-ai-chat' ); ?></label>
+							<div style="display:flex;align-items:center;gap:8px;">
+								<input type="color" id="eaic-color-user-bg" name="<?php echo esc_attr( $eaic_option_key ); ?>[color_user_bg]" value="<?php echo esc_attr( $eaic_opts['color_user_bg'] ); ?>">
+								<button type="button" class="button eaic-color-reset" data-target="eaic-color-user-bg" data-default="#1a56db"><?php esc_html_e( 'Reset', 'easyit-ai-chat' ); ?></button>
+							</div>
+							<div class="eaic-field-desc"><?php esc_html_e( 'User message bubble background.', 'easyit-ai-chat' ); ?></div>
+						</div>
+						<div class="eaic-field">
+							<label class="eaic-label" for="eaic-color-bot-bg"><?php esc_html_e( 'AI Message Color', 'easyit-ai-chat' ); ?></label>
+							<div style="display:flex;align-items:center;gap:8px;">
+								<input type="color" id="eaic-color-bot-bg" name="<?php echo esc_attr( $eaic_option_key ); ?>[color_bot_bg]" value="<?php echo esc_attr( $eaic_opts['color_bot_bg'] ); ?>">
+								<button type="button" class="button eaic-color-reset" data-target="eaic-color-bot-bg" data-default="#f3f4f6"><?php esc_html_e( 'Reset', 'easyit-ai-chat' ); ?></button>
+							</div>
+							<div class="eaic-field-desc"><?php esc_html_e( 'AI message bubble background.', 'easyit-ai-chat' ); ?></div>
+						</div>
+					</div>
+				</div>
+
+				<div class="eaic-card">
 					<div class="eaic-card-title"><span class="icon">🤖</span> <?php esc_html_e( 'AI Avatar', 'easyit-ai-chat' ); ?></div>
 					<div class="eaic-field">
 						<label class="eaic-label"><?php esc_html_e( 'Custom Avatar Image', 'easyit-ai-chat' ); ?></label>

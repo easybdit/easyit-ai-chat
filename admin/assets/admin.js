@@ -44,6 +44,13 @@
 		$('#eaic-sq-wrap').toggle($(this).is(':checked'));
 	});
 
+	// Color reset buttons
+	$(document).on('click', '.eaic-color-reset', function () {
+		var target = $(this).data('target');
+		var def    = $(this).data('default');
+		$('#' + target).val(def);
+	});
+
 	// AI Avatar — WordPress media uploader
 	$(document).on('click', '#eaic-avatar-upload-btn', function (e) {
 		e.preventDefault();

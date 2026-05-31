@@ -59,6 +59,9 @@ class EAIC_Options {
 			'suggested_questions_enabled'  => false,
 			'suggested_questions'          => "What can you help me with?\nTell me about your features\nHow do I get started?",
 			'ai_avatar_url'                => '',
+			'color_accent'                 => '#4f46e5',
+			'color_user_bg'                => '#1a56db',
+			'color_bot_bg'                 => '#f3f4f6',
 		);
 	}
 

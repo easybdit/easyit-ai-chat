@@ -114,6 +114,10 @@ class EAIC_Public {
 			'eaic_chat'
 		);
 
+		$color_accent  = $opts['color_accent']  ?: '#4f46e5';
+		$color_user_bg = $opts['color_user_bg'] ?: '#1a56db';
+		$color_bot_bg  = $opts['color_bot_bg']  ?: '#f3f4f6';
+
 		$provider      = sanitize_key( $atts['provider'] );
 		$title         = sanitize_text_field( $atts['title'] );
 		$placeholder   = sanitize_text_field( $atts['placeholder'] );
@@ -130,6 +134,14 @@ class EAIC_Public {
 		);
 
 		ob_start();
+		$eaic_need_style = ( $color_accent  !== '#4f46e5' )
+		                || ( $color_user_bg !== '#1a56db' )
+		                || ( $color_bot_bg  !== '#f3f4f6' );
+		if ( $eaic_need_style ) :
+			?>
+<style>.eaic-widget{--c-accent:<?php echo esc_attr( $color_accent ); ?> !important;--c-accent2:<?php echo esc_attr( $color_accent ); ?> !important;--c-user-bg:<?php echo esc_attr( $color_user_bg ); ?> !important;--c-bot-bg:<?php echo esc_attr( $color_bot_bg ); ?> !important;}</style>
+<?php
+		endif;
 		?>
 <div class="eaic-page-wrap">
 	<div class="eaic-widget"

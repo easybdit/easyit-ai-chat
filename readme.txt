@@ -4,7 +4,7 @@ Tags: chatbot, ai chatbot, openai, gemini, ollama
 Requires at least: 6.0
 Tested up to: 7.0
 Requires PHP: 8.0
-Stable tag: 1.0.13
+Stable tag: 1.0.14
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -183,6 +183,9 @@ WooCommerce-specific bots (Order Status Bot, Product Q&A Bot, Floating Widget) a
 
 == Changelog ==
 
+= 1.0.14 =
+* Added Color Customization — set Accent, User message, and AI message bubble colors via color pickers in Settings → UI. Changes apply instantly with a reset-to-default button for each color.
+
 = 1.0.13 =
 * Added Custom AI Avatar — upload any image from the WordPress Media Library to replace the default 🤖 emoji in all AI message bubbles. Configurable in Settings → UI.
 
@@ -237,6 +240,9 @@ WooCommerce-specific bots (Order Status Bot, Product Q&A Bot, Floating Widget) a
 * Initial public release.
 
 == Upgrade Notice ==
+
+= 1.0.14 =
+New feature: Color Customization — accent, user bubble, and AI bubble colors via color pickers in Settings → UI.
 
 = 1.0.13 =
 New feature: Custom AI Avatar — replace the default robot emoji with your own image via Settings → UI.

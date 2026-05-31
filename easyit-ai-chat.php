@@ -3,7 +3,7 @@
  * Plugin Name:       EasyIT AI Chat — Chatbot for OpenAI, Claude, DeepSeek, Gemini & Ollama
  * Plugin URI:        https://github.com/easybdit/easyit-ai-chat
  * Description:       Unified AI chatbot for WordPress. Connect Ollama, OpenAI, Anthropic (Claude), DeepSeek and Google Gemini with one shortcode [eaic_chat]. Free, open-source, no tracking.
- * Version:           1.0.13
+ * Version:           1.0.14
  * Requires at least: 6.0
  * Requires PHP:      8.0
  * Author:            EasyIT
@@ -19,7 +19,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'EAIC_VERSION',  '1.0.13' );
+define( 'EAIC_VERSION',  '1.0.14' );
 define( 'EAIC_FILE',     __FILE__ );
 define( 'EAIC_DIR',      plugin_dir_path( __FILE__ ) );
 define( 'EAIC_URL',      plugin_dir_url( __FILE__ ) );
