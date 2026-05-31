@@ -683,6 +683,39 @@
 			body.appendChild( this.buildFeedbackWrap( msgFbIdx, opts.fb_rating ) );
 		}
 
+		// Read Aloud (TTS) button.
+		if ( 'assistant' === role && content && window.speechSynthesis ) {
+			var ttsBtn = document.createElement( 'button' );
+			ttsBtn.type      = 'button';
+			ttsBtn.className = 'eaic-tts-btn';
+			ttsBtn.title     = t( 'read_aloud', 'Read aloud' );
+			ttsBtn.innerHTML =
+				'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13" aria-hidden="true"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>';
+			( function ( btn, el ) {
+				btn.addEventListener( 'click', function () {
+					if ( window.speechSynthesis.speaking ) {
+						window.speechSynthesis.cancel();
+						return;
+					}
+					var cleanText = ( el.innerText || el.textContent || '' ).replace( /[*#_~`]/g, '' ).trim();
+					var utt = new window.SpeechSynthesisUtterance( cleanText );
+					utt.lang = document.documentElement.lang || 'en-US';
+					utt.onstart = function () {
+						btn.classList.add( 'eaic-tts-active' );
+						btn.title = t( 'stop_reading', 'Stop reading' );
+						btn.innerHTML = '<svg viewBox="0 0 24 24" fill="currentColor" width="13" height="13" aria-hidden="true"><rect x="5" y="5" width="14" height="14" rx="2"/></svg>';
+					};
+					utt.onend = utt.onerror = function () {
+						btn.classList.remove( 'eaic-tts-active' );
+						btn.title = t( 'read_aloud', 'Read aloud' );
+						btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13" aria-hidden="true"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>';
+					};
+					window.speechSynthesis.speak( utt );
+				} );
+			}( ttsBtn, content_el ) );
+			body.appendChild( ttsBtn );
+		}
+
 		if ( 'assistant' === role && content ) {
 			var copyBtn = document.createElement( 'button' );
 			copyBtn.type      = 'button';

@@ -267,6 +267,8 @@ class EAIC_Admin {
 			'thumbs_down'    => __( 'Not helpful', 'easyit-ai-chat' ),
 			'fullscreen'     => __( 'Fullscreen', 'easyit-ai-chat' ),
 			'exit_fullscreen'=> __( 'Exit fullscreen', 'easyit-ai-chat' ),
+			'read_aloud'     => __( 'Read aloud', 'easyit-ai-chat' ),
+			'stop_reading'   => __( 'Stop reading', 'easyit-ai-chat' ),
 		);
 	}
 

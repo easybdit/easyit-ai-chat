@@ -621,6 +621,28 @@ body.eaic-has-fullscreen { overflow: hidden !important; }
 .eaic-widget .eaic-send-btn.eaic-btn-stop { background:#ef4444 !important; box-shadow:0 2px 8px rgba(239,68,68,.35) !important; }
 .eaic-widget .eaic-send-btn.eaic-btn-stop:not(:disabled):hover { background:#dc2626 !important; }
 
+/* ---- Read Aloud (TTS) button ---- */
+.eaic-widget .eaic-tts-btn {
+	display:      none !important;
+	align-items:  center !important;
+	justify-content: center !important;
+	width:        26px !important;
+	height:       26px !important;
+	background:   transparent !important;
+	border:       1px solid var(--c-border) !important;
+	border-radius:6px !important;
+	color:        var(--c-muted) !important;
+	cursor:       pointer !important;
+	padding:      0 !important;
+	margin-top:   4px !important;
+	box-shadow:   none !important;
+	transition:   background .12s, color .12s, border-color .12s !important;
+	flex-shrink:  0 !important;
+}
+.eaic-widget .eaic-msg--assistant:hover .eaic-tts-btn { display:flex !important; }
+.eaic-widget .eaic-tts-btn.eaic-tts-active { display:flex !important; color:var(--c-accent) !important; border-color:var(--c-accent) !important; }
+.eaic-widget .eaic-tts-btn:hover { background:#f3f4f6 !important; color:#111827 !important; border-color:#d1d5db !important; }
+
 /* ---- Regenerate button ---- */
 .eaic-widget .eaic-regen-btn {
 	display:      inline-flex !important;

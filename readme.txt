@@ -4,7 +4,7 @@ Tags: chatbot, ai chatbot, openai, gemini, ollama
 Requires at least: 6.0
 Tested up to: 7.0
 Requires PHP: 8.0
-Stable tag: 1.0.26
+Stable tag: 1.0.27
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -183,6 +183,9 @@ WooCommerce-specific bots (Order Status Bot, Product Q&A Bot, Floating Widget) a
 
 == Changelog ==
 
+= 1.0.27 =
+* Added Read Aloud (TTS) — a speaker button appears on hover over any AI message. Click to have the browser read the message aloud using the Web Speech API (SpeechSynthesis). Click again to stop. No external service required — uses the built-in browser engine.
+
 = 1.0.26 =
 * Added GDPR Consent Gate — optionally show a consent banner before the chat activates. Users must click an accept button before chatting. Consent is stored in a browser cookie (365 days). Configurable message text and button label. Enable in Settings → UI.
 
@@ -276,6 +279,9 @@ WooCommerce-specific bots (Order Status Bot, Product Q&A Bot, Floating Widget) a
 * Initial public release.
 
 == Upgrade Notice ==
+
+= 1.0.27 =
+New: Read Aloud (TTS) — speaker button on AI messages, uses browser SpeechSynthesis, no external service.
 
 = 1.0.26 =
 New: GDPR Consent Gate — cookie-based consent banner before chat starts. Configurable text. Enable in Settings → UI.
