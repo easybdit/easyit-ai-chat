@@ -56,6 +56,14 @@ class EAIC_Admin {
 			'eaic-test-chat',
 			array( $this, 'render_test_chat' )
 		);
+		add_submenu_page(
+			'eaic',
+			__( 'Analytics', 'easyit-ai-chat' ),
+			__( 'Analytics', 'easyit-ai-chat' ),
+			'manage_options',
+			'eaic-analytics',
+			array( $this, 'render_analytics' )
+		);
 	}
 
 	/**
@@ -157,11 +165,13 @@ class EAIC_Admin {
 	 * @return void
 	 */
 	public function enqueue_assets( $hook ) {
-		$is_settings  = ( 'toplevel_page_eaic' === $hook );
-		$is_test_chat = ( 'easyit-ai-chat_page_eaic-test-chat' === $hook )
+		$is_settings   = ( 'toplevel_page_eaic' === $hook );
+		$is_test_chat  = ( 'easyit-ai-chat_page_eaic-test-chat' === $hook )
 			|| ( 'eaic_page_eaic-test-chat' === $hook );
+		$is_analytics  = ( 'easyit-ai-chat_page_eaic-analytics' === $hook )
+			|| ( 'eaic_page_eaic-analytics' === $hook );
 
-		if ( ! $is_settings && ! $is_test_chat ) {
+		if ( ! $is_settings && ! $is_test_chat && ! $is_analytics ) {
 			return;
 		}
 
@@ -284,6 +294,20 @@ class EAIC_Admin {
 		}
 		$eaic_opts = EAIC_Options::all();
 		require EAIC_DIR . 'admin/views/settings-page.php';
+	}
+
+	/**
+	 * Render the analytics page.
+	 *
+	 * @return void
+	 */
+	public function render_analytics() {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			return;
+		}
+		$eaic_stats = EAIC_DB::get_stats();
+		$eaic_daily = EAIC_DB::get_messages_per_day( 7 );
+		require EAIC_DIR . 'admin/views/analytics-page.php';
 	}
 
 	/**

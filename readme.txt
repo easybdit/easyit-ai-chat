@@ -4,7 +4,7 @@ Tags: chatbot, ai chatbot, openai, gemini, ollama
 Requires at least: 6.0
 Tested up to: 7.0
 Requires PHP: 8.0
-Stable tag: 1.0.17
+Stable tag: 1.0.18
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -183,6 +183,9 @@ WooCommerce-specific bots (Order Status Bot, Product Q&A Bot, Floating Widget) a
 
 == Changelog ==
 
+= 1.0.18 =
+* Added Analytics Dashboard — new admin page (EasyIT AI Chat → Analytics) showing total conversations, total messages, messages today, active chats this week, most used provider, and a 7-day message bar chart. All data from your own database, zero external tracking.
+
 = 1.0.17 =
 * Added Floating Chat Widget — a fixed launcher button that appears on every page. Click to open a slide-up chat panel. Configurable position (bottom-right / bottom-left), label, and uses your accent color. Enable in Settings → UI. No WooCommerce required.
 
@@ -249,6 +252,9 @@ WooCommerce-specific bots (Order Status Bot, Product Q&A Bot, Floating Widget) a
 * Initial public release.
 
 == Upgrade Notice ==
+
+= 1.0.18 =
+New feature: Analytics Dashboard — total chats, messages, 7-day chart, top provider. Admin only.
 
 = 1.0.17 =
 New feature: Floating Chat Widget — fixed launcher button on every page, opens a slide-up chat panel.

@@ -419,4 +419,57 @@ class EAIC_DB {
 			wp_cache_delete( 'sessions_g_' . md5( (string) $guest_token ), self::CACHE_GROUP );
 		}
 	}
+
+	/**
+	 * Return aggregate stats for the analytics dashboard.
+	 *
+	 * @return array<string,mixed>
+	 */
+	public static function get_stats() {
+		global $wpdb;
+		$st = $wpdb->prefix . self::SESSIONS_TABLE;
+		$mt = $wpdb->prefix . self::MESSAGES_TABLE;
+
+		return array(
+			'total_sessions'   => (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$st}" ), // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			'total_messages'   => (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$mt}" ), // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			'messages_today'   => (int) $wpdb->get_var( $wpdb->prepare(
+				"SELECT COUNT(*) FROM {$mt} WHERE DATE(created_at) = %s", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				current_time( 'Y-m-d' )
+			) ),
+			'active_this_week' => (int) $wpdb->get_var( $wpdb->prepare(
+				"SELECT COUNT(DISTINCT session_id) FROM {$mt} WHERE created_at >= %s", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				gmdate( 'Y-m-d H:i:s', strtotime( '-7 days' ) )
+			) ),
+			'top_provider'     => $wpdb->get_var( "SELECT provider FROM {$st} GROUP BY provider ORDER BY COUNT(*) DESC LIMIT 1" ) ?: '—', // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		);
+	}
+
+	/**
+	 * Return message counts grouped by day for the last N days.
+	 *
+	 * @param int $days Number of days to look back.
+	 * @return array<string,int> Keyed by Y-m-d date string.
+	 */
+	public static function get_messages_per_day( $days = 7 ) {
+		global $wpdb;
+		$mt    = $wpdb->prefix . self::MESSAGES_TABLE;
+		$since = gmdate( 'Y-m-d H:i:s', strtotime( "-{$days} days" ) );
+
+		$rows = $wpdb->get_results( $wpdb->prepare(
+			"SELECT DATE(created_at) AS day, COUNT(*) AS cnt FROM {$mt} WHERE created_at >= %s GROUP BY DATE(created_at) ORDER BY day ASC", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			$since
+		), ARRAY_A );
+
+		$result = array();
+		for ( $i = $days - 1; $i >= 0; $i-- ) {
+			$result[ gmdate( 'Y-m-d', strtotime( "-{$i} days" ) ) ] = 0;
+		}
+		foreach ( (array) $rows as $row ) {
+			if ( isset( $result[ $row['day'] ] ) ) {
+				$result[ $row['day'] ] = (int) $row['cnt'];
+			}
+		}
+		return $result;
+	}
 }

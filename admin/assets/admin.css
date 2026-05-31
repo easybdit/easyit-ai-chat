@@ -380,3 +380,103 @@
 	border-radius: 8px;
 	margin-bottom: 16px;
 }
+
+/* ---- Analytics ---- */
+.eaic-stats-grid {
+	display: grid;
+	grid-template-columns: repeat(4, 1fr);
+	gap: 16px;
+	margin-bottom: 24px;
+}
+@media (max-width: 900px) { .eaic-stats-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 500px) { .eaic-stats-grid { grid-template-columns: 1fr; } }
+
+.eaic-stat-card {
+	background: #fff;
+	border: 1px solid #e5e7eb;
+	border-radius: 12px;
+	padding: 20px 18px;
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 6px;
+	box-shadow: 0 1px 4px rgba(0,0,0,.05);
+}
+.eaic-stat-icon  { font-size: 22px; }
+.eaic-stat-number {
+	font-size: 32px;
+	font-weight: 700;
+	color: #111827;
+	line-height: 1.1;
+}
+.eaic-stat-label {
+	font-size: 13px;
+	color: #6b7280;
+}
+
+.eaic-analytics-row {
+	display: grid;
+	grid-template-columns: 1fr 260px;
+	gap: 16px;
+	align-items: start;
+}
+@media (max-width: 900px) { .eaic-analytics-row { grid-template-columns: 1fr; } }
+
+.eaic-chart-card, .eaic-provider-card { margin-bottom: 0; }
+
+.eaic-chart-wrap { padding: 8px 0 0; }
+.eaic-chart {
+	display: flex;
+	align-items: flex-end;
+	gap: 8px;
+	height: 160px;
+}
+.eaic-chart-col {
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 4px;
+	height: 100%;
+	justify-content: flex-end;
+}
+.eaic-chart-count {
+	font-size: 11px;
+	color: #6b7280;
+	min-height: 16px;
+	font-weight: 600;
+}
+.eaic-chart-bar-track {
+	width: 100%;
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+	justify-content: flex-end;
+	background: #f3f4f6;
+	border-radius: 6px 6px 0 0;
+	overflow: hidden;
+}
+.eaic-chart-bar {
+	width: 100%;
+	background: linear-gradient(to top, #4f46e5, #7c3aed);
+	border-radius: 6px 6px 0 0;
+	min-height: 3px;
+	transition: height .3s ease;
+}
+.eaic-chart-label {
+	font-size: 11px;
+	color: #9ca3af;
+	font-weight: 600;
+}
+.eaic-no-data {
+	color: #9ca3af;
+	font-style: italic;
+	text-align: center;
+	padding: 40px 0;
+}
+.eaic-top-provider {
+	font-size: 28px;
+	font-weight: 700;
+	color: #4f46e5;
+	margin-top: 12px;
+}
