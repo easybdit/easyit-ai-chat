@@ -172,6 +172,24 @@ class EAIC_Admin {
 				: $current['bot_profiles'] ),
 			'webhook_url'                 => isset( $input['webhook_url'] )    ? esc_url_raw( $input['webhook_url'] )          : $current['webhook_url'],
 			'webhook_secret'              => isset( $input['webhook_secret'] ) ? sanitize_text_field( $input['webhook_secret'] ) : $current['webhook_secret'],
+			// v2.0.0 — Security
+			'access_restriction'          => ( isset( $input['access_restriction'] ) && in_array( $input['access_restriction'], array( 'everyone', 'logged_in', 'specific_roles' ), true ) )
+			                                   ? $input['access_restriction'] : $current['access_restriction'],
+			'allowed_roles'               => ( isset( $input['allowed_roles'] ) && is_array( $input['allowed_roles'] ) )
+			                                   ? array_map( 'sanitize_key', $input['allowed_roles'] ) : $current['allowed_roles'],
+			'ip_blocklist'                => isset( $input['ip_blocklist'] )             ? sanitize_textarea_field( $input['ip_blocklist'] )              : $current['ip_blocklist'],
+			'word_filter_enabled'         => ! empty( $input['word_filter_enabled'] ),
+			'word_filter_words'           => isset( $input['word_filter_words'] )        ? sanitize_textarea_field( $input['word_filter_words'] )         : $current['word_filter_words'],
+			'word_filter_action'          => ( isset( $input['word_filter_action'] ) && in_array( $input['word_filter_action'], array( 'block', 'warn' ), true ) )
+			                                   ? $input['word_filter_action'] : $current['word_filter_action'],
+			'disable_storage'             => ! empty( $input['disable_storage'] ),
+			'captcha_enabled'             => ! empty( $input['captcha_enabled'] ),
+			'abuse_alert_enabled'         => ! empty( $input['abuse_alert_enabled'] ),
+			'abuse_alert_email'           => isset( $input['abuse_alert_email'] )        ? sanitize_email( $input['abuse_alert_email'] )                  : $current['abuse_alert_email'],
+			'prompt_injection_detect'     => ! empty( $input['prompt_injection_detect'] ),
+			'prompt_injection_action'     => ( isset( $input['prompt_injection_action'] ) && in_array( $input['prompt_injection_action'], array( 'block', 'warn' ), true ) )
+			                                   ? $input['prompt_injection_action'] : $current['prompt_injection_action'],
+			'max_message_length'          => isset( $input['max_message_length'] ) ? max( 50, min( 4000, absint( $input['max_message_length'] ) ) ) : $current['max_message_length'],
 		);
 	}
 
@@ -309,8 +327,10 @@ class EAIC_Admin {
 			'thumbs_down'    => __( 'Not helpful', 'easyit-ai-chat' ),
 			'fullscreen'     => __( 'Fullscreen', 'easyit-ai-chat' ),
 			'exit_fullscreen'=> __( 'Exit fullscreen', 'easyit-ai-chat' ),
-			'read_aloud'     => __( 'Read aloud', 'easyit-ai-chat' ),
-			'stop_reading'   => __( 'Stop reading', 'easyit-ai-chat' ),
+			'read_aloud'        => __( 'Read aloud', 'easyit-ai-chat' ),
+			'stop_reading'      => __( 'Stop reading', 'easyit-ai-chat' ),
+			'msg_too_long'      => __( 'Message is too long.', 'easyit-ai-chat' ),
+			'captcha_required'  => __( 'Please answer the captcha first.', 'easyit-ai-chat' ),
 		);
 	}
 

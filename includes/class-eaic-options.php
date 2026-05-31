@@ -74,6 +74,20 @@ class EAIC_Options {
 			'bot_profiles'                 => array(),
 			'webhook_url'                  => '',
 			'webhook_secret'               => '',
+			// v2.0.0 — Security
+			'access_restriction'           => 'everyone',  // everyone | logged_in | specific_roles
+			'allowed_roles'                => array( 'subscriber', 'contributor', 'author', 'editor', 'administrator' ),
+			'ip_blocklist'                 => '',
+			'word_filter_enabled'          => false,
+			'word_filter_words'            => '',
+			'word_filter_action'           => 'block',     // block | warn
+			'disable_storage'              => false,
+			'captcha_enabled'              => false,
+			'abuse_alert_enabled'          => false,
+			'abuse_alert_email'            => '',
+			'prompt_injection_detect'      => false,
+			'prompt_injection_action'      => 'block',     // block | warn
+			'max_message_length'           => 4000,
 		);
 	}
 

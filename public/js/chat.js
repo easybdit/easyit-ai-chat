@@ -185,6 +185,10 @@
 		this.elSendBtn      = root.querySelector( '.eaic-send-btn' );
 		this.elExportBtn      = root.querySelector( '.eaic-export-btn' );
 		this.elFullscreenBtn  = root.querySelector( '.eaic-fullscreen-btn' );
+		this.elCaptchaInput   = root.querySelector( '.eaic-captcha-input' );
+		this.elCaptchaToken   = root.querySelector( '.eaic-captcha-token' );
+		this.elCaptchaStatus  = root.querySelector( '.eaic-captcha-status' );
+		this._captchaSolved   = false;
 
 		if ( this.elMessages && this.msgHeight ) {
 			this.elMessages.style.maxHeight = this.msgHeight + 'px';
@@ -329,6 +333,23 @@
 		var text = overrideText !== undefined ? overrideText : this.elInput.value.trim();
 		if ( ! text ) { return; }
 
+		// H. Message length check.
+		var maxLen = CFG.max_message_length || 4000;
+		if ( text.length > maxLen ) {
+			this.renderError( t( 'msg_too_long', 'Message is too long (' + text.length + '/' + maxLen + ' characters).' ) );
+			return;
+		}
+
+		// E. Captcha check.
+		if ( CFG.captcha_enabled && ! this._captchaSolved && this.elCaptchaInput ) {
+			var capAnswer = this.elCaptchaInput.value.trim();
+			if ( ! capAnswer ) {
+				if ( this.elCaptchaStatus ) { this.elCaptchaStatus.textContent = t( 'captcha_required', 'Please answer the captcha first.' ); }
+				this.elCaptchaInput.focus();
+				return;
+			}
+		}
+
 		this._lastUserText = text;
 		this.sending = true;
 		this.removeRegenBtn();
@@ -357,6 +378,10 @@
 		body.append( 'provider', this.provider );
 		body.append( 'session',  this.currentSession );
 		body.append( 'system',   this.systemPrompt );
+		if ( CFG.captcha_enabled && ! this._captchaSolved && this.elCaptchaInput && this.elCaptchaToken ) {
+			body.append( 'cap_answer', this.elCaptchaInput.value.trim() );
+			body.append( 'cap_token',  this.elCaptchaToken.value );
+		}
 
 		var streamText   = '';
 		var contentEl    = null;
@@ -421,6 +446,12 @@
 
 							if ( 'done' === eventName ) {
 								self.clearTimer();
+								// Mark captcha as solved after first successful response.
+								if ( CFG.captcha_enabled && ! self._captchaSolved ) {
+									self._captchaSolved = true;
+									var capBar = self.root.querySelector( '.eaic-captcha-bar' );
+									if ( capBar ) { capBar.style.display = 'none'; }
+								}
 								if ( contentEl ) {
 									contentEl.innerHTML = renderMarkdown( streamText );
 									self.scrollToBottom();

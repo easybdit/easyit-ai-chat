@@ -90,6 +90,8 @@ class EAIC_Public {
 				'gdpr_gate_enabled'           => (bool) $opts['gdpr_gate_enabled'],
 				'gdpr_gate_text'              => $opts['gdpr_gate_text'],
 				'gdpr_gate_btn_text'          => $opts['gdpr_gate_btn_text'],
+				'captcha_enabled'             => (bool) $opts['captcha_enabled'],
+				'max_message_length'          => max( 50, (int) $opts['max_message_length'] ),
 				'suggested_questions_enabled' => (bool) $opts['suggested_questions_enabled'],
 				'suggested_questions'         => array_slice(
 					array_values( array_filter( array_map( 'trim', explode( "\n", $opts['suggested_questions'] ) ) ) ),
@@ -145,6 +147,28 @@ class EAIC_Public {
 		$system_prompt = sanitize_textarea_field( $atts['system_prompt'] );
 		$height        = max( 300, absint( $atts['height'] ) );
 		$lock_prompt   = ! empty( $opts['lock_system_prompt'] );
+
+		// Access restriction — return early with message if not allowed.
+		$restriction = $opts['access_restriction'] ?? 'everyone';
+		if ( 'logged_in' === $restriction && ! is_user_logged_in() ) {
+			return '<p class="eaic-access-denied">' . esc_html__( 'You must be logged in to use this chat.', 'easyit-ai-chat' ) . '</p>';
+		}
+		if ( 'specific_roles' === $restriction ) {
+			if ( ! is_user_logged_in() ) {
+				return '<p class="eaic-access-denied">' . esc_html__( 'You must be logged in to use this chat.', 'easyit-ai-chat' ) . '</p>';
+			}
+			$current_user  = wp_get_current_user();
+			$allowed_roles = is_array( $opts['allowed_roles'] ) ? $opts['allowed_roles'] : array();
+			if ( ! array_intersect( (array) $current_user->roles, $allowed_roles ) ) {
+				return '<p class="eaic-access-denied">' . esc_html__( 'You do not have permission to use this chat.', 'easyit-ai-chat' ) . '</p>';
+			}
+		}
+
+		// Captcha generation.
+		$eaic_captcha = null;
+		if ( ! empty( $opts['captcha_enabled'] ) ) {
+			$eaic_captcha = EAIC_Engine::generate_captcha();
+		}
 
 		$providers = array(
 			'ollama'    => 'Ollama',
@@ -230,9 +254,18 @@ class EAIC_Public {
 				</div>
 			<?php endif; ?>
 
+			<?php if ( $eaic_captcha ) : ?>
+			<div class="eaic-captcha-bar">
+				<span class="eaic-captcha-question"><?php echo esc_html( $eaic_captcha['question'] ); ?> = ?</span>
+				<input type="number" class="eaic-captcha-input" placeholder="<?php esc_attr_e( 'Answer', 'easyit-ai-chat' ); ?>" min="0" max="99">
+				<input type="hidden" class="eaic-captcha-token" value="<?php echo esc_attr( $eaic_captcha['token'] ); ?>">
+				<span class="eaic-captcha-status"></span>
+			</div>
+			<?php endif; ?>
+
 			<div class="eaic-input-area">
 				<div class="eaic-input-wrap">
-					<textarea class="eaic-input" rows="1" maxlength="4000"
+					<textarea class="eaic-input" rows="1" maxlength="<?php echo esc_attr( (string) max( 50, (int) $opts['max_message_length'] ) ); ?>"
 						placeholder="<?php echo esc_attr( $placeholder ); ?>"
 						aria-label="<?php echo esc_attr( $placeholder ); ?>"></textarea>
 					<?php if ( ! empty( $opts['voice_input_enabled'] ) ) : ?>

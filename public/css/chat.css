@@ -483,6 +483,51 @@
 	white-space:  pre !important;
 }
 
+/* ---- Access denied message ---- */
+.eaic-access-denied {
+	padding:       20px 24px !important;
+	background:    #fff1f2 !important;
+	border:        1px solid #fecdd3 !important;
+	border-radius: 8px !important;
+	color:         #9f1239 !important;
+	font-size:     14px !important;
+	text-align:    center !important;
+	margin:        16px auto !important;
+	max-width:     500px !important;
+}
+
+/* ---- Math Captcha bar ---- */
+.eaic-widget .eaic-captcha-bar {
+	display:      flex !important;
+	align-items:  center !important;
+	gap:          10px !important;
+	padding:      10px 16px !important;
+	background:   #fffbeb !important;
+	border-top:   1px solid #fde68a !important;
+	flex-shrink:  0 !important;
+	flex-wrap:    wrap !important;
+}
+.eaic-widget .eaic-captcha-question {
+	font-size:   13px !important;
+	font-weight: 600 !important;
+	color:       #92400e !important;
+	font-family: var(--font) !important;
+}
+.eaic-widget .eaic-captcha-input {
+	width:         70px !important;
+	padding:       6px 10px !important;
+	border:        1.5px solid #fbbf24 !important;
+	border-radius: 7px !important;
+	font-size:     14px !important;
+	font-family:   var(--font) !important;
+	outline:       none !important;
+	text-align:    center !important;
+	background:    #fff !important;
+	color:         #111827 !important;
+}
+.eaic-widget .eaic-captcha-input:focus { border-color:#f59e0b !important; box-shadow:0 0 0 3px rgba(245,158,11,.15) !important; }
+.eaic-widget .eaic-captcha-status { font-size:12px !important; color:#ef4444 !important; font-family:var(--font) !important; }
+
 /* ---- GDPR Consent Gate ---- */
 .eaic-widget .eaic-gdpr-overlay {
 	position:        absolute !important;

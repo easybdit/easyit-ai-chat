@@ -99,6 +99,12 @@
 		});
 	});
 
+	// ----- Access restriction role toggle -----
+	$('#eaic-access-restriction').on('change', function() {
+		$('#eaic-roles-wrap').toggle($(this).val() === 'specific_roles');
+	});
+	// ----- End Access restriction -----
+
 	// ----- Bot Profiles -----
 	var $profileList  = $('#eaic-profiles-list');
 	var $profileJson  = $('#eaic-profiles-json');

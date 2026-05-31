@@ -514,6 +514,137 @@ $eaic_option_key = EAIC_Options::OPTION_KEY;
 					</label>
 				</div>
 
+				<!-- Access Restriction -->
+				<div class="eaic-card">
+					<div class="eaic-card-title"><span class="icon">👤</span> <?php esc_html_e( 'Access Restriction', 'easyit-ai-chat' ); ?></div>
+					<div class="eaic-field">
+						<label class="eaic-label"><?php esc_html_e( 'Who can use the chat?', 'easyit-ai-chat' ); ?></label>
+						<select name="<?php echo esc_attr( $eaic_option_key ); ?>[access_restriction]" id="eaic-access-restriction">
+							<option value="everyone" <?php selected( $eaic_opts['access_restriction'], 'everyone' ); ?>><?php esc_html_e( 'Everyone (guests + logged-in)', 'easyit-ai-chat' ); ?></option>
+							<option value="logged_in" <?php selected( $eaic_opts['access_restriction'], 'logged_in' ); ?>><?php esc_html_e( 'Logged-in users only', 'easyit-ai-chat' ); ?></option>
+							<option value="specific_roles" <?php selected( $eaic_opts['access_restriction'], 'specific_roles' ); ?>><?php esc_html_e( 'Specific user roles', 'easyit-ai-chat' ); ?></option>
+						</select>
+					</div>
+					<?php
+					$eaic_all_roles = wp_roles()->get_names();
+					?>
+					<div class="eaic-field" id="eaic-roles-wrap" style="<?php echo $eaic_opts['access_restriction'] === 'specific_roles' ? '' : 'display:none'; ?>">
+						<label class="eaic-label"><?php esc_html_e( 'Allowed Roles', 'easyit-ai-chat' ); ?></label>
+						<div style="display:flex;flex-wrap:wrap;gap:10px;">
+							<?php foreach ( $eaic_all_roles as $role_slug => $role_name ) : ?>
+							<label style="display:flex;align-items:center;gap:5px;font-size:13px">
+								<input type="checkbox" name="<?php echo esc_attr( $eaic_option_key ); ?>[allowed_roles][]" value="<?php echo esc_attr( $role_slug ); ?>" <?php checked( in_array( $role_slug, (array) $eaic_opts['allowed_roles'], true ) ); ?>>
+								<?php echo esc_html( translate_user_role( $role_name ) ); ?>
+							</label>
+							<?php endforeach; ?>
+						</div>
+					</div>
+				</div>
+
+				<!-- IP Blocklist -->
+				<div class="eaic-card">
+					<div class="eaic-card-title"><span class="icon">🚫</span> <?php esc_html_e( 'IP Blocklist', 'easyit-ai-chat' ); ?></div>
+					<div class="eaic-field">
+						<label class="eaic-label"><?php esc_html_e( 'Blocked IP Addresses', 'easyit-ai-chat' ); ?></label>
+						<textarea name="<?php echo esc_attr( $eaic_option_key ); ?>[ip_blocklist]" rows="4" style="width:100%;font-family:monospace"><?php echo esc_textarea( $eaic_opts['ip_blocklist'] ); ?></textarea>
+						<div class="eaic-field-desc"><?php esc_html_e( 'One IP per line (IPv4 or IPv6). Blocked IPs cannot send messages.', 'easyit-ai-chat' ); ?></div>
+					</div>
+				</div>
+
+				<!-- Word Filter -->
+				<div class="eaic-card">
+					<div class="eaic-card-title"><span class="icon">🔤</span> <?php esc_html_e( 'Word Filter', 'easyit-ai-chat' ); ?></div>
+					<label class="eaic-check-row">
+						<input type="checkbox" name="<?php echo esc_attr( $eaic_option_key ); ?>[word_filter_enabled]" value="1" <?php checked( $eaic_opts['word_filter_enabled'] ); ?>>
+						<div>
+							<div class="eaic-check-label"><?php esc_html_e( 'Enable Word Filter', 'easyit-ai-chat' ); ?></div>
+							<div class="eaic-check-desc"><?php esc_html_e( 'Block or warn when a message contains banned words.', 'easyit-ai-chat' ); ?></div>
+						</div>
+					</label>
+					<div class="eaic-field" style="margin-top:12px">
+						<label class="eaic-label"><?php esc_html_e( 'Banned Words', 'easyit-ai-chat' ); ?></label>
+						<textarea name="<?php echo esc_attr( $eaic_option_key ); ?>[word_filter_words]" rows="4" style="width:100%"><?php echo esc_textarea( $eaic_opts['word_filter_words'] ); ?></textarea>
+						<div class="eaic-field-desc"><?php esc_html_e( 'One word or phrase per line. Case-insensitive.', 'easyit-ai-chat' ); ?></div>
+					</div>
+					<div class="eaic-field">
+						<label class="eaic-label"><?php esc_html_e( 'Action', 'easyit-ai-chat' ); ?></label>
+						<select name="<?php echo esc_attr( $eaic_option_key ); ?>[word_filter_action]">
+							<option value="block" <?php selected( $eaic_opts['word_filter_action'], 'block' ); ?>><?php esc_html_e( 'Block — reject message silently', 'easyit-ai-chat' ); ?></option>
+							<option value="warn"  <?php selected( $eaic_opts['word_filter_action'], 'warn' );  ?>><?php esc_html_e( 'Warn — show error to user', 'easyit-ai-chat' ); ?></option>
+						</select>
+					</div>
+				</div>
+
+				<!-- Prompt Injection Detection -->
+				<div class="eaic-card">
+					<div class="eaic-card-title"><span class="icon">🧠</span> <?php esc_html_e( 'Prompt Injection Detection', 'easyit-ai-chat' ); ?></div>
+					<label class="eaic-check-row">
+						<input type="checkbox" name="<?php echo esc_attr( $eaic_option_key ); ?>[prompt_injection_detect]" value="1" <?php checked( $eaic_opts['prompt_injection_detect'] ); ?>>
+						<div>
+							<div class="eaic-check-label"><?php esc_html_e( 'Detect prompt injection attempts', 'easyit-ai-chat' ); ?></div>
+							<div class="eaic-check-desc"><?php esc_html_e( 'Detects common patterns like "ignore all previous instructions", "act as", "jailbreak" etc.', 'easyit-ai-chat' ); ?></div>
+						</div>
+					</label>
+					<div class="eaic-field" style="margin-top:12px">
+						<label class="eaic-label"><?php esc_html_e( 'Action', 'easyit-ai-chat' ); ?></label>
+						<select name="<?php echo esc_attr( $eaic_option_key ); ?>[prompt_injection_action]">
+							<option value="block" <?php selected( $eaic_opts['prompt_injection_action'], 'block' ); ?>><?php esc_html_e( 'Block — reject message', 'easyit-ai-chat' ); ?></option>
+							<option value="warn"  <?php selected( $eaic_opts['prompt_injection_action'], 'warn' );  ?>><?php esc_html_e( 'Warn — show notice to user', 'easyit-ai-chat' ); ?></option>
+						</select>
+					</div>
+				</div>
+
+				<!-- No-Storage Mode -->
+				<div class="eaic-card">
+					<div class="eaic-card-title"><span class="icon">🗑️</span> <?php esc_html_e( 'No-Storage Mode', 'easyit-ai-chat' ); ?></div>
+					<label class="eaic-check-row">
+						<input type="checkbox" name="<?php echo esc_attr( $eaic_option_key ); ?>[disable_storage]" value="1" <?php checked( $eaic_opts['disable_storage'] ); ?>>
+						<div>
+							<div class="eaic-check-label"><?php esc_html_e( 'Do not save conversations', 'easyit-ai-chat' ); ?></div>
+							<div class="eaic-check-desc"><?php esc_html_e( 'Messages are not written to the database. Conversation history and session sidebar will be empty. Good for GDPR-strict setups.', 'easyit-ai-chat' ); ?></div>
+						</div>
+					</label>
+				</div>
+
+				<!-- Math Captcha -->
+				<div class="eaic-card">
+					<div class="eaic-card-title"><span class="icon">🧮</span> <?php esc_html_e( 'Anti-Bot Captcha', 'easyit-ai-chat' ); ?></div>
+					<label class="eaic-check-row">
+						<input type="checkbox" name="<?php echo esc_attr( $eaic_option_key ); ?>[captcha_enabled]" value="1" <?php checked( $eaic_opts['captcha_enabled'] ); ?>>
+						<div>
+							<div class="eaic-check-label"><?php esc_html_e( 'Enable math captcha', 'easyit-ai-chat' ); ?></div>
+							<div class="eaic-check-desc"><?php esc_html_e( 'Show a simple arithmetic question before first message. No external API required.', 'easyit-ai-chat' ); ?></div>
+						</div>
+					</label>
+				</div>
+
+				<!-- Abuse Alert -->
+				<div class="eaic-card">
+					<div class="eaic-card-title"><span class="icon">📧</span> <?php esc_html_e( 'Abuse Alert', 'easyit-ai-chat' ); ?></div>
+					<label class="eaic-check-row">
+						<input type="checkbox" name="<?php echo esc_attr( $eaic_option_key ); ?>[abuse_alert_enabled]" value="1" <?php checked( $eaic_opts['abuse_alert_enabled'] ); ?>>
+						<div>
+							<div class="eaic-check-label"><?php esc_html_e( 'Email admin when rate limit is exceeded', 'easyit-ai-chat' ); ?></div>
+							<div class="eaic-check-desc"><?php esc_html_e( 'Sends a one-time email when a user hits the rate limit. Good for detecting abuse early.', 'easyit-ai-chat' ); ?></div>
+						</div>
+					</label>
+					<div class="eaic-field" style="margin-top:12px">
+						<label class="eaic-label"><?php esc_html_e( 'Alert Email', 'easyit-ai-chat' ); ?></label>
+						<input type="email" name="<?php echo esc_attr( $eaic_option_key ); ?>[abuse_alert_email]" value="<?php echo esc_attr( $eaic_opts['abuse_alert_email'] ); ?>" placeholder="<?php echo esc_attr( get_option( 'admin_email' ) ); ?>" style="max-width:320px;width:100%">
+						<div class="eaic-field-desc"><?php esc_html_e( 'Leave empty to use the WordPress admin email.', 'easyit-ai-chat' ); ?></div>
+					</div>
+				</div>
+
+				<!-- Message Length -->
+				<div class="eaic-card">
+					<div class="eaic-card-title"><span class="icon">📏</span> <?php esc_html_e( 'Message Length Limit', 'easyit-ai-chat' ); ?></div>
+					<div class="eaic-field">
+						<label class="eaic-label" for="eaic-max-msg-len"><?php esc_html_e( 'Max characters per message', 'easyit-ai-chat' ); ?></label>
+						<input id="eaic-max-msg-len" type="number" min="50" max="4000" name="<?php echo esc_attr( $eaic_option_key ); ?>[max_message_length]" value="<?php echo (int) $eaic_opts['max_message_length']; ?>" style="max-width:120px">
+						<div class="eaic-field-desc"><?php esc_html_e( 'Limit the maximum length of user messages (50–4000 characters). Default: 4000.', 'easyit-ai-chat' ); ?></div>
+					</div>
+				</div>
+
 			</div><!-- /#eaic-panel-security -->
 
 			<!-- WEBHOOK -->

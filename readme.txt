@@ -4,7 +4,7 @@ Tags: chatbot, ai chatbot, openai, gemini, ollama
 Requires at least: 6.0
 Tested up to: 7.0
 Requires PHP: 8.0
-Stable tag: 1.0.31
+Stable tag: 2.0.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -183,6 +183,17 @@ WooCommerce-specific bots (Order Status Bot, Product Q&A Bot, Floating Widget) a
 
 == Changelog ==
 
+= 2.0.0 =
+* **Major release — Security Suite.** Eight new security features in Settings → Security:
+* **Access Restriction** — Allow everyone, logged-in users only, or specific user roles.
+* **IP Blocklist** — Block specific IP addresses from using the chat.
+* **Word Filter** — Block or warn when a message contains banned words/phrases (case-insensitive, one per line).
+* **Prompt Injection Detection** — Detect and block common jailbreak/injection patterns automatically.
+* **No-Storage Mode** — Opt out of saving conversations to the database entirely (GDPR-strict setups).
+* **Anti-Bot Math Captcha** — Simple arithmetic challenge before the first message. No external API required.
+* **Abuse Alert Email** — Get an email when the rate limit is exceeded. Configurable recipient.
+* **Message Length Limit** — Configure max characters per user message (50–4000, default 4000).
+
 = 1.0.31 =
 * Added Webhook Support — configure a webhook URL in Settings → Webhook. After each AI response, the plugin sends a non-blocking POST to your URL with JSON payload: session_uuid, user_message, ai_response, provider, timestamp. Optional HMAC-SHA256 secret key adds an X-EAIC-Signature header for verification. Compatible with Zapier, Make (Integromat), n8n, and any HTTP endpoint.
 
@@ -291,6 +302,9 @@ WooCommerce-specific bots (Order Status Bot, Product Q&A Bot, Floating Widget) a
 * Initial public release.
 
 == Upgrade Notice ==
+
+= 2.0.0 =
+Major release: 8 new security features — Access Restriction, IP Blocklist, Word Filter, Prompt Injection Detection, No-Storage Mode, Math Captcha, Abuse Alert, Message Length Limit.
 
 = 1.0.31 =
 New: Webhook support — POST to any URL after each AI response. JSON payload + optional HMAC signature. Settings → Webhook.

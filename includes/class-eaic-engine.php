@@ -144,13 +144,41 @@ class EAIC_Engine {
 		$rl_max    = max( 1,  (int) $opts['rate_limit_max'] );
 		$rate_key  = $user_id > 0 ? 'u' . $user_id : 'g' . $guest_token;
 		if ( $this->is_rate_limited( $rate_key, $rl_max, $rl_window ) ) {
+			$this->maybe_send_abuse_alert( $opts );
 			wp_send_json_error( array( 'message' => __( 'Too many requests. Please wait a moment.', 'easyit-ai-chat' ) ), 429 );
 		}
 
 		$rl_ip_max = max( 1, (int) $opts['rate_limit_ip_max'] );
 		$client_ip = $this->get_client_ip();
 		if ( '' !== $client_ip && $this->is_rate_limited( 'ip_' . $client_ip, $rl_ip_max, $rl_window ) ) {
+			$this->maybe_send_abuse_alert( $opts );
 			wp_send_json_error( array( 'message' => __( 'Too many requests. Please wait a moment.', 'easyit-ai-chat' ) ), 429 );
+		}
+
+		// ---- v2.0.0 Security checks ----
+
+		// A. IP Blocklist.
+		if ( ! empty( $opts['ip_blocklist'] ) && '' !== $client_ip ) {
+			$blocked_ips = array_filter( array_map( 'trim', explode( "\n", $opts['ip_blocklist'] ) ) );
+			if ( in_array( $client_ip, $blocked_ips, true ) ) {
+				wp_send_json_error( array( 'message' => __( 'Access denied.', 'easyit-ai-chat' ) ), 403 );
+			}
+		}
+
+		// C. User Role Restriction.
+		$restriction = $opts['access_restriction'] ?? 'everyone';
+		if ( 'logged_in' === $restriction && ! is_user_logged_in() ) {
+			wp_send_json_error( array( 'message' => __( 'You must be logged in to use this chat.', 'easyit-ai-chat' ) ), 403 );
+		}
+		if ( 'specific_roles' === $restriction && is_user_logged_in() ) {
+			$current_user  = wp_get_current_user();
+			$allowed_roles = is_array( $opts['allowed_roles'] ) ? $opts['allowed_roles'] : array();
+			if ( ! array_intersect( (array) $current_user->roles, $allowed_roles ) ) {
+				wp_send_json_error( array( 'message' => __( 'You do not have permission to use this chat.', 'easyit-ai-chat' ) ), 403 );
+			}
+		}
+		if ( 'specific_roles' === $restriction && ! is_user_logged_in() ) {
+			wp_send_json_error( array( 'message' => __( 'You must be logged in to use this chat.', 'easyit-ai-chat' ) ), 403 );
 		}
 
 		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce verified by caller (check_ajax_referer / wp_verify_nonce) before resolve_request() is invoked.
@@ -168,8 +196,61 @@ class EAIC_Engine {
 		if ( '' === $message ) {
 			wp_send_json_error( array( 'message' => __( 'Empty message.', 'easyit-ai-chat' ) ), 400 );
 		}
-		if ( mb_strlen( $message ) > self::MAX_MESSAGE_LEN ) {
+
+		// H. Message Length (configurable).
+		$max_msg_len = max( 50, (int) ( $opts['max_message_length'] ?? self::MAX_MESSAGE_LEN ) );
+		if ( mb_strlen( $message ) > $max_msg_len ) {
 			wp_send_json_error( array( 'message' => __( 'Message too long.', 'easyit-ai-chat' ) ), 400 );
+		}
+
+		// B. Word Filter.
+		if ( ! empty( $opts['word_filter_enabled'] ) && ! empty( $opts['word_filter_words'] ) ) {
+			$banned = array_filter( array_map( 'trim', explode( "\n", $opts['word_filter_words'] ) ) );
+			foreach ( $banned as $word ) {
+				if ( '' !== $word && mb_stripos( $message, $word ) !== false ) {
+					if ( 'warn' === ( $opts['word_filter_action'] ?? 'block' ) ) {
+						wp_send_json_error( array( 'message' => __( 'Your message contains a word that is not allowed.', 'easyit-ai-chat' ) ), 400 );
+					} else {
+						// Silent block — return fake OK to not reveal filter.
+						wp_send_json_error( array( 'message' => __( 'Message could not be sent.', 'easyit-ai-chat' ) ), 400 );
+					}
+				}
+			}
+		}
+
+		// G. Prompt Injection Detection.
+		if ( ! empty( $opts['prompt_injection_detect'] ) ) {
+			$injection_patterns = array(
+				'/ignore\s+(all\s+)?(previous|prior|above|earlier)\s+(instructions?|prompts?|rules?)/i',
+				'/you\s+are\s+now\s+(a\s+)?/i',
+				'/act\s+as\s+(if\s+(you\s+are|you\'re)\s+)?a\s+/i',
+				'/disregard\s+(all\s+)?(your|previous|prior)\s+/i',
+				'/forget\s+(everything|all|your\s+instructions)/i',
+				'/jailbreak/i',
+				'/DAN\s+mode/i',
+				'/\[SYSTEM\]/i',
+				'/pretend\s+(you\s+are|to\s+be)\s+/i',
+				'/override\s+(your\s+)?(safety|instructions|guidelines)/i',
+			);
+			foreach ( $injection_patterns as $pattern ) {
+				if ( preg_match( $pattern, $message ) ) {
+					if ( 'warn' === ( $opts['prompt_injection_action'] ?? 'block' ) ) {
+						wp_send_json_error( array( 'message' => __( 'Suspicious message pattern detected. Please rephrase.', 'easyit-ai-chat' ) ), 400 );
+					} else {
+						wp_send_json_error( array( 'message' => __( 'Message could not be sent.', 'easyit-ai-chat' ) ), 400 );
+					}
+					break;
+				}
+			}
+		}
+
+		// E. Math Captcha verification (first message only).
+		if ( ! empty( $opts['captcha_enabled'] ) ) {
+			$cap_token  = isset( $_POST['cap_token'] )  ? sanitize_text_field( wp_unslash( $_POST['cap_token'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing
+			$cap_answer = isset( $_POST['cap_answer'] ) ? absint( wp_unslash( $_POST['cap_answer'] ) )             : -1; // phpcs:ignore WordPress.Security.NonceVerification.Missing
+			if ( ! $this->verify_captcha( $cap_token, $cap_answer ) ) {
+				wp_send_json_error( array( 'message' => __( 'Incorrect captcha answer. Please try again.', 'easyit-ai-chat' ) ), 400 );
+			}
 		}
 
 		// Session resolution.
@@ -283,14 +364,15 @@ class EAIC_Engine {
 			exit;
 		}
 
-		// Persist to DB.
-		EAIC_DB::add_message( $uuid, 'user',      $message );
-		EAIC_DB::add_message( $uuid, 'assistant', $ai_reply );
-
+		// Persist to DB (skip if no-storage mode).
 		$new_title = null;
-		if ( $is_first_message ) {
-			$new_title = $this->generate_title( $provider, $message );
-			EAIC_DB::update_session_title( $uuid, $new_title );
+		if ( ! EAIC_Options::get( 'disable_storage', false ) ) {
+			EAIC_DB::add_message( $uuid, 'user',      $message );
+			EAIC_DB::add_message( $uuid, 'assistant', $ai_reply );
+			if ( $is_first_message ) {
+				$new_title = $this->generate_title( $provider, $message );
+				EAIC_DB::update_session_title( $uuid, $new_title );
+			}
 		}
 
 		// Final event — JS knows streaming is complete.
@@ -342,6 +424,65 @@ class EAIC_Engine {
 			'timeout'   => 5,
 			'blocking'  => false, // fire and forget
 		) );
+	}
+
+	/**
+	 * Send abuse alert email (once per IP per rate-limit window).
+	 *
+	 * @param array $opts Plugin options.
+	 * @return void
+	 */
+	private function maybe_send_abuse_alert( $opts ) {
+		if ( empty( $opts['abuse_alert_enabled'] ) ) { return; }
+		$ip         = $this->get_client_ip();
+		$alert_key  = 'eaic_abuse_alerted_' . md5( $ip );
+		if ( get_transient( $alert_key ) ) { return; } // already sent recently
+		set_transient( $alert_key, 1, max( 10, (int) ( $opts['rate_limit_window'] ?? 60 ) ) );
+		$to      = ! empty( $opts['abuse_alert_email'] ) ? $opts['abuse_alert_email'] : get_option( 'admin_email' );
+		$subject = sprintf( __( '[%s] Chat Rate Limit Exceeded', 'easyit-ai-chat' ), get_bloginfo( 'name' ) );
+		$body    = sprintf(
+			__( "The IP address %s has exceeded the chat rate limit on %s.\n\nTime: %s\n\nYou may add this IP to the blocklist in EasyIT AI Chat → Settings → Security.", 'easyit-ai-chat' ),
+			$ip,
+			get_site_url(),
+			current_time( 'Y-m-d H:i:s' )
+		);
+		wp_mail( $to, $subject, $body );
+	}
+
+	/**
+	 * Generate a signed math captcha token.
+	 *
+	 * @return array{ question: string, token: string }
+	 */
+	public static function generate_captcha() {
+		$a   = wp_rand( 1, 9 );
+		$b   = wp_rand( 1, 9 );
+		$ans = $a + $b;
+		$exp = time() + 600; // 10 minutes
+		$data = implode( '|', array( $a, $b, $ans, $exp ) );
+		$sig  = hash_hmac( 'sha256', $data, wp_salt( 'auth' ) );
+		return array(
+			'question' => "{$a} + {$b}",
+			'token'    => $data . '|' . $sig,
+		);
+	}
+
+	/**
+	 * Verify a math captcha token + answer.
+	 *
+	 * @param string $token  Signed token from generate_captcha().
+	 * @param int    $answer User-provided answer.
+	 * @return bool
+	 */
+	private function verify_captcha( $token, $answer ) {
+		if ( '' === $token ) { return false; }
+		$parts = explode( '|', $token );
+		if ( 5 !== count( $parts ) ) { return false; }
+		list( $a, $b, $stored_ans, $exp, $sig ) = $parts;
+		if ( time() > (int) $exp ) { return false; }
+		$expected_sig = hash_hmac( 'sha256', implode( '|', array( $a, $b, $stored_ans, $exp ) ), wp_salt( 'auth' ) );
+		if ( ! hash_equals( $expected_sig, $sig ) ) { return false; }
+		return ( (int) $answer === (int) $stored_ans );
 	}
 
 	/**
