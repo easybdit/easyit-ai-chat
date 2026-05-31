@@ -453,6 +453,16 @@
 	white-space:  pre !important;
 }
 
+/* ---- Message timestamp ---- */
+.eaic-widget .eaic-msg-ts {
+	font-size:    10px !important;
+	font-weight:  400 !important;
+	color:        var(--c-muted) !important;
+	margin-left:  auto !important;
+	flex-shrink:  0 !important;
+	letter-spacing: .01em !important;
+}
+
 /* ---- Stop button state ---- */
 .eaic-widget .eaic-send-btn.eaic-btn-stop { background:#ef4444 !important; box-shadow:0 2px 8px rgba(239,68,68,.35) !important; }
 .eaic-widget .eaic-send-btn.eaic-btn-stop:not(:disabled):hover { background:#dc2626 !important; }

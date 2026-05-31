@@ -567,6 +567,13 @@
 	/* Message rendering                                                    */
 	/* ------------------------------------------------------------------ */
 
+	function formatTime( dateStr ) {
+		var d = dateStr ? new Date( String( dateStr ).replace( ' ', 'T' ) ) : new Date();
+		if ( isNaN( d.getTime() ) ) { d = new Date(); }
+		var h = d.getHours(), m = d.getMinutes();
+		return ( h < 10 ? '0' : '' ) + h + ':' + ( m < 10 ? '0' : '' ) + m;
+	}
+
 	Widget.prototype.appendMessage = function ( role, content, opts ) {
 		if ( ! this.elMessages ) { return null; }
 		this.clearWelcome();
@@ -597,6 +604,11 @@
 			badge.textContent = opts.provider;
 			label.appendChild( badge );
 		}
+
+		var ts = document.createElement( 'span' );
+		ts.className   = 'eaic-msg-ts';
+		ts.textContent = formatTime( opts.created_at || null );
+		label.appendChild( ts );
 
 		var content_el = document.createElement( 'div' );
 		content_el.className = 'eaic-msg-content';
@@ -759,7 +771,7 @@
 			}
 			self.elMessages.innerHTML = '';
 			( data.messages || [] ).forEach( function ( m ) {
-				self.appendMessage( m.role, m.content, { provider: data.provider } );
+				self.appendMessage( m.role, m.content, { provider: data.provider, created_at: m.created_at } );
 			} );
 			if ( ! data.messages || data.messages.length === 0 ) {
 				self.resetMessages( data.title );

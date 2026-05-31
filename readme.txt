@@ -4,7 +4,7 @@ Tags: chatbot, ai chatbot, openai, gemini, ollama
 Requires at least: 6.0
 Tested up to: 7.0
 Requires PHP: 8.0
-Stable tag: 1.0.20
+Stable tag: 1.0.21
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -183,6 +183,9 @@ WooCommerce-specific bots (Order Status Bot, Product Q&A Bot, Floating Widget) a
 
 == Changelog ==
 
+= 1.0.21 =
+* Added Message Timestamps — each chat message now shows the time it was sent (HH:MM format) next to the sender label. Timestamps are preserved when loading conversation history.
+
 = 1.0.20 =
 * Added Stop & Regenerate — the Send button turns into a red Stop button while the AI is responding. Click Stop to cancel the stream at any time. After a response completes, a Regenerate button appears below the last AI message to re-run the same query.
 
@@ -258,6 +261,9 @@ WooCommerce-specific bots (Order Status Bot, Product Q&A Bot, Floating Widget) a
 * Initial public release.
 
 == Upgrade Notice ==
+
+= 1.0.21 =
+New: Message timestamps (HH:MM) displayed next to each message label.
 
 = 1.0.20 =
 New: Stop button cancels AI response mid-stream; Regenerate button re-runs the last query.
