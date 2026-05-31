@@ -4,7 +4,7 @@ Tags: chatbot, ai chatbot, openai, gemini, ollama
 Requires at least: 6.0
 Tested up to: 7.0
 Requires PHP: 8.0
-Stable tag: 1.0.24
+Stable tag: 1.0.25
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -183,6 +183,9 @@ WooCommerce-specific bots (Order Status Bot, Product Q&A Bot, Floating Widget) a
 
 == Changelog ==
 
+= 1.0.25 =
+* Added Fullscreen Mode — an expand button in the chat topbar switches the widget to full-screen overlay. Press Escape or click again to exit. Works on any page without layout changes.
+
 = 1.0.24 =
 * Added Session Search — a search box in the chat sidebar lets users filter conversations by title in real time. No extra server requests — filtering is client-side.
 
@@ -270,6 +273,9 @@ WooCommerce-specific bots (Order Status Bot, Product Q&A Bot, Floating Widget) a
 * Initial public release.
 
 == Upgrade Notice ==
+
+= 1.0.25 =
+New: Fullscreen mode — expand button in topbar, Escape to exit.
 
 = 1.0.24 =
 New: Session search box in sidebar — filter conversations by title, client-side, instant.

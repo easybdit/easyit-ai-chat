@@ -189,6 +189,10 @@ class EAIC_Public {
 					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
 				</button>
 				<?php endif; ?>
+				<button class="eaic-fullscreen-btn" type="button" title="<?php esc_attr_e( 'Fullscreen', 'easyit-ai-chat' ); ?>" aria-label="<?php esc_attr_e( 'Toggle fullscreen', 'easyit-ai-chat' ); ?>">
+					<svg class="eaic-fs-expand" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16" aria-hidden="true"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
+					<svg class="eaic-fs-compress" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16" aria-hidden="true" style="display:none"><polyline points="4 14 10 14 10 20"/><polyline points="20 10 14 10 14 4"/><line x1="10" y1="14" x2="3" y2="21"/><line x1="21" y1="3" x2="14" y2="10"/></svg>
+				</button>
 			</div>
 
 			<div class="eaic-messages" role="log" aria-live="polite">

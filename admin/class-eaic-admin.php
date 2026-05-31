@@ -262,6 +262,8 @@ class EAIC_Admin {
 			'regenerate'     => __( 'Regenerate', 'easyit-ai-chat' ),
 			'thumbs_up'      => __( 'Helpful', 'easyit-ai-chat' ),
 			'thumbs_down'    => __( 'Not helpful', 'easyit-ai-chat' ),
+			'fullscreen'     => __( 'Fullscreen', 'easyit-ai-chat' ),
+			'exit_fullscreen'=> __( 'Exit fullscreen', 'easyit-ai-chat' ),
 		);
 	}
 

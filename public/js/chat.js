@@ -183,7 +183,8 @@
 		this.elMessages     = root.querySelector( '.eaic-messages' );
 		this.elInput        = root.querySelector( '.eaic-input' );
 		this.elSendBtn      = root.querySelector( '.eaic-send-btn' );
-		this.elExportBtn    = root.querySelector( '.eaic-export-btn' );
+		this.elExportBtn      = root.querySelector( '.eaic-export-btn' );
+		this.elFullscreenBtn  = root.querySelector( '.eaic-fullscreen-btn' );
 
 		if ( this.elMessages && this.msgHeight ) {
 			this.elMessages.style.maxHeight = this.msgHeight + 'px';
@@ -248,6 +249,16 @@
 		if ( this.elExportBtn ) {
 			this.elExportBtn.addEventListener( 'click', function () { self.exportConversation(); } );
 		}
+
+		if ( this.elFullscreenBtn ) {
+			this.elFullscreenBtn.addEventListener( 'click', function () { self.toggleFullscreen(); } );
+		}
+
+		document.addEventListener( 'keydown', function ( e ) {
+			if ( e.key === 'Escape' && self.root.classList.contains( 'eaic-is-fullscreen' ) ) {
+				self.exitFullscreen();
+			}
+		} );
 
 		// Session search.
 		if ( this.elSearchInput ) {
@@ -914,6 +925,39 @@
 	/* ------------------------------------------------------------------ */
 	/* Utilities                                                            */
 	/* ------------------------------------------------------------------ */
+
+	Widget.prototype.toggleFullscreen = function () {
+		if ( this.root.classList.contains( 'eaic-is-fullscreen' ) ) {
+			this.exitFullscreen();
+		} else {
+			this.enterFullscreen();
+		}
+	};
+
+	Widget.prototype.enterFullscreen = function () {
+		this.root.classList.add( 'eaic-is-fullscreen' );
+		document.body.classList.add( 'eaic-has-fullscreen' );
+		if ( this.elFullscreenBtn ) {
+			var exp = this.elFullscreenBtn.querySelector( '.eaic-fs-expand' );
+			var com = this.elFullscreenBtn.querySelector( '.eaic-fs-compress' );
+			if ( exp ) { exp.style.display = 'none'; }
+			if ( com ) { com.style.display = ''; }
+			this.elFullscreenBtn.title = t( 'exit_fullscreen', 'Exit fullscreen' );
+		}
+		this.scrollToBottom();
+	};
+
+	Widget.prototype.exitFullscreen = function () {
+		this.root.classList.remove( 'eaic-is-fullscreen' );
+		document.body.classList.remove( 'eaic-has-fullscreen' );
+		if ( this.elFullscreenBtn ) {
+			var exp = this.elFullscreenBtn.querySelector( '.eaic-fs-expand' );
+			var com = this.elFullscreenBtn.querySelector( '.eaic-fs-compress' );
+			if ( exp ) { exp.style.display = ''; }
+			if ( com ) { com.style.display = 'none'; }
+			this.elFullscreenBtn.title = t( 'fullscreen', 'Fullscreen' );
+		}
+	};
 
 	Widget.prototype.fallbackCopy = function ( text ) {
 		try {

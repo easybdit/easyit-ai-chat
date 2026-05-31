@@ -483,6 +483,41 @@
 	white-space:  pre !important;
 }
 
+/* ---- Fullscreen button ---- */
+.eaic-widget .eaic-fullscreen-btn {
+	background:    transparent !important;
+	border:        none !important;
+	cursor:        pointer !important;
+	color:         var(--c-muted) !important;
+	padding:       6px !important;
+	border-radius: 6px !important;
+	display:       flex !important;
+	align-items:   center !important;
+	justify-content:center !important;
+	box-shadow:    none !important;
+	flex-shrink:   0 !important;
+	transition:    background .12s, color .12s !important;
+}
+.eaic-widget .eaic-fullscreen-btn:hover { background:#f3f4f6 !important; color:#111827 !important; }
+
+/* Fullscreen overlay */
+.eaic-widget.eaic-is-fullscreen {
+	position:      fixed !important;
+	inset:         0 !important;
+	max-width:     100% !important;
+	width:         100% !important;
+	height:        100% !important;
+	z-index:       999998 !important;
+	border-radius: 0 !important;
+	margin:        0 !important;
+	box-shadow:    none !important;
+}
+.eaic-widget.eaic-is-fullscreen .eaic-messages {
+	max-height: calc(100vh - 180px) !important;
+	min-height: calc(100vh - 180px) !important;
+}
+body.eaic-has-fullscreen { overflow: hidden !important; }
+
 /* ---- Feedback 👍👎 buttons ---- */
 .eaic-widget .eaic-feedback-wrap {
 	display:    flex !important;
