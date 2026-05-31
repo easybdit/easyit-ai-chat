@@ -22,6 +22,7 @@ class EAIC_Public {
 		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_assets' ) );
 		add_shortcode( 'eaic_chat', array( $this, 'render_shortcode' ) );
 		add_filter( 'body_class', array( $this, 'body_class' ) );
+		add_action( 'wp_footer', array( $this, 'render_floating_widget' ), 99 );
 	}
 
 	/**
@@ -228,5 +229,42 @@ class EAIC_Public {
 </div>
 		<?php
 		return ob_get_clean();
+	}
+
+	/**
+	 * Render the simple floating chat widget in wp_footer.
+	 *
+	 * @return void
+	 */
+	public function render_floating_widget() {
+		$opts = EAIC_Options::all();
+		if ( empty( $opts['floating_widget_enabled'] ) ) {
+			return;
+		}
+
+		$position = in_array( $opts['floating_widget_position'], array( 'bottom-right', 'bottom-left' ), true )
+			? $opts['floating_widget_position'] : 'bottom-right';
+		$label    = sanitize_text_field( $opts['floating_widget_label'] ?: 'Chat with us' );
+		$accent   = $opts['color_accent'] ?: '#4f46e5';
+
+		$chat_html = do_shortcode( '[eaic_chat height="400"]' );
+		?>
+<div class="eaic-floating-wrap eaic-floating-<?php echo esc_attr( $position ); ?>" style="--eaic-float-accent:<?php echo esc_attr( $accent ); ?>">
+	<div class="eaic-float-panel" id="eaic-float-panel" aria-hidden="true">
+		<div class="eaic-float-header">
+			<span class="eaic-float-title"><?php echo esc_html( $label ); ?></span>
+			<button type="button" class="eaic-float-close" aria-label="<?php esc_attr_e( 'Close chat', 'easyit-ai-chat' ); ?>">
+				<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="18" height="18" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+			</button>
+		</div>
+		<div class="eaic-float-body"><?php echo $chat_html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></div>
+	</div>
+	<button type="button" class="eaic-float-btn" id="eaic-float-btn"
+		aria-label="<?php echo esc_attr( $label ); ?>" aria-expanded="false">
+		<svg class="eaic-float-icon-chat" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="26" height="26" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+		<svg class="eaic-float-icon-close" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="24" height="24" aria-hidden="true" style="display:none"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+	</button>
+</div>
+		<?php
 	}
 }

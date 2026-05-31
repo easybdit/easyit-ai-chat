@@ -890,6 +890,46 @@
 	/* Boot                                                                 */
 	/* ------------------------------------------------------------------ */
 
+	function bootFloating() {
+		var btn   = document.getElementById( 'eaic-float-btn' );
+		var panel = document.getElementById( 'eaic-float-panel' );
+		if ( ! btn || ! panel ) { return; }
+
+		var iconChat  = btn.querySelector( '.eaic-float-icon-chat' );
+		var iconClose = btn.querySelector( '.eaic-float-icon-close' );
+
+		function openPanel() {
+			panel.classList.add( 'eaic-float-open' );
+			panel.setAttribute( 'aria-hidden', 'false' );
+			btn.setAttribute( 'aria-expanded', 'true' );
+			btn.classList.add( 'eaic-float-is-open' );
+			if ( iconChat  ) { iconChat.style.display  = 'none'; }
+			if ( iconClose ) { iconClose.style.display = ''; }
+		}
+
+		function closePanel() {
+			panel.classList.remove( 'eaic-float-open' );
+			panel.setAttribute( 'aria-hidden', 'true' );
+			btn.setAttribute( 'aria-expanded', 'false' );
+			btn.classList.remove( 'eaic-float-is-open' );
+			if ( iconChat  ) { iconChat.style.display  = ''; }
+			if ( iconClose ) { iconClose.style.display = 'none'; }
+		}
+
+		btn.addEventListener( 'click', function () {
+			if ( panel.classList.contains( 'eaic-float-open' ) ) { closePanel(); } else { openPanel(); }
+		} );
+
+		var closeBtn = panel.querySelector( '.eaic-float-close' );
+		if ( closeBtn ) { closeBtn.addEventListener( 'click', closePanel ); }
+
+		document.addEventListener( 'click', function ( e ) {
+			if ( ! e.target.closest ) { return; }
+			if ( e.target.closest( '.eaic-floating-wrap' ) ) { return; }
+			if ( panel.classList.contains( 'eaic-float-open' ) ) { closePanel(); }
+		} );
+	}
+
 	function boot() {
 		var widgets = document.querySelectorAll( '.eaic-widget' );
 		var i;
@@ -898,6 +938,7 @@
 			new Widget( widgets[ i ] );
 			/* eslint-enable no-new */
 		}
+		bootFloating();
 	}
 
 	if ( document.readyState === 'loading' ) {

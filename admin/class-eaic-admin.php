@@ -140,6 +140,10 @@ class EAIC_Admin {
 			'ai_avatar_url'               => isset( $input['ai_avatar_url'] )   ? esc_url_raw( $input['ai_avatar_url'] )                                                    : $current['ai_avatar_url'],
 			'voice_input_enabled'         => ! empty( $input['voice_input_enabled'] ),
 			'export_enabled'              => ! empty( $input['export_enabled'] ),
+			'floating_widget_enabled'     => ! empty( $input['floating_widget_enabled'] ),
+			'floating_widget_position'    => ( isset( $input['floating_widget_position'] ) && in_array( $input['floating_widget_position'], array( 'bottom-right', 'bottom-left' ), true ) )
+			                                    ? $input['floating_widget_position'] : $current['floating_widget_position'],
+			'floating_widget_label'       => isset( $input['floating_widget_label'] ) ? sanitize_text_field( $input['floating_widget_label'] ) : $current['floating_widget_label'],
 			'color_accent'                => ! empty( $input['color_accent'] )  ? ( sanitize_hex_color( $input['color_accent'] )  ?: $current['color_accent'] )  : $current['color_accent'],
 			'color_user_bg'               => ! empty( $input['color_user_bg'] ) ? ( sanitize_hex_color( $input['color_user_bg'] ) ?: $current['color_user_bg'] ) : $current['color_user_bg'],
 			'color_bot_bg'                => ! empty( $input['color_bot_bg'] )  ? ( sanitize_hex_color( $input['color_bot_bg'] )  ?: $current['color_bot_bg'] )  : $current['color_bot_bg'],

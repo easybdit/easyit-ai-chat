@@ -361,6 +361,30 @@ $eaic_option_key = EAIC_Options::OPTION_KEY;
 				</div>
 
 				<div class="eaic-card">
+					<div class="eaic-card-title"><span class="icon">💬</span> <?php esc_html_e( 'Floating Widget', 'easyit-ai-chat' ); ?></div>
+					<label class="eaic-check-row">
+						<input type="checkbox" name="<?php echo esc_attr( $eaic_option_key ); ?>[floating_widget_enabled]" value="1" <?php checked( $eaic_opts['floating_widget_enabled'] ); ?>>
+						<div>
+							<div class="eaic-check-label"><?php esc_html_e( 'Enable Floating Chat Button', 'easyit-ai-chat' ); ?></div>
+							<div class="eaic-check-desc"><?php esc_html_e( 'Show a fixed chat launcher on every page. No WooCommerce required.', 'easyit-ai-chat' ); ?></div>
+						</div>
+					</label>
+					<div class="eaic-field-grid" style="margin-top:12px">
+						<div class="eaic-field">
+							<label class="eaic-label" for="eaic-float-position"><?php esc_html_e( 'Position', 'easyit-ai-chat' ); ?></label>
+							<select id="eaic-float-position" name="<?php echo esc_attr( $eaic_option_key ); ?>[floating_widget_position]">
+								<option value="bottom-right" <?php selected( $eaic_opts['floating_widget_position'], 'bottom-right' ); ?>><?php esc_html_e( 'Bottom Right', 'easyit-ai-chat' ); ?></option>
+								<option value="bottom-left"  <?php selected( $eaic_opts['floating_widget_position'], 'bottom-left' ); ?>><?php esc_html_e( 'Bottom Left', 'easyit-ai-chat' ); ?></option>
+							</select>
+						</div>
+						<div class="eaic-field">
+							<label class="eaic-label" for="eaic-float-label"><?php esc_html_e( 'Button Label / Tooltip', 'easyit-ai-chat' ); ?></label>
+							<input id="eaic-float-label" type="text" name="<?php echo esc_attr( $eaic_option_key ); ?>[floating_widget_label]" value="<?php echo esc_attr( $eaic_opts['floating_widget_label'] ); ?>" placeholder="Chat with us">
+						</div>
+					</div>
+				</div>
+
+				<div class="eaic-card">
 					<div class="eaic-card-title"><span class="icon">🎙️</span> <?php esc_html_e( 'Voice Input', 'easyit-ai-chat' ); ?></div>
 					<label class="eaic-check-row">
 						<input type="checkbox" name="<?php echo esc_attr( $eaic_option_key ); ?>[voice_input_enabled]" value="1" <?php checked( $eaic_opts['voice_input_enabled'] ); ?>>

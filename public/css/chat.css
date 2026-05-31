@@ -548,6 +548,101 @@ body.eaic-chat-page .page-title,
 body.eaic-chat-page h1.wp-block-post-title,
 body.eaic-chat-page .page-header { display:none !important; }
 
+/* ---- Floating widget ---- */
+.eaic-floating-wrap {
+	position:   fixed !important;
+	z-index:    999999 !important;
+	display:    flex !important;
+	flex-direction: column !important;
+	align-items: flex-end !important;
+	gap:        12px !important;
+}
+.eaic-floating-bottom-right { bottom:24px !important; right:24px !important; }
+.eaic-floating-bottom-left  { bottom:24px !important; left:24px !important; align-items:flex-start !important; }
+
+.eaic-float-btn {
+	width:           60px !important;
+	height:          60px !important;
+	border-radius:   50% !important;
+	background:      var(--eaic-float-accent, #4f46e5) !important;
+	color:           #fff !important;
+	border:          none !important;
+	cursor:          pointer !important;
+	display:         flex !important;
+	align-items:     center !important;
+	justify-content: center !important;
+	box-shadow:      0 4px 20px rgba(0,0,0,.25) !important;
+	padding:         0 !important;
+	margin:          0 !important;
+	flex-shrink:     0 !important;
+	transition:      transform .2s cubic-bezier(.34,1.56,.64,1), box-shadow .2s !important;
+}
+.eaic-float-btn:hover { transform:scale(1.08) !important; box-shadow:0 6px 28px rgba(0,0,0,.3) !important; }
+.eaic-float-btn:active { transform:scale(.95) !important; }
+
+.eaic-float-panel {
+	width:        380px !important;
+	background:   #fff !important;
+	border-radius:16px !important;
+	box-shadow:   0 20px 60px rgba(0,0,0,.18), 0 4px 16px rgba(0,0,0,.1) !important;
+	overflow:     hidden !important;
+	transform:    scale(.94) translateY(12px) !important;
+	opacity:      0 !important;
+	pointer-events: none !important;
+	transition:   transform .22s cubic-bezier(.34,1.56,.64,1), opacity .18s ease !important;
+	max-height:   90vh !important;
+	display:      flex !important;
+	flex-direction: column !important;
+}
+.eaic-float-panel.eaic-float-open {
+	transform:      scale(1) translateY(0) !important;
+	opacity:        1 !important;
+	pointer-events: auto !important;
+}
+
+.eaic-float-header {
+	display:       flex !important;
+	align-items:   center !important;
+	justify-content: space-between !important;
+	padding:       14px 16px !important;
+	background:    var(--eaic-float-accent, #4f46e5) !important;
+	color:         #fff !important;
+	flex-shrink:   0 !important;
+}
+.eaic-float-title { font-size:15px !important; font-weight:600 !important; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif !important; }
+.eaic-float-close {
+	background:    transparent !important;
+	border:        none !important;
+	color:         rgba(255,255,255,.8) !important;
+	cursor:        pointer !important;
+	padding:       4px !important;
+	border-radius: 6px !important;
+	display:       flex !important;
+	align-items:   center !important;
+	box-shadow:    none !important;
+	transition:    color .12s !important;
+}
+.eaic-float-close:hover { color:#fff !important; }
+
+.eaic-float-body { flex:1 !important; overflow:hidden !important; }
+.eaic-float-body .eaic-page-wrap { margin:0 !important; padding:0 !important; }
+.eaic-float-body .eaic-widget {
+	margin:        0 !important;
+	border-radius: 0 !important;
+	box-shadow:    none !important;
+	border:        none !important;
+	min-height:    0 !important;
+	max-width:     100% !important;
+}
+.eaic-float-body .eaic-sidebar { display:none !important; }
+.eaic-float-body .eaic-messages { min-height:200px !important; }
+
+@media (max-width:440px) {
+	.eaic-float-panel { width:calc(100vw - 24px) !important; }
+	.eaic-floating-bottom-right { right:12px !important; }
+	.eaic-floating-bottom-left  { left:12px !important; }
+}
+
 /* ---- Mic button ---- */
 .eaic-widget .eaic-mic-btn {
 	flex-shrink:     0 !important;

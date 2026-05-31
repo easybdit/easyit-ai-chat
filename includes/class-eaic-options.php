@@ -64,6 +64,9 @@ class EAIC_Options {
 			'color_bot_bg'                 => '#f3f4f6',
 			'voice_input_enabled'          => false,
 			'export_enabled'               => false,
+			'floating_widget_enabled'      => false,
+			'floating_widget_position'     => 'bottom-right',
+			'floating_widget_label'        => 'Chat with us',
 		);
 	}
 
