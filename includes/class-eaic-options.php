@@ -70,6 +70,7 @@ class EAIC_Options {
 			'gdpr_gate_enabled'            => false,
 			'gdpr_gate_text'               => 'This chat uses AI services. By continuing, you agree to our Privacy Policy.',
 			'gdpr_gate_btn_text'           => 'I Accept & Continue',
+			'context_messages'             => 10,
 		);
 	}
 

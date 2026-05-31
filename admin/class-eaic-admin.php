@@ -158,6 +158,7 @@ class EAIC_Admin {
 			'gdpr_gate_enabled'           => ! empty( $input['gdpr_gate_enabled'] ),
 			'gdpr_gate_text'              => isset( $input['gdpr_gate_text'] )     ? sanitize_textarea_field( $input['gdpr_gate_text'] )     : $current['gdpr_gate_text'],
 			'gdpr_gate_btn_text'          => isset( $input['gdpr_gate_btn_text'] ) ? sanitize_text_field( $input['gdpr_gate_btn_text'] )     : $current['gdpr_gate_btn_text'],
+			'context_messages'            => isset( $input['context_messages'] )  ? max( 1, min( 20, absint( $input['context_messages'] ) ) ) : $current['context_messages'],
 		);
 	}
 

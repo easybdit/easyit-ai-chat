@@ -4,7 +4,7 @@ Tags: chatbot, ai chatbot, openai, gemini, ollama
 Requires at least: 6.0
 Tested up to: 7.0
 Requires PHP: 8.0
-Stable tag: 1.0.27
+Stable tag: 1.0.28
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -183,6 +183,9 @@ WooCommerce-specific bots (Order Status Bot, Product Q&A Bot, Floating Widget) a
 
 == Changelog ==
 
+= 1.0.28 =
+* Added Context Length Control — a new "Context Window (messages)" setting (1–20, default 10) controls how many previous messages are sent to the AI with each request. Lower values reduce token cost; higher values give the AI more conversation memory. Find it in Settings → AI Behavior.
+
 = 1.0.27 =
 * Added Read Aloud (TTS) — a speaker button appears on hover over any AI message. Click to have the browser read the message aloud using the Web Speech API (SpeechSynthesis). Click again to stop. No external service required — uses the built-in browser engine.
 
@@ -279,6 +282,9 @@ WooCommerce-specific bots (Order Status Bot, Product Q&A Bot, Floating Widget) a
 * Initial public release.
 
 == Upgrade Notice ==
+
+= 1.0.28 =
+New: Context window setting (1–20 messages) to control AI memory per request. Lowers token cost on long chats.
 
 = 1.0.27 =
 New: Read Aloud (TTS) — speaker button on AI messages, uses browser SpeechSynthesis, no external service.

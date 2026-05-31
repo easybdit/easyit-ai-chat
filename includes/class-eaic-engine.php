@@ -187,7 +187,12 @@ class EAIC_Engine {
 
 		$rows             = EAIC_DB::get_messages( $uuid );
 		$is_first_message = 0 === count( $rows );
-		$messages         = array();
+		$ctx_limit        = max( 1, (int) EAIC_Options::get( 'context_messages', 10 ) );
+		// Keep only the last N messages for context window.
+		if ( count( $rows ) > $ctx_limit ) {
+			$rows = array_slice( $rows, -$ctx_limit );
+		}
+		$messages = array();
 		foreach ( $rows as $row ) {
 			$messages[] = array( 'role' => $row['role'], 'content' => $row['content'] );
 		}

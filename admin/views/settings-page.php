@@ -249,6 +249,12 @@ $eaic_option_key = EAIC_Options::OPTION_KEY;
 					</div>
 
 					<div class="eaic-field">
+						<label class="eaic-label" for="eaic-context-messages"><?php esc_html_e( 'Context Window (messages)', 'easyit-ai-chat' ); ?></label>
+						<input id="eaic-context-messages" type="number" min="1" max="20" name="<?php echo esc_attr( $eaic_option_key ); ?>[context_messages]" value="<?php echo (int) $eaic_opts['context_messages']; ?>">
+						<div class="eaic-field-desc"><?php esc_html_e( 'How many previous messages to include in each AI request (1–20). Higher = more context, higher token cost.', 'easyit-ai-chat' ); ?></div>
+					</div>
+
+					<div class="eaic-field">
 						<label class="eaic-label" for="eaic-retention"><?php esc_html_e( 'Data Retention (days)', 'easyit-ai-chat' ); ?></label>
 						<input id="eaic-retention" type="number" min="1" max="3650" name="<?php echo esc_attr( $eaic_option_key ); ?>[data_retention_days]" value="<?php echo (int) $eaic_opts['data_retention_days']; ?>">
 						<div class="eaic-field-desc"><?php esc_html_e( 'Auto-delete conversations older than this many days. Requires cron to be running.', 'easyit-ai-chat' ); ?></div>
