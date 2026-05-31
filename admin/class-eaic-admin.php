@@ -167,7 +167,36 @@ class EAIC_Admin {
 			'gdpr_gate_text'              => isset( $input['gdpr_gate_text'] )     ? sanitize_textarea_field( $input['gdpr_gate_text'] )     : $current['gdpr_gate_text'],
 			'gdpr_gate_btn_text'          => isset( $input['gdpr_gate_btn_text'] ) ? sanitize_text_field( $input['gdpr_gate_btn_text'] )     : $current['gdpr_gate_btn_text'],
 			'context_messages'            => isset( $input['context_messages'] )  ? max( 1, min( 20, absint( $input['context_messages'] ) ) ) : $current['context_messages'],
+			'bot_profiles'                => $this->sanitize_bot_profiles( isset( $input['bot_profiles'] )
+				? ( is_string( $input['bot_profiles'] ) ? json_decode( wp_unslash( $input['bot_profiles'] ), true ) : $input['bot_profiles'] )
+				: $current['bot_profiles'] ),
 		);
+	}
+
+	/**
+	 * Sanitize the bot_profiles array from the settings form.
+	 *
+	 * @param mixed $raw Raw input.
+	 * @return array
+	 */
+	private function sanitize_bot_profiles( $raw ) {
+		if ( ! is_array( $raw ) ) { return array(); }
+		$allowed_providers = array( 'ollama', 'openai', 'anthropic', 'deepseek', 'gemini' );
+		$clean = array();
+		foreach ( $raw as $profile ) {
+			if ( ! is_array( $profile ) ) { continue; }
+			$slug = isset( $profile['slug'] ) ? sanitize_key( $profile['slug'] ) : '';
+			if ( ! $slug ) { continue; }
+			$clean[] = array(
+				'slug'          => $slug,
+				'name'          => isset( $profile['name'] )          ? sanitize_text_field( $profile['name'] )          : $slug,
+				'provider'      => ( isset( $profile['provider'] ) && in_array( $profile['provider'], $allowed_providers, true ) ) ? $profile['provider'] : 'ollama',
+				'title'         => isset( $profile['title'] )         ? sanitize_text_field( $profile['title'] )         : '',
+				'placeholder'   => isset( $profile['placeholder'] )   ? sanitize_text_field( $profile['placeholder'] )   : '',
+				'system_prompt' => isset( $profile['system_prompt'] ) ? sanitize_textarea_field( $profile['system_prompt'] ) : '',
+			);
+		}
+		return $clean;
 	}
 
 	/**

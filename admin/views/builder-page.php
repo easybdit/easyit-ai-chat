@@ -64,6 +64,18 @@ $eaic_providers = array(
 					<input id="eab-height" type="number" min="200" max="900" class="eab-input" placeholder="600">
 				</div>
 
+				<?php if ( ! empty( $eaic_opts['bot_profiles'] ) ) : ?>
+				<div class="eaic-field">
+					<label class="eaic-label" for="eab-profile"><?php esc_html_e( 'Bot Profile', 'easyit-ai-chat' ); ?></label>
+					<select id="eab-profile" class="eab-input">
+						<option value=""><?php esc_html_e( '— None —', 'easyit-ai-chat' ); ?></option>
+						<?php foreach ( $eaic_opts['bot_profiles'] as $prof ) : ?>
+							<option value="<?php echo esc_attr( $prof['slug'] ); ?>"><?php echo esc_html( $prof['name'] ); ?></option>
+						<?php endforeach; ?>
+					</select>
+				</div>
+				<?php endif; ?>
+
 			</div>
 
 			<div class="eaic-field">
@@ -134,13 +146,18 @@ $eaic_providers = array(
 		var placeholder = document.getElementById('eab-placeholder').value.trim();
 		var height      = document.getElementById('eab-height').value.trim();
 		var system      = document.getElementById('eab-system').value.trim();
+		var profileEl   = document.getElementById('eab-profile');
+		var profile     = profileEl ? profileEl.value : '';
 
 		var sc = '[eaic_chat';
-		if (provider)    { sc += ' provider="' + provider + '"'; }
+		if (profile)      { sc += ' profile="' + profile + '"'; }
+		else {
+			if (provider)    { sc += ' provider="' + provider + '"'; }
+		}
 		if (title)        { sc += ' title="' + title.replace(/"/g,'&quot;') + '"'; }
 		if (placeholder)  { sc += ' placeholder="' + placeholder.replace(/"/g,'&quot;') + '"'; }
 		if (height && parseInt(height,10) !== 600) { sc += ' height="' + parseInt(height,10) + '"'; }
-		if (system)       { sc += ' system_prompt="' + system.replace(/"/g,'&quot;') + '"'; }
+		if (system && !profile) { sc += ' system_prompt="' + system.replace(/"/g,'&quot;') + '"'; }
 		sc += ']';
 		output.textContent = sc;
 	}

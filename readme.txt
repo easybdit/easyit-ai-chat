@@ -4,7 +4,7 @@ Tags: chatbot, ai chatbot, openai, gemini, ollama
 Requires at least: 6.0
 Tested up to: 7.0
 Requires PHP: 8.0
-Stable tag: 1.0.29
+Stable tag: 1.0.30
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -183,6 +183,9 @@ WooCommerce-specific bots (Order Status Bot, Product Q&A Bot, Floating Widget) a
 
 == Changelog ==
 
+= 1.0.30 =
+* Added Multiple Bot Profiles — create named configurations (slug, name, provider, title, system prompt) in Settings → Profiles. Load any profile with `[eaic_chat profile="your-slug"]`. Profiles appear in the Shortcode Builder for one-click selection.
+
 = 1.0.29 =
 * Added Shortcode Builder — a new admin page (EasyIT AI Chat → Shortcode Builder) lets you configure the chatbot visually. Choose provider, title, placeholder, height, and system prompt with dropdowns and inputs. The shortcode updates live and a Copy button puts it on your clipboard instantly. No typing required.
 
@@ -285,6 +288,9 @@ WooCommerce-specific bots (Order Status Bot, Product Q&A Bot, Floating Widget) a
 * Initial public release.
 
 == Upgrade Notice ==
+
+= 1.0.30 =
+New: Multiple Bot Profiles — named configurations loaded via profile="slug" shortcode attribute.
 
 = 1.0.29 =
 New: Shortcode Builder admin page — configure chatbot visually, get shortcode instantly. No typing required.

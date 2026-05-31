@@ -115,10 +115,25 @@ class EAIC_Public {
 				'placeholder'   => $opts['placeholder_text'],
 				'system_prompt' => $opts['system_prompt'],
 				'height'        => 600,
+				'profile'       => '',
 			),
 			$atts,
 			'eaic_chat'
 		);
+
+		// Apply bot profile overrides if profile slug matches.
+		if ( ! empty( $atts['profile'] ) && ! empty( $opts['bot_profiles'] ) ) {
+			$profile_slug = sanitize_key( $atts['profile'] );
+			foreach ( $opts['bot_profiles'] as $prof ) {
+				if ( isset( $prof['slug'] ) && $prof['slug'] === $profile_slug ) {
+					if ( ! empty( $prof['provider'] ) )      { $atts['provider']      = $prof['provider']; }
+					if ( ! empty( $prof['title'] ) )         { $atts['title']         = $prof['title']; }
+					if ( ! empty( $prof['placeholder'] ) )   { $atts['placeholder']   = $prof['placeholder']; }
+					if ( ! empty( $prof['system_prompt'] ) ) { $atts['system_prompt'] = $prof['system_prompt']; }
+					break;
+				}
+			}
+		}
 
 		$color_accent  = $opts['color_accent']  ?: '#4f46e5';
 		$color_user_bg = $opts['color_user_bg'] ?: '#1a56db';

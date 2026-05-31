@@ -66,6 +66,7 @@ $eaic_option_key = EAIC_Options::OPTION_KEY;
 				<button type="button" class="eaic-tab-btn" data-tab="general"><span class="eaic-tab-icon">⚙️</span> <?php esc_html_e( 'General', 'easyit-ai-chat' ); ?></button>
 				<button type="button" class="eaic-tab-btn" data-tab="ui"><span class="eaic-tab-icon">🎨</span> <?php esc_html_e( 'UI', 'easyit-ai-chat' ); ?></button>
 				<button type="button" class="eaic-tab-btn" data-tab="security"><span class="eaic-tab-icon">🔒</span> <?php esc_html_e( 'Security', 'easyit-ai-chat' ); ?></button>
+				<button type="button" class="eaic-tab-btn" data-tab="profiles"><span class="eaic-tab-icon">🤖</span> <?php esc_html_e( 'Profiles', 'easyit-ai-chat' ); ?></button>
 			</div>
 
 			<!-- OLLAMA -->
@@ -513,6 +514,23 @@ $eaic_option_key = EAIC_Options::OPTION_KEY;
 				</div>
 
 			</div><!-- /#eaic-panel-security -->
+
+			<!-- BOT PROFILES -->
+			<div class="eaic-panel" id="eaic-panel-profiles">
+				<div class="eaic-card">
+					<div class="eaic-card-title"><span class="icon">🤖</span> <?php esc_html_e( 'Bot Profiles', 'easyit-ai-chat' ); ?></div>
+					<p class="eaic-field-desc" style="margin-bottom:12px"><?php esc_html_e( 'Save named configurations and load them with [eaic_chat profile="your-slug"]. Slugs must be lowercase letters/numbers/hyphens.', 'easyit-ai-chat' ); ?></p>
+
+					<input type="hidden" id="eaic-profiles-json" name="<?php echo esc_attr( EAIC_Options::OPTION_KEY ); ?>[bot_profiles]" value="<?php echo esc_attr( wp_json_encode( $eaic_opts['bot_profiles'] ) ); ?>">
+
+					<div id="eaic-profiles-list">
+						<!-- Profiles rendered by JS -->
+					</div>
+					<button type="button" id="eaic-add-profile" class="button" style="margin-top:10px">
+						+ <?php esc_html_e( 'Add Profile', 'easyit-ai-chat' ); ?>
+					</button>
+				</div>
+			</div><!-- /#eaic-panel-profiles -->
 
 			<div class="eaic-save-row">
 				<button type="submit" class="eaic-save-btn">💾 <?php esc_html_e( 'Save Settings', 'easyit-ai-chat' ); ?></button>
