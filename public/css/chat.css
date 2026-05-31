@@ -290,6 +290,7 @@
 }
 .eaic-widget .eaic-msg--user      .eaic-msg-avatar { background:var(--c-user-bg) !important; color:#fff !important; }
 .eaic-widget .eaic-msg--assistant .eaic-msg-avatar { background:linear-gradient(135deg,#4f46e5,#7c3aed) !important; color:#fff !important; font-size:16px !important; }
+.eaic-widget .eaic-msg-avatar .eaic-avatar-img { width:100% !important; height:100% !important; object-fit:cover !important; border-radius:50% !important; display:block !important; }
 
 .eaic-widget .eaic-msg-body { display:flex !important; flex-direction:column !important; gap:4px !important; max-width:72% !important; }
 

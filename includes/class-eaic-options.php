@@ -58,6 +58,7 @@ class EAIC_Options {
 			'welcome_message_text'         => 'Hello! How can I help you today?',
 			'suggested_questions_enabled'  => false,
 			'suggested_questions'          => "What can you help me with?\nTell me about your features\nHow do I get started?",
+			'ai_avatar_url'                => '',
 		);
 	}
 

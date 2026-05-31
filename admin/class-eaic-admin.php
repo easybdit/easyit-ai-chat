@@ -136,7 +136,8 @@ class EAIC_Admin {
 			'welcome_message_enabled'     => ! empty( $input['welcome_message_enabled'] ),
 			'welcome_message_text'        => isset( $input['welcome_message_text'] )        ? sanitize_textarea_field( $input['welcome_message_text'] )        : $current['welcome_message_text'],
 			'suggested_questions_enabled' => ! empty( $input['suggested_questions_enabled'] ),
-			'suggested_questions'         => isset( $input['suggested_questions'] )         ? sanitize_textarea_field( $input['suggested_questions'] )         : $current['suggested_questions'],
+			'suggested_questions'         => isset( $input['suggested_questions'] )  ? sanitize_textarea_field( $input['suggested_questions'] )  : $current['suggested_questions'],
+			'ai_avatar_url'               => isset( $input['ai_avatar_url'] )        ? esc_url_raw( $input['ai_avatar_url'] )                    : $current['ai_avatar_url'],
 		);
 	}
 
@@ -153,6 +154,10 @@ class EAIC_Admin {
 
 		if ( ! $is_settings && ! $is_test_chat ) {
 			return;
+		}
+
+		if ( $is_settings ) {
+			wp_enqueue_media();
 		}
 
 		wp_enqueue_style(

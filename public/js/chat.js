@@ -144,6 +144,25 @@
 	}
 
 	/* ------------------------------------------------------------------ */
+	/* Avatar helper                                                        */
+	/* ------------------------------------------------------------------ */
+
+	function buildAssistantAvatar() {
+		var el = document.createElement( 'div' );
+		el.className = 'eaic-msg-avatar';
+		if ( CFG.ai_avatar_url ) {
+			var img = document.createElement( 'img' );
+			img.src       = CFG.ai_avatar_url;
+			img.alt       = t( 'ai', 'AI' );
+			img.className = 'eaic-avatar-img';
+			el.appendChild( img );
+		} else {
+			el.textContent = '🤖';
+		}
+		return el;
+	}
+
+	/* ------------------------------------------------------------------ */
 	/* Widget                                                               */
 	/* ------------------------------------------------------------------ */
 
@@ -434,12 +453,10 @@
 		if ( ! this.elMessages ) { return null; }
 		this.clearWelcome();
 
-		var wrap = document.createElement( 'div' );
+		var wrap   = document.createElement( 'div' );
 		wrap.className = 'eaic-msg eaic-msg--assistant';
 
-		var avatar = document.createElement( 'div' );
-		avatar.className = 'eaic-msg-avatar';
-		avatar.textContent = '🤖';
+		var avatar = buildAssistantAvatar();
 
 		var body = document.createElement( 'div' );
 		body.className = 'eaic-msg-body';
@@ -489,11 +506,14 @@
 		var wrap = document.createElement( 'div' );
 		wrap.className = 'eaic-msg eaic-msg--' + ( 'user' === role ? 'user' : 'assistant' );
 
-		var avatar = document.createElement( 'div' );
-		avatar.className = 'eaic-msg-avatar';
-		avatar.textContent = 'user' === role
-			? ( t( 'you', 'You' ).charAt( 0 ) || 'U' )
-			: '🤖';
+		var avatar;
+		if ( 'user' === role ) {
+			avatar = document.createElement( 'div' );
+			avatar.className   = 'eaic-msg-avatar';
+			avatar.textContent = t( 'you', 'You' ).charAt( 0 ) || 'U';
+		} else {
+			avatar = buildAssistantAvatar();
+		}
 
 		var body = document.createElement( 'div' );
 		body.className = 'eaic-msg-body';
@@ -557,9 +577,7 @@
 		var wrap = document.createElement( 'div' );
 		wrap.className = 'eaic-msg eaic-msg--assistant eaic-welcome-bubble';
 
-		var avatar = document.createElement( 'div' );
-		avatar.className = 'eaic-msg-avatar';
-		avatar.textContent = '🤖';
+		var avatar = buildAssistantAvatar();
 
 		var body = document.createElement( 'div' );
 		body.className = 'eaic-msg-body';

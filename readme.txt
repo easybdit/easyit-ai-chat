@@ -4,7 +4,7 @@ Tags: chatbot, ai chatbot, openai, gemini, ollama
 Requires at least: 6.0
 Tested up to: 7.0
 Requires PHP: 8.0
-Stable tag: 1.0.12
+Stable tag: 1.0.13
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -183,6 +183,9 @@ WooCommerce-specific bots (Order Status Bot, Product Q&A Bot, Floating Widget) a
 
 == Changelog ==
 
+= 1.0.13 =
+* Added Custom AI Avatar — upload any image from the WordPress Media Library to replace the default 🤖 emoji in all AI message bubbles. Configurable in Settings → UI.
+
 = 1.0.12 =
 * Added Suggested Questions — display clickable question chips below the welcome area. Clicking a chip sends it instantly. Up to 6 chips, one per line. Configurable in Settings → UI.
 
@@ -234,6 +237,9 @@ WooCommerce-specific bots (Order Status Bot, Product Q&A Bot, Floating Widget) a
 * Initial public release.
 
 == Upgrade Notice ==
+
+= 1.0.13 =
+New feature: Custom AI Avatar — replace the default robot emoji with your own image via Settings → UI.
 
 = 1.0.12 =
 New feature: Suggested Questions — clickable chips that send a question instantly when clicked.

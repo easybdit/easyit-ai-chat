@@ -83,6 +83,7 @@ class EAIC_Public {
 				'is_logged_in'            => is_user_logged_in(),
 				'welcome_message_enabled'     => (bool) $opts['welcome_message_enabled'],
 				'welcome_message_text'        => $opts['welcome_message_text'],
+				'ai_avatar_url'               => $opts['ai_avatar_url'],
 				'suggested_questions_enabled' => (bool) $opts['suggested_questions_enabled'],
 				'suggested_questions'         => array_slice(
 					array_values( array_filter( array_map( 'trim', explode( "\n", $opts['suggested_questions'] ) ) ) ),

@@ -329,6 +329,24 @@ $eaic_option_key = EAIC_Options::OPTION_KEY;
 						</div>
 					</div>
 				</div>
+
+				<div class="eaic-card">
+					<div class="eaic-card-title"><span class="icon">🤖</span> <?php esc_html_e( 'AI Avatar', 'easyit-ai-chat' ); ?></div>
+					<div class="eaic-field">
+						<label class="eaic-label"><?php esc_html_e( 'Custom Avatar Image', 'easyit-ai-chat' ); ?></label>
+						<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+							<?php $eaic_avatar = $eaic_opts['ai_avatar_url']; ?>
+							<img id="eaic-avatar-preview"
+								src="<?php echo esc_url( $eaic_avatar ); ?>"
+								alt="<?php esc_attr_e( 'Avatar preview', 'easyit-ai-chat' ); ?>"
+								style="width:48px;height:48px;border-radius:50%;object-fit:cover;border:2px solid #e5e7eb;<?php echo $eaic_avatar ? '' : 'display:none;'; ?>">
+							<input type="hidden" id="eaic-avatar-url" name="<?php echo esc_attr( $eaic_option_key ); ?>[ai_avatar_url]" value="<?php echo esc_attr( $eaic_avatar ); ?>">
+							<button type="button" id="eaic-avatar-upload-btn" class="button"><?php esc_html_e( 'Upload Image', 'easyit-ai-chat' ); ?></button>
+							<button type="button" id="eaic-avatar-remove-btn" class="button" <?php echo $eaic_avatar ? '' : 'style="display:none"'; ?>><?php esc_html_e( 'Remove', 'easyit-ai-chat' ); ?></button>
+						</div>
+						<div class="eaic-field-desc"><?php esc_html_e( 'Default: 🤖 emoji. Recommended: 48×48 px PNG/JPG with transparent or round background.', 'easyit-ai-chat' ); ?></div>
+					</div>
+				</div>
 			</div>
 
 			<!-- SECURITY -->

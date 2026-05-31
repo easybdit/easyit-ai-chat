@@ -44,6 +44,28 @@
 		$('#eaic-sq-wrap').toggle($(this).is(':checked'));
 	});
 
+	// AI Avatar — WordPress media uploader
+	$(document).on('click', '#eaic-avatar-upload-btn', function (e) {
+		e.preventDefault();
+		var frame = wp.media({
+			title:    'Select AI Avatar Image',
+			button:   { text: 'Use this image' },
+			multiple: false
+		});
+		frame.on('select', function () {
+			var attachment = frame.state().get('selection').first().toJSON();
+			$('#eaic-avatar-url').val(attachment.url);
+			$('#eaic-avatar-preview').attr('src', attachment.url).show();
+			$('#eaic-avatar-remove-btn').show();
+		});
+		frame.open();
+	});
+	$(document).on('click', '#eaic-avatar-remove-btn', function () {
+		$('#eaic-avatar-url').val('');
+		$('#eaic-avatar-preview').attr('src', '').hide();
+		$(this).hide();
+	});
+
 	// Test connection
 	$(document).on('click', '.eaic-test-btn', function () {
 		var $btn     = $(this);
