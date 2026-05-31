@@ -8,13 +8,13 @@ Stable tag: 2.0.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-AI chatbot for WordPress — add ChatGPT, Claude, Gemini, DeepSeek or local Ollama to any page with one shortcode. Bring your own API keys.
+AI chatbot for WordPress — add ChatGPT, Claude, Gemini, DeepSeek or local Ollama to any page with one shortcode. 30+ features. Bring your own API keys.
 
 == Description ==
 
-**EasyIT AI Chat** is the easiest way to add an AI chatbot to any WordPress page or post. Add a ChatGPT-style assistant powered by OpenAI, Anthropic Claude, Google Gemini, DeepSeek, or a free local Ollama model — just drop in `[eaic_chat]`, no coding required.
+**EasyIT AI Chat** is the most feature-rich free AI chatbot plugin for WordPress. Drop in `[eaic_chat]` on any page to add a fully-featured ChatGPT-style assistant — powered by OpenAI, Anthropic Claude, Google Gemini, DeepSeek, or a 100% free local Ollama model. No coding required.
 
-Choose from the world's best AI providers, or run a local model for free with Ollama. You own your data, you control your keys. No tracking, no telemetry.
+You own your data, you control your keys. No tracking, no telemetry, no subscription — ever.
 
 > 🌐 Website: [easyit.com.bd](https://easyit.com.bd)
 > 📺 Tutorials: [youtube.com/@easybdit](https://www.youtube.com/@easybdit)
@@ -28,21 +28,68 @@ Choose from the world's best AI providers, or run a local model for free with Ol
 * 🔍 **DeepSeek** — DeepSeek-Chat, DeepSeek-Reasoner.
 * ✦ **Google Gemini** — Gemini 2.5 Pro, Gemini 2.5 Flash, Gemini 2.0 Flash, Gemini 1.5 Flash.
 
-= 🚀 Key Features =
+= 🚀 Core Features =
 
-* **One shortcode, any provider** — Switch provider with a single attribute: `[eaic_chat provider="gemini"]`
-* **ChatGPT-style UI** — Sidebar with conversation history, code blocks with copy button, markdown rendering, dark-mode friendly
-* **Auto-title sessions** — First message automatically generates a meaningful conversation title via the AI
-* **Conversation memory** — Sessions saved per logged-in user or per guest (cookie-scoped, never cross-user)
-* **Custom system prompt** — Set a global prompt in settings or override per shortcode
+* **One shortcode, any provider** — `[eaic_chat provider="gemini"]` — switch provider per page, no settings change needed
+* **ChatGPT-style UI** — Sidebar with conversation history, code blocks with copy button, markdown rendering
+* **Auto-title sessions** — First message auto-generates a meaningful conversation title via the AI
+* **Conversation memory** — Sessions saved per logged-in user or guest (cookie-scoped, never cross-user)
+* **Custom system prompt** — Set globally in settings or override per shortcode
 * **Lock system prompt** — Prevent front-end prompt injection; admin-configured prompt only
 * **Test Connection** button — Verify your API key or Ollama URL before going live
 * **Rate limiting** — Per-user, per-session, and per-IP throttle to prevent abuse
 * **Data retention** — Auto-purge old conversations after a configurable number of days
+* **Context window control** — Choose how many previous messages to include per AI request (1–20)
 * **Privacy notice** — Optional configurable notice linking to your Privacy Policy
-* **Lightweight** — Assets load only on pages using the shortcode (~25 KB CSS + ~15 KB JS)
+* **Lightweight** — Assets load only on pages using the shortcode
 * **No telemetry** — Zero external calls except to the AI provider you choose
 * **Open source** — GPL-2.0-or-later, fully auditable
+
+= 💬 Chat UX & Interaction =
+
+* **Typing indicator** — Smooth 3-dot animated bubble while AI is responding (accent-color matched)
+* **Stop & Regenerate** — Cancel a response mid-stream with the ⏹ Stop button; re-run with 🔄 Regenerate
+* **Message timestamps** — HH:MM time shown next to every message label
+* **Copy message** — Hover any AI response to reveal a one-click copy button
+* **Read aloud (TTS)** — 🔊 Speaker button reads any AI message using the browser's built-in Speech Synthesis API
+* **Voice input** — 🎤 Microphone button transcribes speech directly into the input field (Web Speech API)
+* **Fullscreen mode** — Expand the chat widget to full-screen overlay; press Escape to exit
+* **Message feedback** — 👍 / 👎 buttons below AI responses; ratings stored in your DB
+* **Session search** — Search box in the sidebar filters conversations by title in real time
+
+= 🎨 Customization =
+
+* **Welcome message** — Custom AI greeting bubble when a new chat starts (supports markdown)
+* **Suggested questions** — Clickable chip buttons that send a question instantly
+* **Custom AI avatar** — Replace the 🤖 emoji with any image from your Media Library
+* **Color customization** — Accent, user bubble, and bot bubble colors via color pickers; reset to default in one click
+* **Floating chat widget** — Fixed launcher button on every page; configurable position (bottom-right / bottom-left) and label
+* **Bot profiles** — Save named configurations (provider, title, system prompt) and load with `[eaic_chat profile="slug"]`
+* **Multiple providers per site** — Different providers on different pages using shortcode attributes
+
+= 📊 Analytics & Insights =
+
+* **Analytics dashboard** — Total conversations, total messages, messages today, active chats (7 days), most-used provider
+* **7-day bar chart** — Pure CSS message chart — no external libraries
+* **Feedback stats** — Helpful / Not helpful rating counts from user feedback
+
+= 🔧 Developer & Admin Tools =
+
+* **Shortcode Builder** — Visual admin page: configure provider, title, height, system prompt — shortcode updates live, copy with one click
+* **Conversation export** — Download any conversation as a `.txt` file
+* **Webhook support** — POST to any URL after each AI response; JSON payload with session UUID, message, provider, timestamp; optional HMAC-SHA256 signature header
+* **Configurable message length** — Set max characters per user message (50–4000)
+
+= 🔒 Security Suite (v2.0) =
+
+* **Access restriction** — Allow everyone, logged-in users only, or specific WordPress user roles
+* **IP blocklist** — Block specific IPv4 / IPv6 addresses from sending messages
+* **Word filter** — Block or warn when a message contains banned words; configurable action
+* **Prompt injection detection** — Auto-detect and block jailbreak patterns ("ignore all previous instructions", "DAN mode", etc.)
+* **No-storage mode** — Opt out of saving conversations to the database entirely (GDPR-strict setups)
+* **Anti-bot math captcha** — Simple arithmetic challenge before the first message; no external API or cookies required
+* **Abuse alert email** — Get an email notification when the rate limit is exceeded; configurable recipient
+* **GDPR consent gate** — Show an accept banner before the chat activates; consent stored in a browser cookie (365 days)
 
 = 🛒 WooCommerce Add-on (Pro) =
 
@@ -58,13 +105,21 @@ Looking for WooCommerce features? **EasyIT AI Chat Pro** adds:
 **Basic usage:**
 `[eaic_chat]`
 
-**With a specific provider:**
+**Specify a provider:**
 `[eaic_chat provider="gemini" title="Support Bot" height="500"]`
 
-**With a custom system prompt:**
+**Custom system prompt:**
 `[eaic_chat provider="ollama" system_prompt="You are a helpful gardening assistant."]`
 
-**Available attributes:** `provider`, `title`, `placeholder`, `system_prompt`, `height`
+**Load a saved bot profile:**
+`[eaic_chat profile="support-bot"]`
+
+**Full example:**
+`[eaic_chat provider="openai" title="Ask Anything" placeholder="Type your question…" height="600" system_prompt="You are a helpful assistant for our website."]`
+
+**Available attributes:** `provider`, `title`, `placeholder`, `system_prompt`, `height`, `profile`
+
+💡 Use the **Shortcode Builder** (EasyIT AI Chat → Shortcode Builder) to generate shortcodes visually — no typing required.
 
 = 🔒 Privacy =
 
@@ -145,11 +200,11 @@ Locally on your server, or any machine reachable via HTTP. Visit [ollama.com](ht
 
 = Does the plugin store conversations? =
 
-Yes — in two custom database tables in your own database. All data is deleted when you uninstall the plugin. Guest sessions use a cookie token and are never linked to personal data.
+By default yes — in custom database tables in your own database. All data is deleted when you uninstall the plugin. Guest sessions use a cookie token and are never linked to personal data. You can enable **No-Storage Mode** in Settings → Security to disable all DB writes entirely.
 
 = Can I disable conversation history? =
 
-A "no-storage" mode is on the roadmap. Currently you can clear conversations using the trash icon in the chat sidebar.
+Yes. Enable **No-Storage Mode** in Settings → Security → No-Storage Mode. Messages will not be saved to the database at all — ideal for GDPR-strict setups.
 
 = Will it slow down my site? =
 
@@ -167,6 +222,34 @@ Yes — GPL-2.0-or-later. The only costs are to your chosen AI provider. Ollama 
 
 WooCommerce-specific bots (Order Status Bot, Product Q&A Bot, Floating Widget) are available in **EasyIT AI Chat Pro**.
 
+= How do I restrict the chat to logged-in users only? =
+
+Go to **Settings → Security → Access Restriction** and select "Logged-in users only" or "Specific user roles". Guests will see a "You must be logged in" message instead of the chat.
+
+= Can I block abusive users? =
+
+Yes. Use **IP Blocklist** (Settings → Security) to block specific IP addresses. Enable the **Word Filter** to block banned words or phrases. Turn on **Abuse Alert** to receive an email when the rate limit is exceeded.
+
+= Does the floating widget work without WooCommerce? =
+
+Yes — the Floating Chat Widget in the free plugin works on any WordPress site. Enable it in Settings → UI, choose position (bottom-right or bottom-left), set a label, and it appears on every page automatically.
+
+= Can I have different chatbots on different pages? =
+
+Yes. Use Bot Profiles (Settings → Profiles) to save named configurations, then load them per page: `[eaic_chat profile="support-bot"]` on one page and `[eaic_chat profile="sales-bot"]` on another. Each profile has its own provider, title, and system prompt.
+
+= How does the webhook work? =
+
+After each AI response completes, the plugin sends a non-blocking POST request to your configured URL with a JSON body containing: `session_uuid`, `user_message`, `ai_response`, `provider`, `timestamp`, and `site_url`. Optionally add a secret key to receive a `X-EAIC-Signature` HMAC-SHA256 header for verification. Compatible with Zapier, Make (Integromat), n8n, and any HTTP endpoint.
+
+= Does voice input work on all browsers? =
+
+Voice input uses the browser's Web Speech API which is supported in Chrome, Edge, and Safari. It requires HTTPS. Firefox does not support this API.
+
+= Is the math captcha accessible? =
+
+The captcha is a simple arithmetic question (e.g., "3 + 7 = ?") that appears above the chat input. It requires no external service, no cookies, and no images — just basic arithmetic. It is solved once per page load.
+
 = Where can I get support? =
 
 * 📺 Video tutorials: [youtube.com/@easybdit](https://www.youtube.com/@easybdit)
@@ -177,9 +260,12 @@ WooCommerce-specific bots (Order Status Bot, Product Q&A Bot, Floating Widget) a
 
 == Screenshots ==
 
-1. The chat interface — conversation history sidebar, user and AI messages, and a clean ChatGPT-style layout.
-2. Settings page — provider tabs (Ollama, OpenAI, Anthropic, DeepSeek, Gemini), server URL, model, and Test Connection button.
-3. Adding the chatbot to any page — just drop the [eaic_chat] shortcode into a block.
+1. Chat interface — conversation history sidebar, user and AI messages, timestamps, copy and read-aloud buttons.
+2. Settings page — provider tabs, API keys, Test Connection button, UI customization, and Security Suite.
+3. Analytics dashboard — total conversations, messages, 7-day bar chart, feedback ratings.
+4. Shortcode Builder — visual builder generates shortcode live; copy with one click.
+5. Floating chat widget — fixed launcher button that opens a slide-up chat panel on every page.
+6. Security settings — Access Restriction, IP Blocklist, Word Filter, Captcha, and more.
 
 == Changelog ==
 
