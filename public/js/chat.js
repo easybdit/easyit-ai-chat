@@ -474,9 +474,12 @@
 		var content = document.createElement( 'div' );
 		content.className = 'eaic-msg-content eaic-thinking-bubble';
 		content.innerHTML =
-			'<span class="eaic-thinking-icon">⏳</span>' +
-			'<span class="eaic-thinking-text">' + escapeHtml( t( 'thinking', 'Thinking…' ) ) + '</span>' +
-			'<span class="eaic-thinking-timer">0s</span>';
+			'<div class="eaic-typing">' +
+				'<span class="eaic-typing-dot"></span>' +
+				'<span class="eaic-typing-dot"></span>' +
+				'<span class="eaic-typing-dot"></span>' +
+			'</div>' +
+			'<span class="eaic-thinking-timer"></span>';
 
 		body.appendChild( label );
 		body.appendChild( content );
@@ -490,14 +493,7 @@
 	Widget.prototype.updateThinkingTimer = function ( node, seconds ) {
 		if ( ! node ) { return; }
 		var timerEl = node.querySelector( '.eaic-thinking-timer' );
-		var textEl  = node.querySelector( '.eaic-thinking-text' );
-		if ( timerEl ) { timerEl.textContent = seconds + 's'; }
-		if ( textEl ) {
-			if      ( seconds < 5  ) { textEl.textContent = t( 'thinking',   'Thinking…'             ); }
-			else if ( seconds < 12 ) { textEl.textContent = t( 'processing', 'Processing…'           ); }
-			else if ( seconds < 25 ) { textEl.textContent = t( 'working',    'Still working…'        ); }
-			else                     { textEl.textContent = t( 'almost',     'Almost there…'         ); }
-		}
+		if ( timerEl ) { timerEl.textContent = seconds >= 5 ? seconds + 's' : ''; }
 	};
 
 	/* ------------------------------------------------------------------ */

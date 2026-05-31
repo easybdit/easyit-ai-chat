@@ -4,7 +4,7 @@ Tags: chatbot, ai chatbot, openai, gemini, ollama
 Requires at least: 6.0
 Tested up to: 7.0
 Requires PHP: 8.0
-Stable tag: 1.0.18
+Stable tag: 1.0.19
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -183,6 +183,9 @@ WooCommerce-specific bots (Order Status Bot, Product Q&A Bot, Floating Widget) a
 
 == Changelog ==
 
+= 1.0.19 =
+* Improved Typing Indicator — replaced the hourglass thinking bubble with a smooth 3-dot animated typing indicator (classic messaging-app style). Dots use the configured accent color and animate with a staggered bounce. Timer appears after 5 seconds for slow responses.
+
 = 1.0.18 =
 * Added Analytics Dashboard — new admin page (EasyIT AI Chat → Analytics) showing total conversations, total messages, messages today, active chats this week, most used provider, and a 7-day message bar chart. All data from your own database, zero external tracking.
 
@@ -252,6 +255,9 @@ WooCommerce-specific bots (Order Status Bot, Product Q&A Bot, Floating Widget) a
 * Initial public release.
 
 == Upgrade Notice ==
+
+= 1.0.19 =
+Improved typing indicator: smooth 3-dot animation replaces the hourglass bubble for a cleaner, more familiar chat UX.
 
 = 1.0.18 =
 New feature: Analytics Dashboard — total chats, messages, 7-day chart, top provider. Admin only.
