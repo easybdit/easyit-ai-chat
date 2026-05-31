@@ -260,6 +260,8 @@ class EAIC_Admin {
 			'earlier'        => __( 'Earlier', 'easyit-ai-chat' ),
 			'stop'           => __( 'Stop', 'easyit-ai-chat' ),
 			'regenerate'     => __( 'Regenerate', 'easyit-ai-chat' ),
+			'thumbs_up'      => __( 'Helpful', 'easyit-ai-chat' ),
+			'thumbs_down'    => __( 'Not helpful', 'easyit-ai-chat' ),
 		);
 	}
 
@@ -307,8 +309,9 @@ class EAIC_Admin {
 		if ( ! current_user_can( 'manage_options' ) ) {
 			return;
 		}
-		$eaic_stats = EAIC_DB::get_stats();
-		$eaic_daily = EAIC_DB::get_messages_per_day( 7 );
+		$eaic_stats    = EAIC_DB::get_stats();
+		$eaic_daily    = EAIC_DB::get_messages_per_day( 7 );
+		$eaic_feedback = EAIC_DB::get_feedback_stats();
 		require EAIC_DIR . 'admin/views/analytics-page.php';
 	}
 

@@ -453,6 +453,27 @@
 	white-space:  pre !important;
 }
 
+/* ---- Feedback 👍👎 buttons ---- */
+.eaic-widget .eaic-feedback-wrap {
+	display:    flex !important;
+	gap:        4px !important;
+	margin-top: 5px !important;
+}
+.eaic-widget .eaic-fb-btn {
+	background:    transparent !important;
+	border:        1px solid var(--c-border) !important;
+	border-radius: 6px !important;
+	cursor:        pointer !important;
+	padding:       3px 7px !important;
+	font-size:     13px !important;
+	line-height:   1 !important;
+	box-shadow:    none !important;
+	transition:    background .12s, border-color .12s, transform .1s !important;
+	opacity:       .55 !important;
+}
+.eaic-widget .eaic-fb-btn:hover   { opacity:1 !important; background:#f3f4f6 !important; transform:scale(1.1) !important; }
+.eaic-widget .eaic-fb-btn.eaic-fb-active { opacity:1 !important; border-color:var(--c-accent) !important; background:rgba(79,70,229,.07) !important; }
+
 /* ---- Copy message button ---- */
 .eaic-widget .eaic-copy-msg-btn {
 	display:      none !important;

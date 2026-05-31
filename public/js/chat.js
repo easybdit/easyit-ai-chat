@@ -511,6 +511,39 @@
 		if ( existing && existing.parentNode ) { existing.parentNode.removeChild( existing ); }
 	};
 
+	Widget.prototype.buildFeedbackWrap = function ( fbIdx, currentRating ) {
+		var self    = this;
+		var fbWrap  = document.createElement( 'div' );
+		fbWrap.className = 'eaic-feedback-wrap';
+
+		[ 1, -1 ].forEach( function ( val ) {
+			var fbBtn    = document.createElement( 'button' );
+			fbBtn.type   = 'button';
+			fbBtn.className = 'eaic-fb-btn' + ( val === 1 ? ' eaic-fb-up' : ' eaic-fb-down' );
+			fbBtn.title  = val === 1 ? t( 'thumbs_up', 'Helpful' ) : t( 'thumbs_down', 'Not helpful' );
+			fbBtn.innerHTML = val === 1 ? '👍' : '👎';
+			if ( currentRating !== undefined && parseInt( currentRating, 10 ) === val ) {
+				fbBtn.classList.add( 'eaic-fb-active' );
+			}
+			fbBtn.addEventListener( 'click', function () {
+				if ( self.sending || ! self.currentSession ) { return; }
+				ajax( 'eaic_feedback', {
+					session:   self.currentSession,
+					msg_index: fbIdx,
+					rating:    val
+				} ).then( function ( res ) {
+					if ( res && res.success ) {
+						var siblings = fbWrap.querySelectorAll( '.eaic-fb-btn' );
+						for ( var i = 0; i < siblings.length; i++ ) { siblings[ i ].classList.remove( 'eaic-fb-active' ); }
+						fbBtn.classList.add( 'eaic-fb-active' );
+					}
+				} );
+			} );
+			fbWrap.appendChild( fbBtn );
+		} );
+		return fbWrap;
+	};
+
 	Widget.prototype.clearTimer = function () {
 		if ( this._streamTimer ) {
 			clearInterval( this._streamTimer );
@@ -622,7 +655,13 @@
 		body.appendChild( label );
 		body.appendChild( content_el );
 
-		// Copy button on assistant messages.
+		// Feedback 👍👎 on assistant messages.
+		if ( 'assistant' === role && content ) {
+			var msgFbIdx = opts.fb_index !== undefined ? parseInt( opts.fb_index, 10 ) : ( this._asstCount || 0 );
+			if ( opts.fb_index === undefined ) { this._asstCount = ( this._asstCount || 0 ) + 1; }
+			body.appendChild( this.buildFeedbackWrap( msgFbIdx, opts.fb_rating ) );
+		}
+
 		if ( 'assistant' === role && content ) {
 			var copyBtn = document.createElement( 'button' );
 			copyBtn.type      = 'button';
@@ -784,6 +823,7 @@
 
 	Widget.prototype.newChat = function () {
 		this.currentSession = '';
+		this._asstCount     = 0;
 		this.resetMessages();
 		this.markActive();
 		if ( this.elInput ) { this.elInput.focus(); }
@@ -803,9 +843,16 @@
 				self.provider = data.provider;
 			}
 			self.elMessages.innerHTML = '';
+			self._asstCount = 0;
+			var asstIdx = 0;
 			( data.messages || [] ).forEach( function ( m ) {
-				self.appendMessage( m.role, m.content, { provider: data.provider, created_at: m.created_at } );
+				var fbOpts = { provider: data.provider, created_at: m.created_at };
+				if ( 'assistant' === m.role ) {
+					fbOpts.fb_index = asstIdx++;
+				}
+				self.appendMessage( m.role, m.content, fbOpts );
 			} );
+			self._asstCount = asstIdx;
 			if ( ! data.messages || data.messages.length === 0 ) {
 				self.resetMessages( data.title );
 			}

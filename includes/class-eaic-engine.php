@@ -29,6 +29,8 @@ class EAIC_Engine {
 		add_action( 'wp_ajax_eaic_delete',          array( $this, 'ajax_delete' ) );
 		add_action( 'wp_ajax_nopriv_eaic_delete',   array( $this, 'ajax_delete' ) );
 		add_action( 'wp_ajax_eaic_health',          array( $this, 'ajax_health' ) );
+		add_action( 'wp_ajax_eaic_feedback',        array( $this, 'ajax_feedback' ) );
+		add_action( 'wp_ajax_nopriv_eaic_feedback', array( $this, 'ajax_feedback' ) );
 	}
 
 	// -----------------------------------------------------------------------
@@ -453,5 +455,33 @@ class EAIC_Engine {
 		} catch ( Exception $e ) {
 			wp_send_json_error( array( 'message' => '❌ ' . $e->getMessage() ) );
 		}
+	}
+
+	public function ajax_feedback() {
+		check_ajax_referer( 'eaic_nonce', 'nonce' );
+
+		$session_uuid = isset( $_POST['session'] )   ? sanitize_text_field( wp_unslash( $_POST['session'] ) ) : '';
+		$msg_index    = isset( $_POST['msg_index'] ) ? absint( $_POST['msg_index'] ) : 0;
+		$rating_raw   = isset( $_POST['rating'] )    ? (int) wp_unslash( $_POST['rating'] ) : 1;
+		$rating       = $rating_raw >= 0 ? 1 : -1;
+
+		if ( ! $session_uuid ) {
+			wp_send_json_error( array( 'message' => 'Missing session.' ), 400 );
+		}
+
+		// Verify ownership.
+		$identity = $this->get_identity();
+		$session  = EAIC_DB::get_session( $session_uuid );
+		if ( ! $session ) {
+			wp_send_json_error( array( 'message' => 'Session not found.' ), 404 );
+		}
+		$owned = ( $identity['user_id'] > 0 && (int) $session['user_id'] === $identity['user_id'] )
+		      || ( '' !== $identity['guest_token'] && $session['guest_token'] === $identity['guest_token'] );
+		if ( ! $owned ) {
+			wp_send_json_error( array( 'message' => 'Not authorised.' ), 403 );
+		}
+
+		EAIC_DB::save_feedback( $session_uuid, $msg_index, $rating );
+		wp_send_json_success( array( 'rating' => $rating ) );
 	}
 }

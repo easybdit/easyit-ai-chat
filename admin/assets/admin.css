@@ -390,6 +390,8 @@
 }
 @media (max-width: 900px) { .eaic-stats-grid { grid-template-columns: repeat(2, 1fr); } }
 @media (max-width: 500px) { .eaic-stats-grid { grid-template-columns: 1fr; } }
+.eaic-stats-grid--2 { grid-template-columns: repeat(2, 1fr) !important; max-width: 460px; }
+@media (max-width: 500px) { .eaic-stats-grid--2 { grid-template-columns: 1fr !important; } }
 
 .eaic-stat-card {
 	background: #fff;

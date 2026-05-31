@@ -70,6 +70,20 @@ $eaic_top = isset( $eaic_provider_labels[ $eaic_stats['top_provider'] ] )
 
 	</div>
 
+	<!-- Feedback stat cards -->
+	<div class="eaic-stats-grid eaic-stats-grid--2">
+		<div class="eaic-stat-card">
+			<div class="eaic-stat-icon">👍</div>
+			<div class="eaic-stat-number"><?php echo esc_html( number_format_i18n( $eaic_feedback['thumbs_up'] ) ); ?></div>
+			<div class="eaic-stat-label"><?php esc_html_e( 'Helpful ratings', 'easyit-ai-chat' ); ?></div>
+		</div>
+		<div class="eaic-stat-card">
+			<div class="eaic-stat-icon">👎</div>
+			<div class="eaic-stat-number"><?php echo esc_html( number_format_i18n( $eaic_feedback['thumbs_down'] ) ); ?></div>
+			<div class="eaic-stat-label"><?php esc_html_e( 'Not helpful ratings', 'easyit-ai-chat' ); ?></div>
+		</div>
+	</div>
+
 	<!-- Chart + top provider -->
 	<div class="eaic-analytics-row">
 

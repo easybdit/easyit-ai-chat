@@ -21,6 +21,7 @@ class EAIC_DB {
 
 	const SESSIONS_TABLE = 'eaic_sessions';
 	const MESSAGES_TABLE = 'eaic_messages';
+	const FEEDBACK_TABLE = 'eaic_feedback';
 	const CACHE_GROUP    = 'eaic';
 
 	/**
@@ -65,9 +66,22 @@ class EAIC_DB {
 			KEY session_id (session_id)
 		) {$charset_collate};";
 
+		$feedback_table = $wpdb->prefix . self::FEEDBACK_TABLE;
+		$feedback = "CREATE TABLE {$feedback_table} (
+			id           BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+			session_uuid VARCHAR(36)     NOT NULL,
+			msg_index    SMALLINT UNSIGNED NOT NULL DEFAULT 0,
+			rating       TINYINT         NOT NULL DEFAULT 1,
+			created_at   DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			PRIMARY KEY  (id),
+			UNIQUE KEY session_msg (session_uuid, msg_index),
+			KEY session_uuid (session_uuid)
+		) {$charset_collate};";
+
 		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
 		dbDelta( $sessions );
 		dbDelta( $messages );
+		dbDelta( $feedback );
 	}
 
 	/**
@@ -471,5 +485,70 @@ class EAIC_DB {
 			}
 		}
 		return $result;
+	}
+
+	/**
+	 * Save or update a thumbs-up/down rating for an AI message.
+	 *
+	 * @param string $session_uuid Session UUID.
+	 * @param int    $msg_index    Zero-based index of the AI message within the session.
+	 * @param int    $rating       1 (thumbs up) or -1 (thumbs down).
+	 * @return bool
+	 */
+	public static function save_feedback( $session_uuid, $msg_index, $rating ) {
+		global $wpdb;
+		$table  = $wpdb->prefix . self::FEEDBACK_TABLE;
+		$rating = ( (int) $rating >= 0 ) ? 1 : -1;
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$existing = $wpdb->get_var( $wpdb->prepare(
+			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			"SELECT id FROM {$table} WHERE session_uuid = %s AND msg_index = %d",
+			$session_uuid,
+			(int) $msg_index
+		) );
+
+		if ( $existing ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$wpdb->update(
+				$table,
+				array( 'rating' => $rating ),
+				array( 'id' => (int) $existing ),
+				array( '%d' ),
+				array( '%d' )
+			);
+		} else {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$wpdb->insert(
+				$table,
+				array(
+					'session_uuid' => (string) $session_uuid,
+					'msg_index'    => (int) $msg_index,
+					'rating'       => $rating,
+				),
+				array( '%s', '%d', '%d' )
+			);
+		}
+		return true;
+	}
+
+	/**
+	 * Get total thumbs-up and thumbs-down counts.
+	 *
+	 * @return array{ thumbs_up: int, thumbs_down: int }
+	 */
+	public static function get_feedback_stats() {
+		global $wpdb;
+		$table = $wpdb->prefix . self::FEEDBACK_TABLE;
+
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$up   = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$table} WHERE rating = 1" );
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$down = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$table} WHERE rating = -1" );
+
+		return array(
+			'thumbs_up'   => $up,
+			'thumbs_down' => $down,
+		);
 	}
 }
