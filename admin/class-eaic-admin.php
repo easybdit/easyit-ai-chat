@@ -64,6 +64,14 @@ class EAIC_Admin {
 			'eaic-analytics',
 			array( $this, 'render_analytics' )
 		);
+		add_submenu_page(
+			'eaic',
+			__( 'Shortcode Builder', 'easyit-ai-chat' ),
+			__( 'Shortcode Builder', 'easyit-ai-chat' ),
+			'manage_options',
+			'eaic-builder',
+			array( $this, 'render_builder' )
+		);
 	}
 
 	/**
@@ -174,8 +182,10 @@ class EAIC_Admin {
 			|| ( 'eaic_page_eaic-test-chat' === $hook );
 		$is_analytics  = ( 'easyit-ai-chat_page_eaic-analytics' === $hook )
 			|| ( 'eaic_page_eaic-analytics' === $hook );
+		$is_builder    = ( 'easyit-ai-chat_page_eaic-builder' === $hook )
+			|| ( 'eaic_page_eaic-builder' === $hook );
 
-		if ( ! $is_settings && ! $is_test_chat && ! $is_analytics ) {
+		if ( ! $is_settings && ! $is_test_chat && ! $is_analytics && ! $is_builder ) {
 			return;
 		}
 
@@ -321,6 +331,19 @@ class EAIC_Admin {
 		$eaic_daily    = EAIC_DB::get_messages_per_day( 7 );
 		$eaic_feedback = EAIC_DB::get_feedback_stats();
 		require EAIC_DIR . 'admin/views/analytics-page.php';
+	}
+
+	/**
+	 * Render the shortcode builder page.
+	 *
+	 * @return void
+	 */
+	public function render_builder() {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			return;
+		}
+		$eaic_opts = EAIC_Options::all();
+		require EAIC_DIR . 'admin/views/builder-page.php';
 	}
 
 	/**

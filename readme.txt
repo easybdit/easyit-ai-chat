@@ -4,7 +4,7 @@ Tags: chatbot, ai chatbot, openai, gemini, ollama
 Requires at least: 6.0
 Tested up to: 7.0
 Requires PHP: 8.0
-Stable tag: 1.0.28
+Stable tag: 1.0.29
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -183,6 +183,9 @@ WooCommerce-specific bots (Order Status Bot, Product Q&A Bot, Floating Widget) a
 
 == Changelog ==
 
+= 1.0.29 =
+* Added Shortcode Builder — a new admin page (EasyIT AI Chat → Shortcode Builder) lets you configure the chatbot visually. Choose provider, title, placeholder, height, and system prompt with dropdowns and inputs. The shortcode updates live and a Copy button puts it on your clipboard instantly. No typing required.
+
 = 1.0.28 =
 * Added Context Length Control — a new "Context Window (messages)" setting (1–20, default 10) controls how many previous messages are sent to the AI with each request. Lower values reduce token cost; higher values give the AI more conversation memory. Find it in Settings → AI Behavior.
 
@@ -282,6 +285,9 @@ WooCommerce-specific bots (Order Status Bot, Product Q&A Bot, Floating Widget) a
 * Initial public release.
 
 == Upgrade Notice ==
+
+= 1.0.29 =
+New: Shortcode Builder admin page — configure chatbot visually, get shortcode instantly. No typing required.
 
 = 1.0.28 =
 New: Context window setting (1–20 messages) to control AI memory per request. Lowers token cost on long chats.
