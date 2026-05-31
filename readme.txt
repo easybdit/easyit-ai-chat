@@ -4,7 +4,7 @@ Tags: chatbot, ai chatbot, openai, gemini, ollama
 Requires at least: 6.0
 Tested up to: 7.0
 Requires PHP: 8.0
-Stable tag: 1.0.21
+Stable tag: 1.0.22
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -183,6 +183,9 @@ WooCommerce-specific bots (Order Status Bot, Product Q&A Bot, Floating Widget) a
 
 == Changelog ==
 
+= 1.0.22 =
+* Added Copy Message — hover any AI response to reveal a copy button. Copies the plain text of the message to the clipboard. Shows a checkmark confirmation on success.
+
 = 1.0.21 =
 * Added Message Timestamps — each chat message now shows the time it was sent (HH:MM format) next to the sender label. Timestamps are preserved when loading conversation history.
 
@@ -261,6 +264,9 @@ WooCommerce-specific bots (Order Status Bot, Product Q&A Bot, Floating Widget) a
 * Initial public release.
 
 == Upgrade Notice ==
+
+= 1.0.22 =
+New: Copy button on AI messages — hover to reveal, click to copy to clipboard.
 
 = 1.0.21 =
 New: Message timestamps (HH:MM) displayed next to each message label.

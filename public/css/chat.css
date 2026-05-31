@@ -453,6 +453,28 @@
 	white-space:  pre !important;
 }
 
+/* ---- Copy message button ---- */
+.eaic-widget .eaic-copy-msg-btn {
+	display:      none !important;
+	align-items:  center !important;
+	justify-content: center !important;
+	width:        26px !important;
+	height:       26px !important;
+	background:   transparent !important;
+	border:       1px solid var(--c-border) !important;
+	border-radius:6px !important;
+	color:        var(--c-muted) !important;
+	cursor:       pointer !important;
+	padding:      0 !important;
+	margin-top:   4px !important;
+	box-shadow:   none !important;
+	transition:   background .12s, color .12s, border-color .12s !important;
+	flex-shrink:  0 !important;
+}
+.eaic-widget .eaic-msg--assistant:hover .eaic-copy-msg-btn { display:flex !important; }
+.eaic-widget .eaic-copy-msg-btn:hover { background:#f3f4f6 !important; color:#111827 !important; border-color:#d1d5db !important; }
+.eaic-widget .eaic-copy-msg-btn.is-copied { color:#16a34a !important; border-color:#16a34a !important; }
+
 /* ---- Message timestamp ---- */
 .eaic-widget .eaic-msg-ts {
 	font-size:    10px !important;
