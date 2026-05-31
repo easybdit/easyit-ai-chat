@@ -188,9 +188,11 @@
 			this.elMessages.style.maxHeight = this.msgHeight + 'px';
 		}
 
-		this.currentSession = '';
-		this.sending        = false;
-		this._streamTimer   = null; // elapsed-time ticker
+		this.currentSession  = '';
+		this.sending         = false;
+		this._streamTimer    = null;
+		this._streamReader   = null; // active ReadableStreamDefaultReader
+		this._lastUserText   = '';   // last sent user message (for regenerate)
 
 		this.bind();
 		this.initVoice();
@@ -216,7 +218,9 @@
 		}
 
 		if ( this.elSendBtn ) {
-			this.elSendBtn.addEventListener( 'click', function () { self.send(); } );
+			this.elSendBtn.addEventListener( 'click', function () {
+				if ( self.sending ) { self.stopStream(); } else { self.send(); }
+			} );
 		}
 
 		if ( this.elNewBtn ) {
@@ -299,20 +303,23 @@
 	/* Send — uses SSE streaming via fetch + ReadableStream                 */
 	/* ------------------------------------------------------------------ */
 
-	Widget.prototype.send = function () {
+	Widget.prototype.send = function ( overrideText ) {
 		if ( this.sending || ! this.elInput ) { return; }
-		var text = this.elInput.value.trim();
+		var text = overrideText !== undefined ? overrideText : this.elInput.value.trim();
 		if ( ! text ) { return; }
 
+		this._lastUserText = text;
 		this.sending = true;
-		if ( this.elSendBtn ) { this.elSendBtn.disabled = true; }
-		if ( this.elInput   ) { this.elInput.disabled   = true; }
+		this.removeRegenBtn();
+		this.setSendBtnStop();
+		if ( this.elInput ) { this.elInput.disabled = true; }
 
-		this.appendMessage( 'user', text );
-		this.elInput.value = '';
-		this.autoresize();
+		if ( overrideText === undefined ) {
+			this.appendMessage( 'user', text );
+			this.elInput.value = '';
+			this.autoresize();
+		}
 
-		// Show thinking bubble with elapsed timer.
 		var thinkNode = this.appendThinking();
 		var elapsed   = 0;
 		var self      = this;
@@ -322,7 +329,6 @@
 			self.updateThinkingTimer( thinkNode, elapsed );
 		}, 1000 );
 
-		// Build POST body for streaming endpoint.
 		var body = new URLSearchParams();
 		body.append( 'action',   'eaic_stream' );
 		body.append( 'nonce',    CFG.nonce );
@@ -345,6 +351,7 @@
 				throw new Error( 'HTTP ' + response.status );
 			}
 			var reader  = response.body.getReader();
+			self._streamReader = reader;
 			var decoder = new TextDecoder();
 			var buffer  = '';
 
@@ -353,9 +360,8 @@
 					if ( result.done ) { return; }
 					buffer += decoder.decode( result.value, { stream: true } );
 
-					// Process complete SSE lines from buffer.
 					var lines = buffer.split( '\n' );
-					buffer = lines.pop(); // keep incomplete last line
+					buffer = lines.pop();
 
 					var eventName = '';
 					lines.forEach( function ( line ) {
@@ -376,7 +382,6 @@
 							if ( 'chunk' === eventName && json.text ) {
 								streamText += json.text;
 								if ( ! contentEl ) {
-									// First token — replace thinking bubble with real content.
 									self.clearTimer();
 									if ( thinkNode && thinkNode.parentNode ) {
 										thinkNode.parentNode.removeChild( thinkNode );
@@ -386,7 +391,6 @@
 								}
 								if ( contentEl ) {
 									contentEl.innerHTML = renderMarkdown( streamText );
-									// Streaming cursor.
 									var cursor = document.createElement( 'span' );
 									cursor.className = 'eaic-cursor';
 									contentEl.appendChild( cursor );
@@ -396,12 +400,11 @@
 
 							if ( 'done' === eventName ) {
 								self.clearTimer();
-								// Remove cursor, final render.
 								if ( contentEl ) {
 									contentEl.innerHTML = renderMarkdown( streamText );
 									self.scrollToBottom();
+									self.appendRegenBtn( contentEl.closest( '.eaic-msg' ) );
 								}
-								// Update session title in topbar.
 								if ( json.title && self.elSessionTitle ) {
 									self.elSessionTitle.textContent = json.title;
 								}
@@ -427,21 +430,85 @@
 			return pump();
 		} ).catch( function ( err ) {
 			self.clearTimer();
+			self._streamReader = null;
 			if ( thinkNode && thinkNode.parentNode ) {
 				thinkNode.parentNode.removeChild( thinkNode );
 			}
-			self.renderError( err.message || t( 'error_generic', 'Something went wrong.' ) );
+			// Silently finish on abort (user pressed Stop).
+			if ( err && err.name !== 'AbortError' && err.message !== 'stream cancelled' ) {
+				self.renderError( err.message || t( 'error_generic', 'Something went wrong.' ) );
+			}
 			self.finishSend();
 		} );
 	};
 
+	Widget.prototype.stopStream = function () {
+		if ( this._streamReader ) {
+			try { this._streamReader.cancel(); } catch ( e ) { /* no-op */ }
+			this._streamReader = null;
+		}
+		this.clearTimer();
+		// Remove thinking bubble if still showing.
+		var think = this.elMessages && this.elMessages.querySelector( '.eaic-thinking-bubble' );
+		if ( think && think.parentNode ) { think.parentNode.removeChild( think.closest( '.eaic-msg' ) || think ); }
+		this.finishSend();
+	};
+
 	Widget.prototype.finishSend = function () {
-		this.sending = false;
-		if ( this.elSendBtn ) { this.elSendBtn.disabled = false; }
-		if ( this.elInput   ) {
+		this.sending         = false;
+		this._streamReader   = null;
+		this.setSendBtnSend();
+		if ( this.elInput ) {
 			this.elInput.disabled = false;
 			this.elInput.focus();
 		}
+	};
+
+	Widget.prototype.setSendBtnStop = function () {
+		if ( ! this.elSendBtn ) { return; }
+		this.elSendBtn.disabled  = false;
+		this.elSendBtn.title     = t( 'stop', 'Stop' );
+		this.elSendBtn.classList.add( 'eaic-btn-stop' );
+		this.elSendBtn.innerHTML =
+			'<svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16" aria-hidden="true"><rect x="5" y="5" width="14" height="14" rx="2"/></svg>';
+	};
+
+	Widget.prototype.setSendBtnSend = function () {
+		if ( ! this.elSendBtn ) { return; }
+		this.elSendBtn.disabled  = false;
+		this.elSendBtn.title     = '';
+		this.elSendBtn.classList.remove( 'eaic-btn-stop' );
+		this.elSendBtn.innerHTML =
+			'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16" aria-hidden="true"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>';
+	};
+
+	Widget.prototype.appendRegenBtn = function ( msgNode ) {
+		if ( ! msgNode ) { return; }
+		this.removeRegenBtn();
+		var self = this;
+		var btn  = document.createElement( 'button' );
+		btn.type      = 'button';
+		btn.className = 'eaic-regen-btn';
+		btn.title     = t( 'regenerate', 'Regenerate response' );
+		btn.innerHTML =
+			'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14" aria-hidden="true"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>' +
+			'<span>' + escapeHtml( t( 'regenerate', 'Regenerate' ) ) + '</span>';
+		btn.addEventListener( 'click', function () {
+			if ( self.sending ) { return; }
+			// Remove the last assistant message before regenerating.
+			if ( msgNode && msgNode.parentNode ) {
+				msgNode.parentNode.removeChild( msgNode );
+			}
+			self.removeRegenBtn();
+			self.send( self._lastUserText );
+		} );
+		var body = msgNode.querySelector( '.eaic-msg-body' );
+		if ( body ) { body.appendChild( btn ); }
+	};
+
+	Widget.prototype.removeRegenBtn = function () {
+		var existing = this.elMessages && this.elMessages.querySelector( '.eaic-regen-btn' );
+		if ( existing && existing.parentNode ) { existing.parentNode.removeChild( existing ); }
 	};
 
 	Widget.prototype.clearTimer = function () {

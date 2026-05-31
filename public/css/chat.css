@@ -453,6 +453,30 @@
 	white-space:  pre !important;
 }
 
+/* ---- Stop button state ---- */
+.eaic-widget .eaic-send-btn.eaic-btn-stop { background:#ef4444 !important; box-shadow:0 2px 8px rgba(239,68,68,.35) !important; }
+.eaic-widget .eaic-send-btn.eaic-btn-stop:not(:disabled):hover { background:#dc2626 !important; }
+
+/* ---- Regenerate button ---- */
+.eaic-widget .eaic-regen-btn {
+	display:      inline-flex !important;
+	align-items:  center !important;
+	gap:          5px !important;
+	margin-top:   6px !important;
+	padding:      4px 10px !important;
+	background:   transparent !important;
+	border:       1px solid var(--c-border) !important;
+	border-radius:6px !important;
+	color:        var(--c-muted) !important;
+	font-size:    12px !important;
+	font-family:  var(--font) !important;
+	cursor:       pointer !important;
+	box-shadow:   none !important;
+	transition:   background .12s, color .12s, border-color .12s !important;
+	line-height:  1.4 !important;
+}
+.eaic-widget .eaic-regen-btn:hover { background:#f3f4f6 !important; color:#111827 !important; border-color:#d1d5db !important; }
+
 /* ---- Typing dots ---- */
 .eaic-widget .eaic-typing { display:flex !important; gap:5px !important; align-items:center !important; padding:2px 0 !important; }
 .eaic-widget .eaic-typing-dot { width:8px !important; height:8px !important; border-radius:50% !important; background:var(--c-accent) !important; opacity:.5 !important; animation:eaic-bounce 1.2s ease-in-out infinite !important; }

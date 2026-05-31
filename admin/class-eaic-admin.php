@@ -258,6 +258,8 @@ class EAIC_Admin {
 			'today'          => __( 'Today', 'easyit-ai-chat' ),
 			'yesterday'      => __( 'Yesterday', 'easyit-ai-chat' ),
 			'earlier'        => __( 'Earlier', 'easyit-ai-chat' ),
+			'stop'           => __( 'Stop', 'easyit-ai-chat' ),
+			'regenerate'     => __( 'Regenerate', 'easyit-ai-chat' ),
 		);
 	}
 
