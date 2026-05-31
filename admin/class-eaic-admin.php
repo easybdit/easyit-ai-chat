@@ -138,6 +138,7 @@ class EAIC_Admin {
 			'suggested_questions_enabled' => ! empty( $input['suggested_questions_enabled'] ),
 			'suggested_questions'         => isset( $input['suggested_questions'] )  ? sanitize_textarea_field( $input['suggested_questions'] )  : $current['suggested_questions'],
 			'ai_avatar_url'               => isset( $input['ai_avatar_url'] )   ? esc_url_raw( $input['ai_avatar_url'] )                                                    : $current['ai_avatar_url'],
+			'voice_input_enabled'         => ! empty( $input['voice_input_enabled'] ),
 			'color_accent'                => ! empty( $input['color_accent'] )  ? ( sanitize_hex_color( $input['color_accent'] )  ?: $current['color_accent'] )  : $current['color_accent'],
 			'color_user_bg'               => ! empty( $input['color_user_bg'] ) ? ( sanitize_hex_color( $input['color_user_bg'] ) ?: $current['color_user_bg'] ) : $current['color_user_bg'],
 			'color_bot_bg'                => ! empty( $input['color_bot_bg'] )  ? ( sanitize_hex_color( $input['color_bot_bg'] )  ?: $current['color_bot_bg'] )  : $current['color_bot_bg'],

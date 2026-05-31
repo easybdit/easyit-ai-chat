@@ -361,6 +361,17 @@ $eaic_option_key = EAIC_Options::OPTION_KEY;
 				</div>
 
 				<div class="eaic-card">
+					<div class="eaic-card-title"><span class="icon">🎙️</span> <?php esc_html_e( 'Voice Input', 'easyit-ai-chat' ); ?></div>
+					<label class="eaic-check-row">
+						<input type="checkbox" name="<?php echo esc_attr( $eaic_option_key ); ?>[voice_input_enabled]" value="1" <?php checked( $eaic_opts['voice_input_enabled'] ); ?>>
+						<div>
+							<div class="eaic-check-label"><?php esc_html_e( 'Enable Voice Input', 'easyit-ai-chat' ); ?></div>
+							<div class="eaic-check-desc"><?php esc_html_e( 'Show a microphone button in the input area. Uses the browser\'s built-in Web Speech API (Chrome, Edge, Safari). Requires HTTPS.', 'easyit-ai-chat' ); ?></div>
+						</div>
+					</label>
+				</div>
+
+				<div class="eaic-card">
 					<div class="eaic-card-title"><span class="icon">🤖</span> <?php esc_html_e( 'AI Avatar', 'easyit-ai-chat' ); ?></div>
 					<div class="eaic-field">
 						<label class="eaic-label"><?php esc_html_e( 'Custom Avatar Image', 'easyit-ai-chat' ); ?></label>

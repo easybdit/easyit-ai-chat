@@ -533,6 +533,35 @@ body.eaic-chat-page .page-title,
 body.eaic-chat-page h1.wp-block-post-title,
 body.eaic-chat-page .page-header { display:none !important; }
 
+/* ---- Mic button ---- */
+.eaic-widget .eaic-mic-btn {
+	flex-shrink:     0 !important;
+	width:           36px !important;
+	height:          36px !important;
+	border-radius:   10px !important;
+	background:      #f3f4f6 !important;
+	color:           #6b7280 !important;
+	border:          none !important;
+	cursor:          pointer !important;
+	display:         flex !important;
+	align-items:     center !important;
+	justify-content: center !important;
+	padding:         0 !important;
+	margin:          0 !important;
+	box-shadow:      none !important;
+	transition:      background .15s, color .15s !important;
+}
+.eaic-widget .eaic-mic-btn:hover { background:#e5e7eb !important; color:#111827 !important; }
+.eaic-widget .eaic-mic-btn.eaic-mic-active {
+	background: #fee2e2 !important;
+	color:      #ef4444 !important;
+	animation:  eaic-mic-pulse .9s ease infinite !important;
+}
+@keyframes eaic-mic-pulse {
+	0%,100% { box-shadow: 0 0 0 0 rgba(239,68,68,.35); }
+	50%     { box-shadow: 0 0 0 7px rgba(239,68,68,0); }
+}
+
 /* ---- Suggested question chips ---- */
 .eaic-widget .eaic-suggested-chips {
 	display:    flex !important;

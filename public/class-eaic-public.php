@@ -84,6 +84,7 @@ class EAIC_Public {
 				'welcome_message_enabled'     => (bool) $opts['welcome_message_enabled'],
 				'welcome_message_text'        => $opts['welcome_message_text'],
 				'ai_avatar_url'               => $opts['ai_avatar_url'],
+				'voice_input_enabled'         => (bool) $opts['voice_input_enabled'],
 				'suggested_questions_enabled' => (bool) $opts['suggested_questions_enabled'],
 				'suggested_questions'         => array_slice(
 					array_values( array_filter( array_map( 'trim', explode( "\n", $opts['suggested_questions'] ) ) ) ),
@@ -201,6 +202,13 @@ class EAIC_Public {
 					<textarea class="eaic-input" rows="1" maxlength="4000"
 						placeholder="<?php echo esc_attr( $placeholder ); ?>"
 						aria-label="<?php echo esc_attr( $placeholder ); ?>"></textarea>
+					<?php if ( ! empty( $opts['voice_input_enabled'] ) ) : ?>
+					<button class="eaic-mic-btn" type="button" style="display:none"
+						title="<?php esc_attr_e( 'Voice input', 'easyit-ai-chat' ); ?>"
+						aria-label="<?php esc_attr_e( 'Start voice input', 'easyit-ai-chat' ); ?>">
+						<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18" aria-hidden="true"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+					</button>
+					<?php endif; ?>
 					<button class="eaic-send-btn" type="button" disabled
 						aria-label="<?php esc_attr_e( 'Send', 'easyit-ai-chat' ); ?>">
 						<svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18" aria-hidden="true"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>

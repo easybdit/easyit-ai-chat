@@ -192,6 +192,7 @@
 		this._streamTimer   = null; // elapsed-time ticker
 
 		this.bind();
+		this.initVoice();
 		this.loadSessions();
 	}
 
@@ -784,6 +785,61 @@
 		if ( wrap.children.length > 0 ) {
 			this.elMessages.appendChild( wrap );
 		}
+	};
+
+	/* ------------------------------------------------------------------ */
+	/* Voice input                                                          */
+	/* ------------------------------------------------------------------ */
+
+	Widget.prototype.initVoice = function () {
+		if ( ! CFG.voice_input_enabled ) { return; }
+		var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+		if ( ! SR ) { return; }
+
+		var micBtn = this.root.querySelector( '.eaic-mic-btn' );
+		if ( ! micBtn ) { return; }
+		micBtn.style.display = '';
+
+		var self        = this;
+		var recognition = new SR();
+		var listening   = false;
+
+		recognition.continuous     = false;
+		recognition.interimResults = false;
+		recognition.lang           = document.documentElement.lang || 'en-US';
+
+		micBtn.addEventListener( 'click', function () {
+			if ( self.sending ) { return; }
+			if ( listening ) { recognition.stop(); return; }
+			try { recognition.start(); } catch ( e ) { /* already started */ }
+		} );
+
+		recognition.onstart = function () {
+			listening = true;
+			micBtn.classList.add( 'eaic-mic-active' );
+		};
+
+		recognition.onresult = function ( e ) {
+			var transcript = e.results[ 0 ][ 0 ].transcript;
+			if ( self.elInput ) {
+				self.elInput.value = ( self.elInput.value + ' ' + transcript ).trim();
+				self.autoresize();
+				if ( self.elSendBtn ) {
+					self.elSendBtn.disabled = self.elInput.value.trim() === '' || self.sending;
+				}
+				self.elInput.focus();
+			}
+		};
+
+		recognition.onend = function () {
+			listening = false;
+			micBtn.classList.remove( 'eaic-mic-active' );
+		};
+
+		recognition.onerror = function () {
+			listening = false;
+			micBtn.classList.remove( 'eaic-mic-active' );
+		};
 	};
 
 	/* ------------------------------------------------------------------ */

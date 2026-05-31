@@ -4,7 +4,7 @@ Tags: chatbot, ai chatbot, openai, gemini, ollama
 Requires at least: 6.0
 Tested up to: 7.0
 Requires PHP: 8.0
-Stable tag: 1.0.14
+Stable tag: 1.0.15
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -183,6 +183,9 @@ WooCommerce-specific bots (Order Status Bot, Product Q&A Bot, Floating Widget) a
 
 == Changelog ==
 
+= 1.0.15 =
+* Added Voice Input — enable a microphone button in the input area. Uses the browser's Web Speech API (Chrome, Edge, Safari). Speech is transcribed directly into the text field. Enable in Settings → UI. Requires HTTPS.
+
 = 1.0.14 =
 * Added Color Customization — set Accent, User message, and AI message bubble colors via color pickers in Settings → UI. Changes apply instantly with a reset-to-default button for each color.
 
@@ -240,6 +243,9 @@ WooCommerce-specific bots (Order Status Bot, Product Q&A Bot, Floating Widget) a
 * Initial public release.
 
 == Upgrade Notice ==
+
+= 1.0.15 =
+New feature: Voice Input — microphone button with Web Speech API, transcribes speech into the chat input.
 
 = 1.0.14 =
 New feature: Color Customization — accent, user bubble, and AI bubble colors via color pickers in Settings → UI.
