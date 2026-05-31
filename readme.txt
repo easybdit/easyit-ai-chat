@@ -4,7 +4,7 @@ Tags: chatbot, ai chatbot, openai, gemini, ollama
 Requires at least: 6.0
 Tested up to: 7.0
 Requires PHP: 8.0
-Stable tag: 1.0.23
+Stable tag: 1.0.24
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -183,6 +183,9 @@ WooCommerce-specific bots (Order Status Bot, Product Q&A Bot, Floating Widget) a
 
 == Changelog ==
 
+= 1.0.24 =
+* Added Session Search — a search box in the chat sidebar lets users filter conversations by title in real time. No extra server requests — filtering is client-side.
+
 = 1.0.23 =
 * Added Message Feedback — 👍/👎 buttons appear below each AI response. Ratings are stored in your database and visible in the Analytics dashboard (Helpful / Not helpful counts). Feedback resets if you regenerate a response.
 
@@ -267,6 +270,9 @@ WooCommerce-specific bots (Order Status Bot, Product Q&A Bot, Floating Widget) a
 * Initial public release.
 
 == Upgrade Notice ==
+
+= 1.0.24 =
+New: Session search box in sidebar — filter conversations by title, client-side, instant.
 
 = 1.0.23 =
 New: Message feedback (👍/👎) on AI responses. Ratings tracked in DB and shown in Analytics.

@@ -174,6 +174,7 @@
 
 		this.elSidebar      = root.querySelector( '.eaic-sidebar' );
 		this.elSessionsList = root.querySelector( '.eaic-sessions-list' );
+		this.elSearchInput  = root.querySelector( '.eaic-search-input' );
 		this.elNewBtn       = root.querySelector( '.eaic-new-chat-btn' );
 		this.elProviderSel  = root.querySelector( '.eaic-provider-select' );
 		this.elToggleSide   = root.querySelector( '.eaic-toggle-sidebar' );
@@ -246,6 +247,13 @@
 
 		if ( this.elExportBtn ) {
 			this.elExportBtn.addEventListener( 'click', function () { self.exportConversation(); } );
+		}
+
+		// Session search.
+		if ( this.elSearchInput ) {
+			this.elSearchInput.addEventListener( 'input', function () {
+				self.filterSessions( self.elSearchInput.value );
+			} );
 		}
 
 		// Copy-code buttons (delegated).
@@ -802,6 +810,30 @@
 			} );
 		} );
 		this.elSessionsList.innerHTML = html;
+	};
+
+	Widget.prototype.filterSessions = function ( query ) {
+		if ( ! this.elSessionsList ) { return; }
+		var q     = query ? query.toLowerCase().trim() : '';
+		var items = this.elSessionsList.querySelectorAll( '.eaic-session-item' );
+		var i;
+		for ( i = 0; i < items.length; i++ ) {
+			var title = ( items[ i ].getAttribute( 'title' ) || items[ i ].textContent || '' ).toLowerCase();
+			items[ i ].style.display = ( ! q || title.indexOf( q ) !== -1 ) ? '' : 'none';
+		}
+		// Hide group labels that have no visible children.
+		var labels = this.elSessionsList.querySelectorAll( '.eaic-session-group-label' );
+		for ( i = 0; i < labels.length; i++ ) {
+			var next    = labels[ i ].nextElementSibling;
+			var hasVisible = false;
+			while ( next && ! next.classList.contains( 'eaic-session-group-label' ) ) {
+				if ( next.classList.contains( 'eaic-session-item' ) && next.style.display !== 'none' ) {
+					hasVisible = true; break;
+				}
+				next = next.nextElementSibling;
+			}
+			labels[ i ].style.display = hasVisible ? '' : 'none';
+		}
 	};
 
 	Widget.prototype.markActive = function () {
