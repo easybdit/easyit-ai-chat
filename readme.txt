@@ -4,7 +4,7 @@ Tags: chatbot, ai chatbot, openai, gemini, ollama
 Requires at least: 6.0
 Tested up to: 7.0
 Requires PHP: 8.0
-Stable tag: 1.0.25
+Stable tag: 1.0.26
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -183,6 +183,9 @@ WooCommerce-specific bots (Order Status Bot, Product Q&A Bot, Floating Widget) a
 
 == Changelog ==
 
+= 1.0.26 =
+* Added GDPR Consent Gate — optionally show a consent banner before the chat activates. Users must click an accept button before chatting. Consent is stored in a browser cookie (365 days). Configurable message text and button label. Enable in Settings → UI.
+
 = 1.0.25 =
 * Added Fullscreen Mode — an expand button in the chat topbar switches the widget to full-screen overlay. Press Escape or click again to exit. Works on any page without layout changes.
 
@@ -273,6 +276,9 @@ WooCommerce-specific bots (Order Status Bot, Product Q&A Bot, Floating Widget) a
 * Initial public release.
 
 == Upgrade Notice ==
+
+= 1.0.26 =
+New: GDPR Consent Gate — cookie-based consent banner before chat starts. Configurable text. Enable in Settings → UI.
 
 = 1.0.25 =
 New: Fullscreen mode — expand button in topbar, Escape to exit.

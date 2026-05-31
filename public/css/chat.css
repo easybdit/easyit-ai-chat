@@ -483,6 +483,52 @@
 	white-space:  pre !important;
 }
 
+/* ---- GDPR Consent Gate ---- */
+.eaic-widget .eaic-gdpr-overlay {
+	position:        absolute !important;
+	inset:           0 !important;
+	background:      rgba(15,23,42,.72) !important;
+	z-index:         10 !important;
+	display:         flex !important;
+	align-items:     center !important;
+	justify-content: center !important;
+	border-radius:   14px !important;
+	padding:         24px !important;
+}
+.eaic-widget .eaic-gdpr-box {
+	background:    #fff !important;
+	border-radius: 12px !important;
+	padding:       28px 24px !important;
+	max-width:     380px !important;
+	width:         100% !important;
+	text-align:    center !important;
+	box-shadow:    0 20px 60px rgba(0,0,0,.25) !important;
+}
+.eaic-widget .eaic-gdpr-msg {
+	font-size:   14px !important;
+	line-height: 1.6 !important;
+	color:       #374151 !important;
+	margin:      0 0 20px !important;
+	padding:     0 !important;
+	font-family: var(--font) !important;
+}
+.eaic-widget .eaic-gdpr-btn {
+	display:       inline-block !important;
+	padding:       10px 22px !important;
+	background:    var(--c-accent) !important;
+	color:         #fff !important;
+	border:        none !important;
+	border-radius: 8px !important;
+	font-size:     14px !important;
+	font-weight:   600 !important;
+	font-family:   var(--font) !important;
+	cursor:        pointer !important;
+	box-shadow:    0 2px 8px rgba(79,70,229,.35) !important;
+	transition:    background .15s, transform .1s !important;
+}
+.eaic-widget .eaic-gdpr-btn:hover  { background:var(--c-accent2) !important; transform:scale(1.03) !important; }
+.eaic-widget .eaic-gdpr-btn:active { transform:scale(.97) !important; }
+
 /* ---- Fullscreen button ---- */
 .eaic-widget .eaic-fullscreen-btn {
 	background:    transparent !important;

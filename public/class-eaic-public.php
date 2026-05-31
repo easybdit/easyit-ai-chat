@@ -87,6 +87,9 @@ class EAIC_Public {
 				'ai_avatar_url'               => $opts['ai_avatar_url'],
 				'voice_input_enabled'         => (bool) $opts['voice_input_enabled'],
 				'export_enabled'              => (bool) $opts['export_enabled'],
+				'gdpr_gate_enabled'           => (bool) $opts['gdpr_gate_enabled'],
+				'gdpr_gate_text'              => $opts['gdpr_gate_text'],
+				'gdpr_gate_btn_text'          => $opts['gdpr_gate_btn_text'],
 				'suggested_questions_enabled' => (bool) $opts['suggested_questions_enabled'],
 				'suggested_questions'         => array_slice(
 					array_values( array_filter( array_map( 'trim', explode( "\n", $opts['suggested_questions'] ) ) ) ),

@@ -422,8 +422,27 @@ $eaic_option_key = EAIC_Options::OPTION_KEY;
 						</div>
 						<div class="eaic-field-desc"><?php esc_html_e( 'Default: 🤖 emoji. Recommended: 48×48 px PNG/JPG with transparent or round background.', 'easyit-ai-chat' ); ?></div>
 					</div>
+
+				<div class="eaic-card">
+					<div class="eaic-card-title"><span class="icon">🍪</span> <?php esc_html_e( 'GDPR Consent Gate', 'easyit-ai-chat' ); ?></div>
+					<label class="eaic-check-row">
+						<input type="checkbox" name="<?php echo esc_attr( $eaic_option_key ); ?>[gdpr_gate_enabled]" value="1" <?php checked( $eaic_opts['gdpr_gate_enabled'] ); ?>>
+						<div>
+							<div class="eaic-check-label"><?php esc_html_e( 'Require consent before chat starts', 'easyit-ai-chat' ); ?></div>
+							<div class="eaic-check-desc"><?php esc_html_e( 'Shows a consent banner. User must accept before chatting. Consent stored in cookie for 365 days.', 'easyit-ai-chat' ); ?></div>
+						</div>
+					</label>
+					<div class="eaic-field" style="margin-top:12px">
+						<label class="eaic-label"><?php esc_html_e( 'Consent Message', 'easyit-ai-chat' ); ?></label>
+						<textarea name="<?php echo esc_attr( $eaic_option_key ); ?>[gdpr_gate_text]" rows="2" style="width:100%"><?php echo esc_textarea( $eaic_opts['gdpr_gate_text'] ); ?></textarea>
+					</div>
+					<div class="eaic-field">
+						<label class="eaic-label"><?php esc_html_e( 'Accept Button Text', 'easyit-ai-chat' ); ?></label>
+						<input type="text" name="<?php echo esc_attr( $eaic_option_key ); ?>[gdpr_gate_btn_text]" value="<?php echo esc_attr( $eaic_opts['gdpr_gate_btn_text'] ); ?>" style="max-width:300px">
+					</div>
 				</div>
 			</div>
+
 
 			<!-- SECURITY -->
 			<div class="eaic-panel" id="eaic-panel-security">

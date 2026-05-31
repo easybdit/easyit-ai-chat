@@ -193,9 +193,11 @@
 		this.currentSession  = '';
 		this.sending         = false;
 		this._streamTimer    = null;
-		this._streamReader   = null; // active ReadableStreamDefaultReader
-		this._lastUserText   = '';   // last sent user message (for regenerate)
+		this._streamReader   = null;
+		this._lastUserText   = '';
+		this._asstCount      = 0;
 
+		this.initGdpr();
 		this.bind();
 		this.initVoice();
 		this.loadSessions();
@@ -925,6 +927,47 @@
 	/* ------------------------------------------------------------------ */
 	/* Utilities                                                            */
 	/* ------------------------------------------------------------------ */
+
+	Widget.prototype.initGdpr = function () {
+		if ( ! CFG.gdpr_gate_enabled ) { return; }
+
+		// Check cookie.
+		var cookieName = 'eaic_consent';
+		var cookies    = document.cookie.split( ';' );
+		for ( var ci = 0; ci < cookies.length; ci++ ) {
+			var parts = cookies[ ci ].trim().split( '=' );
+			if ( parts[0] === cookieName && parts[1] === '1' ) { return; } // already accepted
+		}
+
+		// Overlay the widget.
+		var self    = this;
+		var overlay = document.createElement( 'div' );
+		overlay.className = 'eaic-gdpr-overlay';
+
+		var box = document.createElement( 'div' );
+		box.className = 'eaic-gdpr-box';
+
+		var msg = document.createElement( 'p' );
+		msg.className   = 'eaic-gdpr-msg';
+		msg.textContent = CFG.gdpr_gate_text || 'This chat uses AI services. By continuing, you agree to our Privacy Policy.';
+
+		var btn = document.createElement( 'button' );
+		btn.type      = 'button';
+		btn.className = 'eaic-gdpr-btn';
+		btn.textContent = CFG.gdpr_gate_btn_text || 'I Accept & Continue';
+		btn.addEventListener( 'click', function () {
+			// Set cookie for 365 days.
+			var exp = new Date();
+			exp.setTime( exp.getTime() + 365 * 24 * 60 * 60 * 1000 );
+			document.cookie = cookieName + '=1; expires=' + exp.toUTCString() + '; path=/; SameSite=Lax';
+			if ( overlay.parentNode ) { overlay.parentNode.removeChild( overlay ); }
+		} );
+
+		box.appendChild( msg );
+		box.appendChild( btn );
+		overlay.appendChild( box );
+		this.root.appendChild( overlay );
+	};
 
 	Widget.prototype.toggleFullscreen = function () {
 		if ( this.root.classList.contains( 'eaic-is-fullscreen' ) ) {

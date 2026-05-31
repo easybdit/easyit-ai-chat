@@ -67,6 +67,9 @@ class EAIC_Options {
 			'floating_widget_enabled'      => false,
 			'floating_widget_position'     => 'bottom-right',
 			'floating_widget_label'        => 'Chat with us',
+			'gdpr_gate_enabled'            => false,
+			'gdpr_gate_text'               => 'This chat uses AI services. By continuing, you agree to our Privacy Policy.',
+			'gdpr_gate_btn_text'           => 'I Accept & Continue',
 		);
 	}
 

@@ -155,6 +155,9 @@ class EAIC_Admin {
 			'color_accent'                => ! empty( $input['color_accent'] )  ? ( sanitize_hex_color( $input['color_accent'] )  ?: $current['color_accent'] )  : $current['color_accent'],
 			'color_user_bg'               => ! empty( $input['color_user_bg'] ) ? ( sanitize_hex_color( $input['color_user_bg'] ) ?: $current['color_user_bg'] ) : $current['color_user_bg'],
 			'color_bot_bg'                => ! empty( $input['color_bot_bg'] )  ? ( sanitize_hex_color( $input['color_bot_bg'] )  ?: $current['color_bot_bg'] )  : $current['color_bot_bg'],
+			'gdpr_gate_enabled'           => ! empty( $input['gdpr_gate_enabled'] ),
+			'gdpr_gate_text'              => isset( $input['gdpr_gate_text'] )     ? sanitize_textarea_field( $input['gdpr_gate_text'] )     : $current['gdpr_gate_text'],
+			'gdpr_gate_btn_text'          => isset( $input['gdpr_gate_btn_text'] ) ? sanitize_text_field( $input['gdpr_gate_btn_text'] )     : $current['gdpr_gate_btn_text'],
 		);
 	}
 
