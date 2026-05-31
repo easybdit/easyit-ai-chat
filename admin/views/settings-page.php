@@ -430,6 +430,7 @@ $eaic_option_key = EAIC_Options::OPTION_KEY;
 						</div>
 						<div class="eaic-field-desc"><?php esc_html_e( 'Default: 🤖 emoji. Recommended: 48×48 px PNG/JPG with transparent or round background.', 'easyit-ai-chat' ); ?></div>
 					</div>
+				</div><!-- /.eaic-card avatar -->
 
 				<div class="eaic-card">
 					<div class="eaic-card-title"><span class="icon">🍪</span> <?php esc_html_e( 'GDPR Consent Gate', 'easyit-ai-chat' ); ?></div>

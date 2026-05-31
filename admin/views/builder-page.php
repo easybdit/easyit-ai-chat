@@ -166,20 +166,26 @@ $eaic_providers = array(
 		inputs[i].addEventListener('input', build);
 	}
 
+	function showCopied() {
+		copyBtn.textContent = '✅ <?php esc_html_e( 'Copied!', 'easyit-ai-chat' ); ?>';
+		setTimeout(function(){ copyBtn.textContent = '<?php esc_html_e( 'Copy Shortcode', 'easyit-ai-chat' ); ?>'; }, 1800);
+	}
+	function fallbackCopy(text) {
+		try {
+			var ta = document.createElement('textarea');
+			ta.value = text; ta.style.cssText = 'position:fixed;opacity:0;top:0;left:0';
+			document.body.appendChild(ta); ta.focus(); ta.select();
+			document.execCommand('copy');
+			document.body.removeChild(ta);
+			showCopied();
+		} catch(e) { /* silent fail */ }
+	}
 	copyBtn.addEventListener('click', function(){
 		var text = output.textContent;
 		if (navigator.clipboard && navigator.clipboard.writeText) {
-			navigator.clipboard.writeText(text).then(function(){
-				copyBtn.textContent = '✅ <?php esc_html_e( 'Copied!', 'easyit-ai-chat' ); ?>';
-				setTimeout(function(){ copyBtn.textContent = '<?php esc_html_e( 'Copy Shortcode', 'easyit-ai-chat' ); ?>'; }, 1800);
-			});
+			navigator.clipboard.writeText(text).then(showCopied).catch(function(){ fallbackCopy(text); });
 		} else {
-			var ta = document.createElement('textarea');
-			ta.value = text; ta.style.position='fixed'; ta.style.opacity='0';
-			document.body.appendChild(ta); ta.select(); document.execCommand('copy');
-			document.body.removeChild(ta);
-			copyBtn.textContent = '✅ <?php esc_html_e( 'Copied!', 'easyit-ai-chat' ); ?>';
-			setTimeout(function(){ copyBtn.textContent = '<?php esc_html_e( 'Copy Shortcode', 'easyit-ai-chat' ); ?>'; }, 1800);
+			fallbackCopy(text);
 		}
 	});
 }());

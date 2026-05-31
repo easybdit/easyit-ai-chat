@@ -4,7 +4,7 @@ Tags: chatbot, ai chatbot, openai, gemini, ollama
 Requires at least: 6.0
 Tested up to: 7.0
 Requires PHP: 8.0
-Stable tag: 2.0.0
+Stable tag: 2.0.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -182,6 +182,9 @@ WooCommerce-specific bots (Order Status Bot, Product Q&A Bot, Floating Widget) a
 3. Adding the chatbot to any page — just drop the [eaic_chat] shortcode into a block.
 
 == Changelog ==
+
+= 2.0.1 =
+* Bug fixes from code audit: fixed critical array key mismatch in feedback ownership check (feedback now correctly accepts/rejects based on actual session owner), fixed missing closing div in AI Avatar settings card (cosmetic HTML issue), improved no-storage mode (no longer creates orphan session records in DB), made `frontend_i18n()` a static method, updated Anthropic default model, fixed `Tested up to` header (6.8), improved copy button error handling in Shortcode Builder.
 
 = 2.0.0 =
 * **Major release — Security Suite.** Eight new security features in Settings → Security:

@@ -294,7 +294,7 @@ class EAIC_Admin {
 					'show_provider_badge' => (bool) $opts['show_provider_badge'],
 					'privacy_notice'      => (bool) $opts['privacy_notice'],
 					'is_logged_in'        => is_user_logged_in(),
-					'i18n'                => $this->frontend_i18n(),
+					'i18n'                => self::frontend_i18n(),
 				)
 			);
 		}
@@ -305,7 +305,7 @@ class EAIC_Admin {
 	 *
 	 * @return array<string,string>
 	 */
-	public function frontend_i18n() {
+	public static function frontend_i18n() {
 		return array(
 			'new_chat'       => __( 'New Chat', 'easyit-ai-chat' ),
 			'thinking'       => __( 'Thinking…', 'easyit-ai-chat' ),

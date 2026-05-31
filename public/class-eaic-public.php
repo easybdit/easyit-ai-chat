@@ -66,11 +66,7 @@ class EAIC_Public {
 		$opts = EAIC_Options::all();
 
 		// Reuse the admin's i18n strings to keep them in sync.
-		$admin_i18n = array();
-		if ( class_exists( 'EAIC_Admin' ) ) {
-			$admin     = new EAIC_Admin();
-			$admin_i18n = $admin->frontend_i18n();
-		}
+		$admin_i18n = class_exists( 'EAIC_Admin' ) ? EAIC_Admin::frontend_i18n() : array();
 
 		wp_localize_script(
 			'eaic-public',

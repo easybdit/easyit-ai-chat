@@ -32,7 +32,7 @@ class EAIC_Options {
 			'openai_model'        => 'gpt-4o-mini',
 			'openai_timeout'      => 30,
 			'anthropic_key'       => '',
-			'anthropic_model'     => 'claude-3-5-haiku-20241022',
+			'anthropic_model'     => 'claude-3-5-sonnet-20241022',
 			'anthropic_timeout'   => 30,
 			'deepseek_key'        => '',
 			'deepseek_model'      => 'deepseek-chat',

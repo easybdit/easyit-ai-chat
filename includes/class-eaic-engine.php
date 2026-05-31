@@ -254,20 +254,27 @@ class EAIC_Engine {
 		}
 
 		// Session resolution.
-		if ( '' !== $uuid && $this->is_valid_uuid( $uuid ) ) {
-			$session = EAIC_DB::get_session( $uuid );
-			if ( ! $session || ! $this->can_access_session( $session, $user_id, $guest_token ) ) {
+		$disable_storage = ! empty( $opts['disable_storage'] );
+		if ( $disable_storage ) {
+			// No-storage mode: generate a temporary UUID, skip all DB session operations.
+			$uuid             = $this->is_valid_uuid( $uuid ) ? $uuid : wp_generate_uuid4();
+			$is_first_message = true;
+			$rows             = array();
+		} else {
+			if ( '' !== $uuid && $this->is_valid_uuid( $uuid ) ) {
+				$session = EAIC_DB::get_session( $uuid );
+				if ( ! $session || ! $this->can_access_session( $session, $user_id, $guest_token ) ) {
+					$uuid = '';
+				}
+			} else {
 				$uuid = '';
 			}
-		} else {
-			$uuid = '';
+			if ( '' === $uuid ) {
+				$uuid = EAIC_DB::create_session( $user_id, $guest_token, $provider, mb_substr( $message, 0, 40 ) );
+			}
+			$rows             = EAIC_DB::get_messages( $uuid );
+			$is_first_message = 0 === count( $rows );
 		}
-		if ( '' === $uuid ) {
-			$uuid = EAIC_DB::create_session( $user_id, $guest_token, $provider, mb_substr( $message, 0, 40 ) );
-		}
-
-		$rows             = EAIC_DB::get_messages( $uuid );
-		$is_first_message = 0 === count( $rows );
 		$ctx_limit        = max( 1, (int) EAIC_Options::get( 'context_messages', 10 ) );
 		// Keep only the last N messages for context window.
 		if ( count( $rows ) > $ctx_limit ) {
@@ -309,13 +316,14 @@ class EAIC_Engine {
 			wp_send_json_error( array( 'message' => $e->getMessage() ) );
 		}
 
-		EAIC_DB::add_message( $uuid, 'user',      $message );
-		EAIC_DB::add_message( $uuid, 'assistant', $ai_reply );
-
 		$new_title = null;
-		if ( $is_first_message ) {
-			$new_title = $this->generate_title( $provider, $message );
-			EAIC_DB::update_session_title( $uuid, $new_title );
+		if ( ! EAIC_Options::get( 'disable_storage', false ) ) {
+			EAIC_DB::add_message( $uuid, 'user',      $message );
+			EAIC_DB::add_message( $uuid, 'assistant', $ai_reply );
+			if ( $is_first_message ) {
+				$new_title = $this->generate_title( $provider, $message );
+				EAIC_DB::update_session_title( $uuid, $new_title );
+			}
 		}
 
 		wp_send_json_success( array(
@@ -364,9 +372,9 @@ class EAIC_Engine {
 			exit;
 		}
 
-		// Persist to DB (skip if no-storage mode).
+		// Persist to DB (skip entirely in no-storage mode).
 		$new_title = null;
-		if ( ! EAIC_Options::get( 'disable_storage', false ) ) {
+		if ( ! $disable_storage ) {
 			EAIC_DB::add_message( $uuid, 'user',      $message );
 			EAIC_DB::add_message( $uuid, 'assistant', $ai_reply );
 			if ( $is_first_message ) {
@@ -647,8 +655,8 @@ class EAIC_Engine {
 		check_ajax_referer( 'eaic_nonce', 'nonce' );
 
 		$session_uuid = isset( $_POST['session'] )   ? sanitize_text_field( wp_unslash( $_POST['session'] ) ) : '';
-		$msg_index    = isset( $_POST['msg_index'] ) ? absint( $_POST['msg_index'] ) : 0;
-		$rating_raw   = isset( $_POST['rating'] )    ? (int) wp_unslash( $_POST['rating'] ) : 1;
+		$msg_index    = isset( $_POST['msg_index'] ) ? absint( wp_unslash( $_POST['msg_index'] ) ) : 0;
+		$rating_raw   = isset( $_POST['rating'] ) ? (int) sanitize_text_field( wp_unslash( $_POST['rating'] ) ) : 1;
 		$rating       = $rating_raw >= 0 ? 1 : -1;
 
 		if ( ! $session_uuid ) {
@@ -656,13 +664,13 @@ class EAIC_Engine {
 		}
 
 		// Verify ownership.
-		$identity = $this->get_identity();
+		list( $fb_user_id, $fb_guest ) = $this->get_identity();
 		$session  = EAIC_DB::get_session( $session_uuid );
 		if ( ! $session ) {
 			wp_send_json_error( array( 'message' => 'Session not found.' ), 404 );
 		}
-		$owned = ( $identity['user_id'] > 0 && (int) $session['user_id'] === $identity['user_id'] )
-		      || ( '' !== $identity['guest_token'] && $session['guest_token'] === $identity['guest_token'] );
+		$owned = ( $fb_user_id > 0 && (int) $session['user_id'] === $fb_user_id )
+		      || ( '' !== $fb_guest && $session['guest_token'] === $fb_guest );
 		if ( ! $owned ) {
 			wp_send_json_error( array( 'message' => 'Not authorised.' ), 403 );
 		}

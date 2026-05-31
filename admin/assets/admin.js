@@ -147,11 +147,13 @@
 	function esc(str) { return $('<span>').text(str||'').html(); }
 
 	$profileList.on('input change', '.eap-slug,.eap-name,.eap-provider,.eap-title,.eap-system', function() {
-		var idx = parseInt($(this).data('idx'), 10);
-		var cls = $(this).attr('class').split(' ')[0];
-		var map = { 'eap-slug':'slug','eap-name':'name','eap-provider':'provider','eap-title':'title','eap-system':'system_prompt' };
-		if (profileData[idx] && map[cls]) {
-			profileData[idx][map[cls]] = $(this).val();
+		var idx  = parseInt($(this).data('idx'), 10);
+		var $el  = $(this);
+		var map  = { 'eap-slug':'slug','eap-name':'name','eap-provider':'provider','eap-title':'title','eap-system':'system_prompt' };
+		var key  = null;
+		$.each(map, function(cls, field) { if ($el.hasClass(cls)) { key = field; return false; } });
+		if (profileData[idx] && key) {
+			profileData[idx][key] = $el.val();
 			saveProfiles();
 		}
 	});
