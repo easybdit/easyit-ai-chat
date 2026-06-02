@@ -72,6 +72,7 @@ class EAIC_Options {
 			'gdpr_gate_btn_text'           => 'I Accept & Continue',
 			'context_messages'             => 10,
 			'bot_profiles'                 => array(),
+			'custom_providers'             => array(),
 			'webhook_url'                  => '',
 			'webhook_secret'               => '',
 			// v2.0.0 — Security

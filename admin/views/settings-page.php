@@ -25,6 +25,14 @@ $eaic_provider_map = array(
 	'deepseek'  => '🔍 DeepSeek',
 	'gemini'    => '✦ Gemini',
 );
+if ( ! empty( $eaic_opts['custom_providers'] ) && is_array( $eaic_opts['custom_providers'] ) ) {
+	foreach ( $eaic_opts['custom_providers'] as $eaic_ci => $eaic_cp ) {
+		if ( ! empty( $eaic_cp['enabled'] ) ) {
+			$eaic_slug                      = 'custom_' . ( $eaic_ci + 1 );
+			$eaic_provider_map[ $eaic_slug ] = '🔧 ' . ( ! empty( $eaic_cp['name'] ) ? $eaic_cp['name'] : $eaic_slug );
+		}
+	}
+}
 
 $eaic_option_key = EAIC_Options::OPTION_KEY;
 ?>
@@ -68,6 +76,7 @@ $eaic_option_key = EAIC_Options::OPTION_KEY;
 				<button type="button" class="eaic-tab-btn" data-tab="security"><span class="eaic-tab-icon">🔒</span> <?php esc_html_e( 'Security', 'easyit-ai-chat' ); ?></button>
 				<button type="button" class="eaic-tab-btn" data-tab="profiles"><span class="eaic-tab-icon">🤖</span> <?php esc_html_e( 'Profiles', 'easyit-ai-chat' ); ?></button>
 				<button type="button" class="eaic-tab-btn" data-tab="webhook"><span class="eaic-tab-icon">🔗</span> <?php esc_html_e( 'Webhook', 'easyit-ai-chat' ); ?></button>
+				<button type="button" class="eaic-tab-btn" data-tab="custom"><span class="eaic-tab-icon">🔧</span> <?php esc_html_e( 'Custom', 'easyit-ai-chat' ); ?></button>
 			</div>
 
 			<!-- OLLAMA -->
@@ -684,6 +693,29 @@ $eaic_option_key = EAIC_Options::OPTION_KEY;
 					</button>
 				</div>
 			</div><!-- /#eaic-panel-profiles -->
+
+			<!-- CUSTOM PROVIDERS -->
+			<div class="eaic-panel" id="eaic-panel-custom">
+				<div class="eaic-card">
+					<div class="eaic-card-title"><span class="icon">🔧</span> <?php esc_html_e( 'Custom Providers', 'easyit-ai-chat' ); ?></div>
+					<p class="eaic-field-desc" style="margin-bottom:14px">
+						<?php esc_html_e( 'Add any OpenAI-compatible API endpoint (e.g. a local Ollama proxy, LM Studio, or a custom LLM gateway). Use it with', 'easyit-ai-chat' ); ?>
+						<code>[eaic_chat provider="custom_1"]</code>.
+					</p>
+
+					<input type="hidden" id="eaic-custom-providers-json"
+						name="<?php echo esc_attr( EAIC_Options::OPTION_KEY ); ?>[custom_providers]"
+						value="<?php echo esc_attr( wp_json_encode( isset( $eaic_opts['custom_providers'] ) ? $eaic_opts['custom_providers'] : array() ) ); ?>">
+
+					<div id="eaic-custom-providers-list">
+						<!-- Rendered by JS -->
+					</div>
+
+					<button type="button" id="eaic-add-custom-provider" class="button" style="margin-top:12px">
+						+ <?php esc_html_e( 'Add Provider', 'easyit-ai-chat' ); ?>
+					</button>
+				</div>
+			</div><!-- /#eaic-panel-custom -->
 
 			<div class="eaic-save-row">
 				<button type="submit" class="eaic-save-btn">💾 <?php esc_html_e( 'Save Settings', 'easyit-ai-chat' ); ?></button>

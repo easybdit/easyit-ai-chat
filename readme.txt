@@ -4,7 +4,7 @@ Tags: chatbot, ai chatbot, openai, gemini, ollama
 Requires at least: 6.0
 Tested up to: 7.0
 Requires PHP: 8.0
-Stable tag: 2.0.1
+Stable tag: 2.1.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -27,6 +27,7 @@ You own your data, you control your keys. No tracking, no telemetry, no subscrip
 * 🧠 **Anthropic (Claude)** — Claude 3.7 Sonnet, Claude 3.5 Sonnet, Claude 3.5 Haiku, Claude 3 Opus.
 * 🔍 **DeepSeek** — DeepSeek-Chat, DeepSeek-Reasoner.
 * ✦ **Google Gemini** — Gemini 2.5 Pro, Gemini 2.5 Flash, Gemini 2.0 Flash, Gemini 1.5 Flash.
+* 🔧 **Custom Providers** — Any OpenAI-compatible endpoint (LM Studio, custom gateway, proxies, etc.).
 
 = 🚀 Core Features =
 
@@ -268,6 +269,9 @@ The captcha is a simple arithmetic question (e.g., "3 + 7 = ?") that appears abo
 6. Security settings — Access Restriction, IP Blocklist, Word Filter, Captcha, and more.
 
 == Changelog ==
+
+= 2.1.0 =
+* New: Custom Providers — add any OpenAI-compatible API endpoint (LM Studio, custom gateway, Ollama proxy, etc.) via Settings → Custom tab. Use with `[eaic_chat provider="custom_1"]`. Includes per-provider Test Connection button, Enable/Disable toggle, configurable URL, API key, model, and timeout.
 
 = 2.0.1 =
 * Bug fixes from code audit: fixed critical array key mismatch in feedback ownership check (feedback now correctly accepts/rejects based on actual session owner), fixed missing closing div in AI Avatar settings card (cosmetic HTML issue), improved no-storage mode (no longer creates orphan session records in DB), made `frontend_i18n()` a static method, updated Anthropic default model, fixed `Tested up to` header (6.8), improved copy button error handling in Shortcode Builder.

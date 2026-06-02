@@ -170,6 +170,9 @@ class EAIC_Admin {
 			'bot_profiles'                => $this->sanitize_bot_profiles( isset( $input['bot_profiles'] )
 				? ( is_string( $input['bot_profiles'] ) ? json_decode( wp_unslash( $input['bot_profiles'] ), true ) : $input['bot_profiles'] )
 				: $current['bot_profiles'] ),
+			'custom_providers'            => $this->sanitize_custom_providers( isset( $input['custom_providers'] )
+				? ( is_string( $input['custom_providers'] ) ? json_decode( wp_unslash( $input['custom_providers'] ), true ) : $input['custom_providers'] )
+				: ( isset( $current['custom_providers'] ) ? $current['custom_providers'] : array() ) ),
 			'webhook_url'                 => isset( $input['webhook_url'] )    ? esc_url_raw( $input['webhook_url'] )          : $current['webhook_url'],
 			'webhook_secret'              => isset( $input['webhook_secret'] ) ? sanitize_text_field( $input['webhook_secret'] ) : $current['webhook_secret'],
 			// v2.0.0 — Security
@@ -214,6 +217,37 @@ class EAIC_Admin {
 				'title'         => isset( $profile['title'] )         ? sanitize_text_field( $profile['title'] )         : '',
 				'placeholder'   => isset( $profile['placeholder'] )   ? sanitize_text_field( $profile['placeholder'] )   : '',
 				'system_prompt' => isset( $profile['system_prompt'] ) ? sanitize_textarea_field( $profile['system_prompt'] ) : '',
+			);
+		}
+		return $clean;
+	}
+
+	/**
+	 * Sanitize the custom_providers array from the settings form.
+	 *
+	 * @param mixed $raw Raw input.
+	 * @return array
+	 */
+	private function sanitize_custom_providers( $raw ) {
+		if ( ! is_array( $raw ) ) {
+			return array();
+		}
+		$clean = array();
+		foreach ( $raw as $cp ) {
+			if ( ! is_array( $cp ) ) {
+				continue;
+			}
+			$url = isset( $cp['url'] ) ? esc_url_raw( trim( $cp['url'] ) ) : '';
+			if ( empty( $url ) ) {
+				continue; // URL is required
+			}
+			$clean[] = array(
+				'name'    => isset( $cp['name'] )    ? sanitize_text_field( $cp['name'] )    : 'Custom Provider',
+				'url'     => $url,
+				'api_key' => isset( $cp['api_key'] ) ? sanitize_text_field( $cp['api_key'] ) : '',
+				'model'   => isset( $cp['model'] )   ? sanitize_text_field( $cp['model'] )   : '',
+				'enabled' => ! empty( $cp['enabled'] ),
+				'timeout' => isset( $cp['timeout'] ) ? max( 10, min( 300, absint( $cp['timeout'] ) ) ) : 30,
 			);
 		}
 		return $clean;

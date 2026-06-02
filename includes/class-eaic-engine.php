@@ -16,21 +16,22 @@ class EAIC_Engine {
 	const MAX_SYSTEM_PROMPT_LEN = 500;
 
 	public function __construct() {
-		add_action( 'wp_ajax_eaic_send',            array( $this, 'ajax_send' ) );
-		add_action( 'wp_ajax_nopriv_eaic_send',     array( $this, 'ajax_send' ) );
-		add_action( 'wp_ajax_eaic_stream',          array( $this, 'ajax_stream' ) );
-		add_action( 'wp_ajax_nopriv_eaic_stream',   array( $this, 'ajax_stream' ) );
-		add_action( 'wp_ajax_eaic_sessions',        array( $this, 'ajax_sessions' ) );
-		add_action( 'wp_ajax_nopriv_eaic_sessions', array( $this, 'ajax_sessions' ) );
-		add_action( 'wp_ajax_eaic_new',             array( $this, 'ajax_new_session' ) );
-		add_action( 'wp_ajax_nopriv_eaic_new',      array( $this, 'ajax_new_session' ) );
-		add_action( 'wp_ajax_eaic_history',         array( $this, 'ajax_history' ) );
-		add_action( 'wp_ajax_nopriv_eaic_history',  array( $this, 'ajax_history' ) );
-		add_action( 'wp_ajax_eaic_delete',          array( $this, 'ajax_delete' ) );
-		add_action( 'wp_ajax_nopriv_eaic_delete',   array( $this, 'ajax_delete' ) );
-		add_action( 'wp_ajax_eaic_health',          array( $this, 'ajax_health' ) );
-		add_action( 'wp_ajax_eaic_feedback',        array( $this, 'ajax_feedback' ) );
-		add_action( 'wp_ajax_nopriv_eaic_feedback', array( $this, 'ajax_feedback' ) );
+		add_action( 'wp_ajax_eaic_send',                    array( $this, 'ajax_send' ) );
+		add_action( 'wp_ajax_nopriv_eaic_send',             array( $this, 'ajax_send' ) );
+		add_action( 'wp_ajax_eaic_stream',                  array( $this, 'ajax_stream' ) );
+		add_action( 'wp_ajax_nopriv_eaic_stream',           array( $this, 'ajax_stream' ) );
+		add_action( 'wp_ajax_eaic_sessions',                array( $this, 'ajax_sessions' ) );
+		add_action( 'wp_ajax_nopriv_eaic_sessions',         array( $this, 'ajax_sessions' ) );
+		add_action( 'wp_ajax_eaic_new',                     array( $this, 'ajax_new_session' ) );
+		add_action( 'wp_ajax_nopriv_eaic_new',              array( $this, 'ajax_new_session' ) );
+		add_action( 'wp_ajax_eaic_history',                 array( $this, 'ajax_history' ) );
+		add_action( 'wp_ajax_nopriv_eaic_history',          array( $this, 'ajax_history' ) );
+		add_action( 'wp_ajax_eaic_delete',                  array( $this, 'ajax_delete' ) );
+		add_action( 'wp_ajax_nopriv_eaic_delete',           array( $this, 'ajax_delete' ) );
+		add_action( 'wp_ajax_eaic_health',                  array( $this, 'ajax_health' ) );
+		add_action( 'wp_ajax_eaic_test_custom_provider',   array( $this, 'ajax_test_custom_provider' ) );
+		add_action( 'wp_ajax_eaic_feedback',                array( $this, 'ajax_feedback' ) );
+		add_action( 'wp_ajax_nopriv_eaic_feedback',         array( $this, 'ajax_feedback' ) );
 	}
 
 	// -----------------------------------------------------------------------
@@ -98,6 +99,18 @@ class EAIC_Engine {
 
 	private function get_provider( $slug ) {
 		$opts = EAIC_Options::all();
+
+		if ( 0 === strpos( $slug, 'custom_' ) ) {
+			$index            = (int) substr( $slug, 7 ) - 1; // 'custom_1' → index 0
+			$custom_providers = isset( $opts['custom_providers'] ) && is_array( $opts['custom_providers'] )
+				? $opts['custom_providers']
+				: array();
+			if ( isset( $custom_providers[ $index ] ) ) {
+				return new EAIC_Custom( $custom_providers[ $index ] );
+			}
+			throw new \RuntimeException( 'Custom provider not found: ' . $slug );
+		}
+
 		switch ( $slug ) {
 			case 'openai':    return new EAIC_OpenAI( $opts );
 			case 'anthropic': return new EAIC_Anthropic( $opts );
@@ -106,6 +119,24 @@ class EAIC_Engine {
 			case 'ollama':
 			default:          return new EAIC_Ollama( $opts );
 		}
+	}
+
+	/**
+	 * Return slugs of all enabled custom providers.
+	 *
+	 * @param array $opts Plugin options.
+	 * @return string[]
+	 */
+	private function custom_provider_slugs( array $opts ) {
+		$slugs = array();
+		if ( ! empty( $opts['custom_providers'] ) && is_array( $opts['custom_providers'] ) ) {
+			foreach ( $opts['custom_providers'] as $i => $cp ) {
+				if ( ! empty( $cp['enabled'] ) ) {
+					$slugs[] = 'custom_' . ( $i + 1 );
+				}
+			}
+		}
+		return $slugs;
 	}
 
 
@@ -189,6 +220,7 @@ class EAIC_Engine {
 		$allowed_providers = isset( $opts['allowed_providers'] ) && is_array( $opts['allowed_providers'] )
 			? $opts['allowed_providers']
 			: array( 'ollama', 'openai', 'anthropic', 'deepseek', 'gemini' );
+		$allowed_providers = array_merge( $allowed_providers, $this->custom_provider_slugs( $opts ) );
 		if ( ! in_array( $provider, $allowed_providers, true ) ) {
 			wp_send_json_error( array( 'message' => __( 'Provider not allowed.', 'easyit-ai-chat' ) ), 400 );
 		}
@@ -584,6 +616,7 @@ class EAIC_Engine {
 		$allowed_providers = isset( $opts['allowed_providers'] ) && is_array( $opts['allowed_providers'] )
 			? $opts['allowed_providers']
 			: array( 'ollama', 'openai', 'anthropic', 'deepseek', 'gemini' );
+		$allowed_providers = array_merge( $allowed_providers, $this->custom_provider_slugs( $opts ) );
 		if ( ! in_array( $provider, $allowed_providers, true ) ) {
 			wp_send_json_error( array( 'message' => __( 'Provider not allowed.', 'easyit-ai-chat' ) ), 400 );
 		}
@@ -645,6 +678,45 @@ class EAIC_Engine {
 				wp_send_json_success( array( 'message' => '✅ ' . __( 'Connected successfully!', 'easyit-ai-chat' ) ) );
 			} else {
 				wp_send_json_error( array( 'message' => '❌ ' . __( 'Connection failed. Check your settings.', 'easyit-ai-chat' ) ) );
+			}
+		} catch ( Exception $e ) {
+			wp_send_json_error( array( 'message' => '❌ ' . $e->getMessage() ) );
+		}
+	}
+
+	/**
+	 * Test a custom provider using form values (before saving).
+	 *
+	 * @return void
+	 */
+	public function ajax_test_custom_provider() {
+		check_ajax_referer( 'eaic_admin_nonce', 'nonce' );
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( array( 'message' => __( 'Unauthorised.', 'easyit-ai-chat' ) ), 403 );
+		}
+
+		$url   = isset( $_POST['url'] )     ? esc_url_raw( wp_unslash( $_POST['url'] ) )             : '';
+		$key   = isset( $_POST['api_key'] ) ? sanitize_text_field( wp_unslash( $_POST['api_key'] ) ) : '';
+		$model = isset( $_POST['model'] )   ? sanitize_text_field( wp_unslash( $_POST['model'] ) )   : '';
+
+		if ( empty( $url ) ) {
+			wp_send_json_error( array( 'message' => '❌ ' . __( 'URL is required.', 'easyit-ai-chat' ) ) );
+		}
+
+		$provider = new EAIC_Custom( array(
+			'url'     => $url,
+			'api_key' => $key,
+			'model'   => $model,
+			'timeout' => 15,
+			'enabled' => true,
+		) );
+
+		try {
+			$ok = $provider->health();
+			if ( $ok ) {
+				wp_send_json_success( array( 'message' => '✅ ' . __( 'Connected successfully!', 'easyit-ai-chat' ) ) );
+			} else {
+				wp_send_json_error( array( 'message' => '❌ ' . __( 'Connection failed. Check URL and API key.', 'easyit-ai-chat' ) ) );
 			}
 		} catch ( Exception $e ) {
 			wp_send_json_error( array( 'message' => '❌ ' . $e->getMessage() ) );

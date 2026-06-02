@@ -173,6 +173,13 @@ class EAIC_Public {
 			'deepseek'  => 'DeepSeek',
 			'gemini'    => 'Gemini',
 		);
+		if ( ! empty( $opts['custom_providers'] ) && is_array( $opts['custom_providers'] ) ) {
+			foreach ( $opts['custom_providers'] as $i => $cp ) {
+				if ( ! empty( $cp['enabled'] ) ) {
+					$providers[ 'custom_' . ( $i + 1 ) ] = isset( $cp['name'] ) && $cp['name'] ? $cp['name'] : 'Custom ' . ( $i + 1 );
+				}
+			}
+		}
 
 		ob_start();
 		$eaic_need_style = ( $color_accent  !== '#4f46e5' )
