@@ -108,7 +108,7 @@ class EAIC_Engine {
 			if ( isset( $custom_providers[ $index ] ) ) {
 				return new EAIC_Custom( $custom_providers[ $index ] );
 			}
-			throw new \RuntimeException( 'Custom provider not found: ' . $slug );
+			throw new \RuntimeException( 'Custom provider not found: ' . esc_html( $slug ) );
 		}
 
 		switch ( $slug ) {
@@ -479,9 +479,11 @@ class EAIC_Engine {
 		if ( get_transient( $alert_key ) ) { return; } // already sent recently
 		set_transient( $alert_key, 1, max( 10, (int) ( $opts['rate_limit_window'] ?? 60 ) ) );
 		$to      = ! empty( $opts['abuse_alert_email'] ) ? $opts['abuse_alert_email'] : get_option( 'admin_email' );
+		// translators: %s: site name.
 		$subject = sprintf( __( '[%s] Chat Rate Limit Exceeded', 'easyit-ai-chat' ), get_bloginfo( 'name' ) );
+		// translators: 1: IP address, 2: site URL, 3: date and time.
 		$body    = sprintf(
-			__( "The IP address %s has exceeded the chat rate limit on %s.\n\nTime: %s\n\nYou may add this IP to the blocklist in EasyIT AI Chat → Settings → Security.", 'easyit-ai-chat' ),
+			__( "The IP address %1\$s has exceeded the chat rate limit on %2\$s.\n\nTime: %3\$s\n\nYou may add this IP to the blocklist in EasyIT AI Chat → Settings → Security.", 'easyit-ai-chat' ),
 			$ip,
 			get_site_url(),
 			current_time( 'Y-m-d H:i:s' )

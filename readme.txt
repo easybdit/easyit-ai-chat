@@ -4,11 +4,11 @@ Tags: chatbot, ai chatbot, openai, gemini, ollama
 Requires at least: 6.0
 Tested up to: 7.0
 Requires PHP: 8.0
-Stable tag: 2.1.1
+Stable tag: 2.1.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-AI chatbot for WordPress — add ChatGPT, Claude, Gemini, DeepSeek or local Ollama to any page with one shortcode. 30+ features. Bring your own API keys.
+AI chatbot for WordPress — OpenAI, Claude, Gemini, DeepSeek & Ollama via one shortcode. 30+ features. Bring your own API keys.
 
 == Description ==
 
