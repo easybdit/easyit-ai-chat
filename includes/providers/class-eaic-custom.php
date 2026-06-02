@@ -72,7 +72,7 @@ class EAIC_Custom extends EAIC_Provider {
 	}
 
 	/**
-	 * Connectivity check — tries /models first, falls back to a minimal chat completion.
+	 * Connectivity check — tries /ping first, then falls back to /models.
 	 *
 	 * @return bool
 	 */
@@ -84,22 +84,30 @@ class EAIC_Custom extends EAIC_Provider {
 			return false;
 		}
 
+		// Try /ping first (EasyAI fast health check).
+		try {
+			$data = $this->http_get(
+				$url . '/ping',
+				array( 'Authorization' => 'Bearer ' . $key ),
+				5
+			);
+			if ( isset( $data['status'] ) && 'ok' === $data['status'] ) {
+				return true;
+			}
+		} catch ( Exception $e ) {
+			// fall through to /models
+		}
+
+		// Fallback: try /models.
 		try {
 			$data = $this->http_get(
 				$url . '/models',
 				array( 'Authorization' => 'Bearer ' . $key ),
-				10
+				5
 			);
-			// Accept OpenAI {data:[]} format or any non-empty array response.
 			return ! empty( $data );
 		} catch ( Exception $e ) {
-			// Fallback: try a minimal chat completion (doesn't cost much).
-			try {
-				$reply = $this->chat( array( array( 'role' => 'user', 'content' => 'hi' ) ), '' );
-				return '' !== $reply;
-			} catch ( Exception $e2 ) {
-				return false;
-			}
+			return false;
 		}
 	}
 }
