@@ -4,7 +4,7 @@ Tags: chatbot, ai chatbot, openai, gemini, ollama
 Requires at least: 6.0
 Tested up to: 7.0
 Requires PHP: 8.0
-Stable tag: 2.1.0
+Stable tag: 2.1.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -269,6 +269,11 @@ The captcha is a simple arithmetic question (e.g., "3 + 7 = ?") that appears abo
 6. Security settings — Access Restriction, IP Blocklist, Word Filter, Captcha, and more.
 
 == Changelog ==
+
+= 2.1.1 =
+* Fix: Custom provider settings now save reliably (JSON decode fallback prevents silent data loss on save).
+* Fix: Settings page stays on the active tab after saving (sessionStorage-based tab restore).
+* Fix: Custom provider slugs (custom_1, custom_2 …) are now accepted as the Default Provider.
 
 = 2.1.0 =
 * New: Custom Providers — add any OpenAI-compatible API endpoint (LM Studio, custom gateway, Ollama proxy, etc.) via Settings → Custom tab. Use with `[eaic_chat provider="custom_1"]`. Includes per-provider Test Connection button, Enable/Disable toggle, configurable URL, API key, model, and timeout.

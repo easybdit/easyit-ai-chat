@@ -103,16 +103,27 @@ class EAIC_Admin {
 		}
 		$current = EAIC_Options::all();
 
-		$all_known_providers = array( 'ollama', 'openai', 'anthropic', 'deepseek', 'gemini' );
+		$builtin_providers = array( 'ollama', 'openai', 'anthropic', 'deepseek', 'gemini' );
 
-		$default_provider = isset( $input['default_provider'] ) ? (string) $input['default_provider'] : $current['default_provider'];
+		// Decode custom providers first so their slugs can be used in default_provider validation.
+		$clean_custom = $this->sanitize_custom_providers( $this->decode_json_input(
+			isset( $input['custom_providers'] ) ? $input['custom_providers'] : null,
+			isset( $current['custom_providers'] ) ? $current['custom_providers'] : array()
+		) );
+		$custom_slugs = array();
+		foreach ( $clean_custom as $i => $cp ) {
+			$custom_slugs[] = 'custom_' . ( $i + 1 );
+		}
+		$all_known_providers = array_merge( $builtin_providers, $custom_slugs );
+
+		$default_provider = isset( $input['default_provider'] ) ? sanitize_key( $input['default_provider'] ) : $current['default_provider'];
 		if ( ! in_array( $default_provider, $all_known_providers, true ) ) {
 			$default_provider = $current['default_provider'];
 		}
 
 		// Allowed providers: at least one must remain; fall back to current if all deselected.
 		if ( isset( $input['allowed_providers'] ) && is_array( $input['allowed_providers'] ) ) {
-			$raw_allowed       = array_intersect( array_map( 'sanitize_key', $input['allowed_providers'] ), $all_known_providers );
+			$raw_allowed       = array_intersect( array_map( 'sanitize_key', $input['allowed_providers'] ), $builtin_providers );
 			$allowed_providers = ! empty( $raw_allowed ) ? array_values( $raw_allowed ) : $current['allowed_providers'];
 		} else {
 			$allowed_providers = $current['allowed_providers'];
@@ -167,12 +178,11 @@ class EAIC_Admin {
 			'gdpr_gate_text'              => isset( $input['gdpr_gate_text'] )     ? sanitize_textarea_field( $input['gdpr_gate_text'] )     : $current['gdpr_gate_text'],
 			'gdpr_gate_btn_text'          => isset( $input['gdpr_gate_btn_text'] ) ? sanitize_text_field( $input['gdpr_gate_btn_text'] )     : $current['gdpr_gate_btn_text'],
 			'context_messages'            => isset( $input['context_messages'] )  ? max( 1, min( 20, absint( $input['context_messages'] ) ) ) : $current['context_messages'],
-			'bot_profiles'                => $this->sanitize_bot_profiles( isset( $input['bot_profiles'] )
-				? ( is_string( $input['bot_profiles'] ) ? json_decode( wp_unslash( $input['bot_profiles'] ), true ) : $input['bot_profiles'] )
-				: $current['bot_profiles'] ),
-			'custom_providers'            => $this->sanitize_custom_providers( isset( $input['custom_providers'] )
-				? ( is_string( $input['custom_providers'] ) ? json_decode( wp_unslash( $input['custom_providers'] ), true ) : $input['custom_providers'] )
-				: ( isset( $current['custom_providers'] ) ? $current['custom_providers'] : array() ) ),
+			'bot_profiles'                => $this->sanitize_bot_profiles( $this->decode_json_input(
+				isset( $input['bot_profiles'] ) ? $input['bot_profiles'] : null,
+				$current['bot_profiles']
+			) ),
+			'custom_providers'            => $clean_custom,
 			'webhook_url'                 => isset( $input['webhook_url'] )    ? esc_url_raw( $input['webhook_url'] )          : $current['webhook_url'],
 			'webhook_secret'              => isset( $input['webhook_secret'] ) ? sanitize_text_field( $input['webhook_secret'] ) : $current['webhook_secret'],
 			// v2.0.0 — Security
@@ -220,6 +230,27 @@ class EAIC_Admin {
 			);
 		}
 		return $clean;
+	}
+
+	/**
+	 * Decode a JSON input field, falling back to $fallback if null/invalid.
+	 *
+	 * @param mixed $raw      Raw input value (string, array, or null).
+	 * @param mixed $fallback Value to return on decode failure.
+	 * @return mixed
+	 */
+	private function decode_json_input( $raw, $fallback ) {
+		if ( null === $raw ) {
+			return $fallback;
+		}
+		if ( is_array( $raw ) ) {
+			return $raw;
+		}
+		if ( is_string( $raw ) ) {
+			$decoded = json_decode( wp_unslash( $raw ), true );
+			return ( JSON_ERROR_NONE === json_last_error() && is_array( $decoded ) ) ? $decoded : $fallback;
+		}
+		return $fallback;
 	}
 
 	/**

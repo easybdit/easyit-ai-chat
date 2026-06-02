@@ -12,14 +12,24 @@
 		if (window.history && history.replaceState) {
 			history.replaceState(null, '', '#' + tab);
 		}
+		try { sessionStorage.setItem('eaic_active_tab', tab); } catch(e) {}
 	});
 
-	// Restore tab from hash
+	// Restore tab: URL hash first, then sessionStorage (survives save-redirect)
 	var hash = location.hash.replace('#', '');
+	if (!hash) {
+		try { hash = sessionStorage.getItem('eaic_active_tab') || ''; } catch(e) {}
+	}
 	if (hash) {
 		var $btn = $('.eaic-tab-btn[data-tab="' + hash + '"]');
 		if ($btn.length) { $btn.trigger('click'); }
 	}
+
+	// Ensure hidden JSON inputs are current before the settings form submits
+	$('form').on('submit', function () {
+		if (typeof saveCp === 'function') { saveCp(); }
+		if (typeof saveProfiles === 'function') { saveProfiles(); }
+	});
 
 	// Shortcode click-to-copy
 	$(document).on('click', '.eaic-sc-item', function () {
