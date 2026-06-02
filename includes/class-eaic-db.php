@@ -440,23 +440,32 @@ class EAIC_DB {
 	 * @return array<string,mixed>
 	 */
 	public static function get_stats() {
+		$cache_key = 'eaic_stats';
+		$cached    = wp_cache_get( $cache_key, 'eaic' );
+		if ( false !== $cached ) {
+			return $cached;
+		}
+
 		global $wpdb;
 		$st = $wpdb->prefix . self::SESSIONS_TABLE;
 		$mt = $wpdb->prefix . self::MESSAGES_TABLE;
 
-		return array(
-			'total_sessions'   => (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$st}" ), // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-			'total_messages'   => (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$mt}" ), // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-			'messages_today'   => (int) $wpdb->get_var( $wpdb->prepare(
+		$stats = array(
+			'total_sessions'   => (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$st}" ), // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery
+			'total_messages'   => (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$mt}" ), // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery
+			'messages_today'   => (int) $wpdb->get_var( $wpdb->prepare( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
 				"SELECT COUNT(*) FROM {$mt} WHERE DATE(created_at) = %s", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 				current_time( 'Y-m-d' )
 			) ),
-			'active_this_week' => (int) $wpdb->get_var( $wpdb->prepare(
+			'active_this_week' => (int) $wpdb->get_var( $wpdb->prepare( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
 				"SELECT COUNT(DISTINCT session_id) FROM {$mt} WHERE created_at >= %s", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 				gmdate( 'Y-m-d H:i:s', strtotime( '-7 days' ) )
 			) ),
-			'top_provider'     => $wpdb->get_var( "SELECT provider FROM {$st} GROUP BY provider ORDER BY COUNT(*) DESC LIMIT 1" ) ?: '—', // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			'top_provider'     => $wpdb->get_var( "SELECT provider FROM {$st} GROUP BY provider ORDER BY COUNT(*) DESC LIMIT 1" ) ?: '—', // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery
 		);
+
+		wp_cache_set( $cache_key, $stats, 'eaic', 300 );
+		return $stats;
 	}
 
 	/**
@@ -466,11 +475,17 @@ class EAIC_DB {
 	 * @return array<string,int> Keyed by Y-m-d date string.
 	 */
 	public static function get_messages_per_day( $days = 7 ) {
+		$cache_key = 'eaic_msgs_per_day_' . (int) $days;
+		$cached    = wp_cache_get( $cache_key, 'eaic' );
+		if ( false !== $cached ) {
+			return $cached;
+		}
+
 		global $wpdb;
 		$mt    = $wpdb->prefix . self::MESSAGES_TABLE;
 		$since = gmdate( 'Y-m-d H:i:s', strtotime( "-{$days} days" ) );
 
-		$rows = $wpdb->get_results( $wpdb->prepare(
+		$rows = $wpdb->get_results( $wpdb->prepare( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
 			"SELECT DATE(created_at) AS day, COUNT(*) AS cnt FROM {$mt} WHERE created_at >= %s GROUP BY DATE(created_at) ORDER BY day ASC", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 			$since
 		), ARRAY_A );
@@ -484,6 +499,8 @@ class EAIC_DB {
 				$result[ $row['day'] ] = (int) $row['cnt'];
 			}
 		}
+
+		wp_cache_set( $cache_key, $result, 'eaic', 300 );
 		return $result;
 	}
 
@@ -538,17 +555,24 @@ class EAIC_DB {
 	 * @return array{ thumbs_up: int, thumbs_down: int }
 	 */
 	public static function get_feedback_stats() {
+		$cache_key = 'eaic_feedback_stats';
+		$cached    = wp_cache_get( $cache_key, 'eaic' );
+		if ( false !== $cached ) {
+			return $cached;
+		}
+
 		global $wpdb;
 		$table = $wpdb->prefix . self::FEEDBACK_TABLE;
 
-		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$up   = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$table} WHERE rating = 1" );
-		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$down = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$table} WHERE rating = -1" );
+		$up   = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$table} WHERE rating = 1" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery
+		$down = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$table} WHERE rating = -1" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery
 
-		return array(
+		$result = array(
 			'thumbs_up'   => $up,
 			'thumbs_down' => $down,
 		);
+
+		wp_cache_set( $cache_key, $result, 'eaic', 300 );
+		return $result;
 	}
 }

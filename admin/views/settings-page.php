@@ -541,10 +541,10 @@ $eaic_option_key = EAIC_Options::OPTION_KEY;
 					<div class="eaic-field" id="eaic-roles-wrap" style="<?php echo $eaic_opts['access_restriction'] === 'specific_roles' ? '' : 'display:none'; ?>">
 						<label class="eaic-label"><?php esc_html_e( 'Allowed Roles', 'easyit-ai-chat' ); ?></label>
 						<div style="display:flex;flex-wrap:wrap;gap:10px;">
-							<?php foreach ( $eaic_all_roles as $role_slug => $role_name ) : ?>
+							<?php foreach ( $eaic_all_roles as $eaic_role_slug => $eaic_role_name ) : ?>
 							<label style="display:flex;align-items:center;gap:5px;font-size:13px">
-								<input type="checkbox" name="<?php echo esc_attr( $eaic_option_key ); ?>[allowed_roles][]" value="<?php echo esc_attr( $role_slug ); ?>" <?php checked( in_array( $role_slug, (array) $eaic_opts['allowed_roles'], true ) ); ?>>
-								<?php echo esc_html( translate_user_role( $role_name ) ); ?>
+								<input type="checkbox" name="<?php echo esc_attr( $eaic_option_key ); ?>[allowed_roles][]" value="<?php echo esc_attr( $eaic_role_slug ); ?>" <?php checked( in_array( $eaic_role_slug, (array) $eaic_opts['allowed_roles'], true ) ); ?>>
+								<?php echo esc_html( translate_user_role( $eaic_role_name ) ); ?>
 							</label>
 							<?php endforeach; ?>
 						</div>

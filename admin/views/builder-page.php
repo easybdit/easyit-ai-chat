@@ -43,8 +43,8 @@ $eaic_providers = array(
 					<label class="eaic-label" for="eab-provider"><?php esc_html_e( 'AI Provider', 'easyit-ai-chat' ); ?></label>
 					<select id="eab-provider" class="eab-input">
 						<option value=""><?php esc_html_e( '— Use site default —', 'easyit-ai-chat' ); ?></option>
-						<?php foreach ( $eaic_providers as $slug => $label ) : ?>
-							<option value="<?php echo esc_attr( $slug ); ?>"><?php echo esc_html( $label ); ?></option>
+						<?php foreach ( $eaic_providers as $eaic_slug => $eaic_label ) : ?>
+							<option value="<?php echo esc_attr( $eaic_slug ); ?>"><?php echo esc_html( $eaic_label ); ?></option>
 						<?php endforeach; ?>
 					</select>
 				</div>
@@ -69,8 +69,8 @@ $eaic_providers = array(
 					<label class="eaic-label" for="eab-profile"><?php esc_html_e( 'Bot Profile', 'easyit-ai-chat' ); ?></label>
 					<select id="eab-profile" class="eab-input">
 						<option value=""><?php esc_html_e( '— None —', 'easyit-ai-chat' ); ?></option>
-						<?php foreach ( $eaic_opts['bot_profiles'] as $prof ) : ?>
-							<option value="<?php echo esc_attr( $prof['slug'] ); ?>"><?php echo esc_html( $prof['name'] ); ?></option>
+						<?php foreach ( $eaic_opts['bot_profiles'] as $eaic_prof ) : ?>
+							<option value="<?php echo esc_attr( $eaic_prof['slug'] ); ?>"><?php echo esc_html( $eaic_prof['name'] ); ?></option>
 						<?php endforeach; ?>
 					</select>
 				</div>
