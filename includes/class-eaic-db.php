@@ -19,10 +19,12 @@ if ( ! defined( 'ABSPATH' ) ) {
  */
 class EAIC_DB {
 
-	const SESSIONS_TABLE = 'eaic_sessions';
-	const MESSAGES_TABLE = 'eaic_messages';
-	const FEEDBACK_TABLE = 'eaic_feedback';
-	const CACHE_GROUP    = 'eaic';
+	const SESSIONS_TABLE  = 'eaic_sessions';
+	const MESSAGES_TABLE  = 'eaic_messages';
+	const FEEDBACK_TABLE  = 'eaic_feedback';
+	const DOCUMENTS_TABLE = 'eaic_documents';
+	const CHUNKS_TABLE    = 'eaic_chunks';
+	const CACHE_GROUP     = 'eaic';
 
 	/**
 	 * Create the plugin tables on activation.
@@ -78,10 +80,37 @@ class EAIC_DB {
 			KEY session_uuid (session_uuid)
 		) {$charset_collate};";
 
+		$documents_table = $wpdb->prefix . self::DOCUMENTS_TABLE;
+		$chunks_table    = $wpdb->prefix . self::CHUNKS_TABLE;
+
+		$documents = "CREATE TABLE {$documents_table} (
+			id          BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+			title       VARCHAR(255)    NOT NULL DEFAULT '',
+			file_name   VARCHAR(255)    NOT NULL DEFAULT '',
+			file_type   VARCHAR(50)     NOT NULL DEFAULT '',
+			chunk_count INT UNSIGNED    NOT NULL DEFAULT 0,
+			status      VARCHAR(20)     NOT NULL DEFAULT 'pending',
+			created_at  DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			PRIMARY KEY (id)
+		) {$charset_collate};";
+
+		$chunks = "CREATE TABLE {$chunks_table} (
+			id          BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+			document_id BIGINT UNSIGNED NOT NULL,
+			chunk_index INT UNSIGNED    NOT NULL DEFAULT 0,
+			content     LONGTEXT        NOT NULL,
+			embedding   LONGTEXT        NOT NULL,
+			created_at  DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			PRIMARY KEY  (id),
+			KEY document_id (document_id)
+		) {$charset_collate};";
+
 		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
 		dbDelta( $sessions );
 		dbDelta( $messages );
 		dbDelta( $feedback );
+		dbDelta( $documents );
+		dbDelta( $chunks );
 	}
 
 	/**

@@ -96,6 +96,13 @@ class EAIC_Options {
 			'prompt_injection_detect'      => false,
 			'prompt_injection_action'      => 'block',     // block | warn
 			'max_message_length'           => 4000,
+			// v2.3.0 — RAG
+			'rag_enabled'                  => false,
+			'rag_embed_model'              => 'nomic-embed-text',
+			'rag_chunk_size'               => 500,
+			'rag_chunk_overlap'            => 50,
+			'rag_top_k'                    => 3,
+			'rag_threshold'                => 0.3,
 		);
 	}
 

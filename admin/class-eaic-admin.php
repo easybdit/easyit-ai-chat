@@ -23,6 +23,9 @@ class EAIC_Admin {
 		add_action( 'admin_init',            array( $this, 'register_settings' ) );
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_assets' ) );
 		add_filter( 'plugin_action_links_' . EAIC_BASENAME, array( $this, 'action_links' ) );
+		add_action( 'wp_ajax_eaic_rag_upload',  array( $this, 'ajax_rag_upload' ) );
+		add_action( 'wp_ajax_eaic_rag_process', array( $this, 'ajax_rag_process' ) );
+		add_action( 'wp_ajax_eaic_rag_delete',  array( $this, 'ajax_rag_delete' ) );
 	}
 
 	/**
@@ -71,6 +74,14 @@ class EAIC_Admin {
 			'manage_options',
 			'eaic-builder',
 			array( $this, 'render_builder' )
+		);
+		add_submenu_page(
+			'eaic',
+			__( 'Knowledge Base', 'easyit-ai-chat' ),
+			__( 'Knowledge Base', 'easyit-ai-chat' ),
+			'manage_options',
+			'eaic-knowledge-base',
+			array( $this, 'render_knowledge_base' )
 		);
 	}
 
@@ -211,6 +222,13 @@ class EAIC_Admin {
 			'prompt_injection_action'     => ( isset( $input['prompt_injection_action'] ) && in_array( $input['prompt_injection_action'], array( 'block', 'warn' ), true ) )
 			                                   ? $input['prompt_injection_action'] : $current['prompt_injection_action'],
 			'max_message_length'          => isset( $input['max_message_length'] ) ? max( 50, min( 4000, absint( $input['max_message_length'] ) ) ) : $current['max_message_length'],
+			// v2.3.0 — RAG
+			'rag_enabled'                 => ! empty( $input['rag_enabled'] ),
+			'rag_embed_model'             => isset( $input['rag_embed_model'] )   ? sanitize_text_field( $input['rag_embed_model'] )                                : $current['rag_embed_model'],
+			'rag_chunk_size'              => isset( $input['rag_chunk_size'] )    ? max( 50, min( 2000, absint( $input['rag_chunk_size'] ) ) )                     : $current['rag_chunk_size'],
+			'rag_chunk_overlap'           => isset( $input['rag_chunk_overlap'] ) ? max( 0, min( 500, absint( $input['rag_chunk_overlap'] ) ) )                    : $current['rag_chunk_overlap'],
+			'rag_top_k'                   => isset( $input['rag_top_k'] )         ? max( 1, min( 10, absint( $input['rag_top_k'] ) ) )                             : $current['rag_top_k'],
+			'rag_threshold'               => isset( $input['rag_threshold'] )     ? min( 1.0, max( 0.0, (float) $input['rag_threshold'] ) )                       : $current['rag_threshold'],
 		);
 	}
 
@@ -481,5 +499,175 @@ class EAIC_Admin {
 		}
 		$eaic_opts = EAIC_Options::all();
 		require EAIC_DIR . 'admin/views/test-chat-page.php';
+	}
+
+	/**
+	 * Render the Knowledge Base (RAG document manager) page.
+	 *
+	 * @return void
+	 */
+	public function render_knowledge_base() {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			return;
+		}
+		$eaic_opts      = EAIC_Options::all();
+		$eaic_documents = EAIC_RAG_DB::get_all_documents();
+		require EAIC_DIR . 'admin/views/knowledge-base-page.php';
+	}
+
+	// -----------------------------------------------------------------------
+	// RAG AJAX handlers
+	// -----------------------------------------------------------------------
+
+	/**
+	 * Upload a document, save to disk, create DB record, and process it.
+	 *
+	 * @return void
+	 */
+	public function ajax_rag_upload() {
+		check_ajax_referer( 'eaic_admin_nonce', 'nonce' );
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( array( 'message' => __( 'Unauthorised.', 'easyit-ai-chat' ) ), 403 );
+		}
+
+		if ( empty( $_FILES['rag_file'] ) || UPLOAD_ERR_OK !== (int) $_FILES['rag_file']['error'] ) {
+			wp_send_json_error( array( 'message' => __( 'No file received or upload error.', 'easyit-ai-chat' ) ) );
+		}
+
+		$file      = $_FILES['rag_file']; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+		$file_name = sanitize_file_name( $file['name'] );
+		$file_type = $file['type'];
+		$allowed   = array( 'text/plain', 'application/pdf' );
+
+		if ( ! in_array( $file_type, $allowed, true ) ) {
+			// Accept by extension as a fallback (some browsers mis-report MIME).
+			$ext = strtolower( pathinfo( $file_name, PATHINFO_EXTENSION ) );
+			if ( 'txt' === $ext ) {
+				$file_type = 'text/plain';
+			} elseif ( 'pdf' === $ext ) {
+				$file_type = 'application/pdf';
+			} else {
+				wp_send_json_error( array( 'message' => __( 'Only .txt and .pdf files are allowed.', 'easyit-ai-chat' ) ) );
+			}
+		}
+
+		// Save to uploads/eaic-docs/.
+		$upload_dir = wp_upload_dir();
+		$target_dir = trailingslashit( $upload_dir['basedir'] ) . 'eaic-docs';
+		if ( ! is_dir( $target_dir ) ) {
+			wp_mkdir_p( $target_dir );
+			// Block direct HTTP access.
+			// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents
+			file_put_contents( $target_dir . '/index.php', '<?php // Silence is golden.' );
+		}
+
+		$unique_name = wp_unique_filename( $target_dir, $file_name );
+		$dest        = $target_dir . '/' . $unique_name;
+
+		if ( ! move_uploaded_file( $file['tmp_name'], $dest ) ) {
+			wp_send_json_error( array( 'message' => __( 'Could not save the uploaded file.', 'easyit-ai-chat' ) ) );
+		}
+
+		// Create DB record.
+		$title  = sanitize_text_field( isset( $_POST['rag_title'] ) ? wp_unslash( $_POST['rag_title'] ) : '' );
+		$title  = '' !== $title ? $title : pathinfo( $file_name, PATHINFO_FILENAME );
+		$doc_id = EAIC_RAG_DB::create_document( $title, $unique_name, $file_type );
+
+		// Process immediately (embed).
+		$opts = EAIC_Options::all();
+		$rag  = new EAIC_RAG( $opts );
+
+		try {
+			$chunk_count = $rag->process_document( $doc_id, $dest, $file_type );
+			wp_send_json_success( array(
+				'message'     => sprintf(
+					/* translators: 1: document title, 2: number of chunks */
+					__( '"%1$s" processed successfully — %2$d chunks stored.', 'easyit-ai-chat' ),
+					esc_html( $title ),
+					$chunk_count
+				),
+				'document_id' => $doc_id,
+			) );
+		} catch ( Exception $e ) {
+			wp_send_json_error( array( 'message' => $e->getMessage() ) );
+		}
+	}
+
+	/**
+	 * Re-process (re-embed) an existing document.
+	 *
+	 * @return void
+	 */
+	public function ajax_rag_process() {
+		check_ajax_referer( 'eaic_admin_nonce', 'nonce' );
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( array( 'message' => __( 'Unauthorised.', 'easyit-ai-chat' ) ), 403 );
+		}
+
+		$doc_id = isset( $_POST['doc_id'] ) ? absint( $_POST['doc_id'] ) : 0;
+		if ( ! $doc_id ) {
+			wp_send_json_error( array( 'message' => __( 'Invalid document ID.', 'easyit-ai-chat' ) ) );
+		}
+
+		$doc = EAIC_RAG_DB::get_document( $doc_id );
+		if ( ! $doc ) {
+			wp_send_json_error( array( 'message' => __( 'Document not found.', 'easyit-ai-chat' ) ) );
+		}
+
+		$upload_dir = wp_upload_dir();
+		$file_path  = trailingslashit( $upload_dir['basedir'] ) . 'eaic-docs/' . $doc['file_name'];
+		if ( ! file_exists( $file_path ) ) {
+			wp_send_json_error( array( 'message' => __( 'Source file not found on disk.', 'easyit-ai-chat' ) ) );
+		}
+
+		$opts = EAIC_Options::all();
+		$rag  = new EAIC_RAG( $opts );
+
+		try {
+			$chunk_count = $rag->process_document( $doc_id, $file_path, $doc['file_type'] );
+			wp_send_json_success( array(
+				'message' => sprintf(
+					/* translators: %d: number of chunks */
+					__( 'Re-processed successfully — %d chunks stored.', 'easyit-ai-chat' ),
+					$chunk_count
+				),
+				'chunk_count' => $chunk_count,
+			) );
+		} catch ( Exception $e ) {
+			wp_send_json_error( array( 'message' => $e->getMessage() ) );
+		}
+	}
+
+	/**
+	 * Delete a document record, its chunks, and the uploaded file.
+	 *
+	 * @return void
+	 */
+	public function ajax_rag_delete() {
+		check_ajax_referer( 'eaic_admin_nonce', 'nonce' );
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( array( 'message' => __( 'Unauthorised.', 'easyit-ai-chat' ) ), 403 );
+		}
+
+		$doc_id = isset( $_POST['doc_id'] ) ? absint( $_POST['doc_id'] ) : 0;
+		if ( ! $doc_id ) {
+			wp_send_json_error( array( 'message' => __( 'Invalid document ID.', 'easyit-ai-chat' ) ) );
+		}
+
+		$doc = EAIC_RAG_DB::get_document( $doc_id );
+		if ( ! $doc ) {
+			wp_send_json_error( array( 'message' => __( 'Document not found.', 'easyit-ai-chat' ) ) );
+		}
+
+		// Remove physical file.
+		$upload_dir = wp_upload_dir();
+		$file_path  = trailingslashit( $upload_dir['basedir'] ) . 'eaic-docs/' . $doc['file_name'];
+		if ( file_exists( $file_path ) ) {
+			wp_delete_file( $file_path );
+		}
+
+		EAIC_RAG_DB::delete_document( $doc_id );
+
+		wp_send_json_success( array( 'message' => __( 'Document deleted.', 'easyit-ai-chat' ) ) );
 	}
 }

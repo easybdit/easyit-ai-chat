@@ -3,7 +3,7 @@
  * Plugin Name:       EasyIT AI Chat — Chatbot for OpenAI, Claude, DeepSeek, Gemini & Ollama
  * Plugin URI:        https://github.com/easybdit/easyit-ai-chat
  * Description:       Unified AI chatbot for WordPress. Connect Ollama, OpenAI, Anthropic (Claude), DeepSeek, Google Gemini and Together AI with one shortcode [eaic_chat]. Free, open-source, no tracking.
- * Version:           2.1.2
+ * Version:           2.3.0
  * Requires at least: 6.0
  * Requires PHP:      8.0
  * Author:            EasyIT
@@ -19,7 +19,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'EAIC_VERSION',  '2.1.2' );
+define( 'EAIC_VERSION',  '2.3.0' );
 define( 'EAIC_FILE',     __FILE__ );
 define( 'EAIC_DIR',      plugin_dir_path( __FILE__ ) );
 define( 'EAIC_URL',      plugin_dir_url( __FILE__ ) );
@@ -63,6 +63,8 @@ require_once EAIC_DIR . 'includes/providers/class-eaic-gemini.php';
 require_once EAIC_DIR . 'includes/providers/class-eaic-together.php';
 require_once EAIC_DIR . 'includes/providers/class-eaic-custom.php';
 require_once EAIC_DIR . 'includes/class-eaic-db.php';
+require_once EAIC_DIR . 'includes/class-eaic-rag-db.php';
+require_once EAIC_DIR . 'includes/class-eaic-rag.php';
 require_once EAIC_DIR . 'includes/class-eaic-engine.php';
 require_once EAIC_DIR . 'admin/class-eaic-admin.php';
 require_once EAIC_DIR . 'public/class-eaic-public.php';
@@ -74,6 +76,10 @@ require_once EAIC_DIR . 'public/class-eaic-public.php';
  * @return void
  */
 function eaic_init() {
+	if ( get_option( 'eaic_db_version' ) !== EAIC_VERSION ) {
+		EAIC_DB::create_tables();
+		update_option( 'eaic_db_version', EAIC_VERSION );
+	}
 	new EAIC_Engine();
 	new EAIC_Admin();
 	new EAIC_Public();

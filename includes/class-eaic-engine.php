@@ -455,6 +455,16 @@ class EAIC_Engine {
 		}
 		// ---- End image generation routing ----
 
+		// ---- RAG context injection ----
+		$rag = new EAIC_RAG( $opts );
+		if ( $rag->is_enabled() ) {
+			$rag_context = $rag->build_context( $message );
+			if ( '' !== $rag_context ) {
+				$system_prompt = $rag_context . ( '' !== $system_prompt ? "\n\n" . $system_prompt : '' );
+			}
+		}
+		// ---- End RAG context injection ----
+
 		$ai_reply = '';
 		try {
 			$ai_reply = $this->get_provider( $provider )->stream_chat( $messages, $system_prompt );
