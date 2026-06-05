@@ -202,6 +202,12 @@ class EAIC_RAG {
 	 * @throws RuntimeException On extraction or embedding failure.
 	 */
 	public function process_document( $doc_id, $file_path, $file_type ) {
+		// Allow long-running processing (many Ollama embed calls).
+		if ( function_exists( 'set_time_limit' ) ) {
+			// phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
+			@set_time_limit( 300 );
+		}
+
 		EAIC_RAG_DB::update_document_status( $doc_id, 'processing' );
 
 		// 1. Extract text.
@@ -223,7 +229,14 @@ class EAIC_RAG {
 
 		$count = 0;
 		foreach ( $chunks as $i => $chunk ) {
-			$embedding = $this->get_embedding( $chunk );
+			$embedding = array();
+			try {
+				$embedding = $this->get_embedding( $chunk );
+			} catch ( Exception $e ) {
+				// Store chunk without embedding; keyword fallback handles search.
+				// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+				error_log( '[EAIC RAG] Chunk ' . $i . ' embedding failed: ' . $e->getMessage() );
+			}
 			EAIC_RAG_DB::add_chunk( $doc_id, $i, $chunk, wp_json_encode( $embedding ) );
 			$count++;
 		}

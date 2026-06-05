@@ -513,7 +513,16 @@ class EAIC_Admin {
 		if ( ! current_user_can( 'manage_options' ) ) {
 			return;
 		}
-		$eaic_opts      = EAIC_Options::all();
+		$eaic_opts = EAIC_Options::all();
+
+		// Reset any document stuck at 'processing' to 'pending' so the user can re-process.
+		EAIC_DB::create_tables();
+		foreach ( EAIC_RAG_DB::get_all_documents() as $stuck_doc ) {
+			if ( 'processing' === $stuck_doc['status'] ) {
+				EAIC_RAG_DB::update_document_status( (int) $stuck_doc['id'], 'pending' );
+			}
+		}
+
 		$eaic_documents = EAIC_RAG_DB::get_all_documents();
 		require EAIC_DIR . 'admin/views/knowledge-base-page.php';
 	}
