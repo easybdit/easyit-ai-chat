@@ -145,17 +145,45 @@ class EAIC_RAG_DB {
 	public static function add_chunk( $document_id, $chunk_index, $content, $embedding ) {
 		global $wpdb;
 
+		// Strip null bytes and non-UTF-8 sequences that MySQL rejects.
+		$content   = self::sanitize_text( (string) $content );
+		$embedding = self::sanitize_text( (string) $embedding );
+
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$wpdb->insert(
+		$result = $wpdb->insert(
 			$wpdb->prefix . self::CHUNKS_TABLE,
 			array(
 				'document_id' => (int) $document_id,
 				'chunk_index' => (int) $chunk_index,
-				'content'     => (string) $content,
-				'embedding'   => (string) $embedding,
+				'content'     => $content,
+				'embedding'   => $embedding,
 			),
 			array( '%d', '%d', '%s', '%s' )
 		);
+
+		if ( false === $result ) {
+			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+			error_log( '[EAIC RAG] add_chunk insert failed (doc=' . $document_id . ' chunk=' . $chunk_index . '): ' . $wpdb->last_error );
+		}
+
+		return false !== $result;
+	}
+
+	/**
+	 * Remove null bytes and ensure valid UTF-8 so MySQL won't reject the text.
+	 *
+	 * @param string $text Raw text.
+	 * @return string
+	 */
+	private static function sanitize_text( $text ) {
+		$text = str_replace( "\0", '', $text );
+		if ( function_exists( 'iconv' ) ) {
+			$clean = @iconv( 'UTF-8', 'UTF-8//IGNORE', $text ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
+			if ( false !== $clean ) {
+				return $clean;
+			}
+		}
+		return wp_check_invalid_utf8( $text, true );
 	}
 
 	/**

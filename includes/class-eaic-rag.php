@@ -56,7 +56,7 @@ class EAIC_RAG {
 			return '';
 		}
 
-		$top_k     = max( 1, (int) ( $this->opts['rag_top_k'] ?? 3 ) );
+		$top_k     = max( 1, (int) ( $this->opts['rag_top_k'] ?? 8 ) );
 		$threshold = isset( $this->opts['rag_threshold'] ) ? (float) $this->opts['rag_threshold'] : 0.1;
 
 		// Try semantic search via Ollama embedding.
@@ -130,8 +130,131 @@ class EAIC_RAG {
 			return '';
 		}
 
-		$context = implode( "\n\n", $context_parts );
-		return "Use the following retrieved context to answer the user's question accurately. The context contains real data — use it directly.\n\n---\n" . $context . "\n---";
+		// For counting queries ("how many X"), scan ALL chunks and inject exact counts.
+		$count_result  = $this->build_count_summary( $query, $all_chunks );
+		$count_summary = $count_result['summary'];
+		$count_chunks  = $count_result['chunks'];
+
+		// When the count query matched keyword chunks, use those as context so the AI
+		// lists the actual matching items — not whatever the embedding model returned.
+		if ( ! empty( $count_chunks ) ) {
+			$context_parts = $count_chunks;
+		}
+
+		$context = implode( "\n\n---\n\n", $context_parts );
+
+		$count_block = '';
+		if ( $count_summary ) {
+			$count_block = "*** VERIFIED COUNT (full document scan — use this as your answer) ***\n" .
+				$count_summary . "\n" .
+				"*** END VERIFIED COUNT ***\n\n";
+		}
+
+		return $count_block .
+			"SUPPORTING DOCUMENT DATA:\n---\n" . $context . "\n---\n\n" .
+			"Instructions: " .
+			( $count_summary
+				? "The VERIFIED COUNT above is the authoritative answer — state it directly. List the actual items from the supporting data with their name, room/location, tag number, and status."
+				: "Answer using only the data above. Use exact item names and numbers. Format with bullet points or a table." );
+	}
+
+	/**
+	 * For "how many X" queries, count occurrences of the search term across ALL chunks.
+	 * Returns ['summary' => string, 'chunks' => array] so build_context() can use the
+	 * exact matched chunks as context (bypassing unreliable semantic search).
+	 *
+	 * @param string $query      User query.
+	 * @param array  $all_chunks All stored chunks.
+	 * @return array{summary: string, chunks: array}
+	 */
+	private function build_count_summary( $query, $all_chunks ) {
+		$empty = array( 'summary' => '', 'chunks' => array() );
+
+		// Detect "how many <item> ..." pattern.
+		if ( ! preg_match( '/\bhow\s+many\s+(.+)/i', trim( $query ), $m ) ) {
+			return $empty;
+		}
+
+		// Strip trailing stop words/punctuation one by one to isolate the item name.
+		$item      = trim( $m[1], " \t\r\n?." );
+		$stop      = array( 'are', 'is', 'do', 'does', 'were', 'available', 'here', 'there', 'in', 'at', 'total', 'exist', 'exists', 'please', 'now' );
+		$item_words = explode( ' ', $item );
+		while ( ! empty( $item_words ) && in_array( strtolower( end( $item_words ) ), $stop, true ) ) {
+			array_pop( $item_words );
+		}
+		$item = trim( implode( ' ', $item_words ), " \t\r\n?." );
+
+		if ( mb_strlen( $item ) < 2 ) {
+			return $empty;
+		}
+
+		$item_lower = mb_strtolower( $item );
+
+		// Derive a stem to handle singular/plural mismatch:
+		// "projectors" → "projector", "chairs" → "chair", "batteries" → "battery".
+		$stem = $item_lower;
+		if ( mb_substr( $item_lower, -3 ) === 'ies' && mb_strlen( $item_lower ) > 4 ) {
+			$stem = mb_substr( $item_lower, 0, -3 ) . 'y';
+		} elseif ( mb_substr( $item_lower, -1 ) === 's' && mb_strlen( $item_lower ) > 3 ) {
+			$stem = mb_substr( $item_lower, 0, -1 );
+		}
+
+		// Count using stem AND collect the chunks that contain the match.
+		$total          = 0;
+		$matched_chunks = array();
+		foreach ( $all_chunks as $chunk ) {
+			$hits = substr_count( mb_strtolower( $chunk['content'] ), $stem );
+			if ( $hits > 0 ) {
+				$total           += $hits;
+				$matched_chunks[] = trim( $chunk['content'] );
+			}
+		}
+
+		if ( $total > 0 ) {
+			return array(
+				'summary' => '- "' . $item . '": ' . $total . ' found in the document.',
+				'chunks'  => $matched_chunks,
+			);
+		}
+
+		// No exact match — find similar item names using individual keywords.
+		$words = array_filter(
+			explode( ' ', $item_lower ),
+			function ( $w ) { return mb_strlen( $w ) > 3; }
+		);
+		if ( empty( $words ) ) {
+			return $empty;
+		}
+
+		$item_counts = array();
+		foreach ( $all_chunks as $chunk ) {
+			// Find lines/entries in the chunk that contain any of the search words.
+			$lines = preg_split( '/(?<=Active|Inactive)\s+\d+\s+/', $chunk['content'] );
+			foreach ( $lines as $line ) {
+				$line_lower = mb_strtolower( $line );
+				foreach ( $words as $w ) {
+					if ( false !== mb_strpos( $line_lower, $w ) ) {
+						// Extract the item name (first few words before "Furniture" or "IT" type).
+						if ( preg_match( '/^([A-Za-z][A-Za-z0-9 \(\)]{2,40?})\s+(?:Furniture|IT|Equipment)/i', trim( $line ), $nm ) ) {
+							$key                  = trim( $nm[1] );
+							$item_counts[ $key ]  = ( $item_counts[ $key ] ?? 0 ) + 1;
+						}
+						break;
+					}
+				}
+			}
+		}
+
+		if ( empty( $item_counts ) ) {
+			return $empty;
+		}
+
+		arsort( $item_counts );
+		$lines = array( 'No exact match for "' . $item . '". Similar items found:' );
+		foreach ( array_slice( $item_counts, 0, 8, true ) as $name => $cnt ) {
+			$lines[] = '- "' . $name . '": ' . $cnt;
+		}
+		return array( 'summary' => implode( "\n", $lines ), 'chunks' => array() );
 	}
 
 	/**
@@ -237,8 +360,20 @@ class EAIC_RAG {
 				// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
 				error_log( '[EAIC RAG] Chunk ' . $i . ' embedding failed: ' . $e->getMessage() );
 			}
-			EAIC_RAG_DB::add_chunk( $doc_id, $i, $chunk, wp_json_encode( $embedding ) );
-			$count++;
+			$ok = EAIC_RAG_DB::add_chunk( $doc_id, $i, $chunk, wp_json_encode( $embedding ) );
+			if ( $ok ) {
+				$count++;
+			}
+		}
+
+		if ( 0 === $count && ! empty( $chunks ) ) {
+			EAIC_RAG_DB::update_document_status( $doc_id, 'error' );
+			global $wpdb;
+			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+			error_log( '[EAIC RAG] All chunk inserts failed. Last DB error: ' . $wpdb->last_error );
+			throw new RuntimeException(
+				esc_html__( 'Failed to save chunks to the database. Check your PHP error log for details (search for "[EAIC RAG]").', 'easyit-ai-chat' )
+			);
 		}
 
 		EAIC_RAG_DB::update_document_status( $doc_id, 'ready', $count );
@@ -262,7 +397,7 @@ class EAIC_RAG {
 	public function get_embedding( $text ) {
 		$ollama_url = rtrim( ! empty( $this->opts['ollama_url'] ) ? $this->opts['ollama_url'] : 'http://localhost:11434', '/' );
 		$model      = ! empty( $this->opts['rag_embed_model'] ) ? $this->opts['rag_embed_model'] : 'nomic-embed-text';
-		$timeout    = 60;
+		$timeout    = 8; // Short timeout so keyword fallback kicks in fast when model is slow/wrong.
 
 		// Try /api/embed first (Ollama ≥ 0.3).
 		$url      = $ollama_url . '/api/embed';
@@ -381,26 +516,64 @@ class EAIC_RAG {
 			return '';
 		}
 
-		$text = '';
+		$text   = '';
+		$offset = 0;
+		$len    = strlen( $content );
 
-		// Try to decompress FlateDecode streams and extract text.
-		preg_match_all( '/stream\r?\n(.*?)\r?\nendstream/s', $content, $streams );
-		foreach ( $streams[1] as $raw_stream ) {
-			$decoded = @gzuncompress( $raw_stream ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
-			$source  = ( false !== $decoded ) ? $decoded : $raw_stream;
+		// Walk the file with strpos instead of a single giant regex (avoids PCRE backtrack limits on large PDFs).
+		while ( $offset < $len ) {
+			$stream_pos = strpos( $content, 'stream', $offset );
+			if ( false === $stream_pos ) {
+				break;
+			}
 
-			// BT...ET text blocks.
+			// Verify the 'stream' keyword is followed by \n or \r\n (PDF spec requirement).
+			$nl = $stream_pos + 6;
+			if ( $nl < $len && "\r" === $content[ $nl ] ) {
+				$nl++;
+			}
+			if ( $nl >= $len || "\n" !== $content[ $nl ] ) {
+				$offset = $stream_pos + 6;
+				continue;
+			}
+			$data_start = $nl + 1;
+
+			// Find the matching endstream.
+			$end_pos = strpos( $content, 'endstream', $data_start );
+			if ( false === $end_pos ) {
+				break;
+			}
+
+			$raw = substr( $content, $data_start, $end_pos - $data_start );
+			// Trim trailing \r\n before endstream.
+			$raw    = rtrim( $raw, "\r\n" );
+			$offset = $end_pos + 9;
+
+			if ( strlen( $raw ) < 4 ) {
+				continue;
+			}
+
+			// PDF FlateDecode = zlib (RFC 1950). Try gzuncompress first, then raw gzinflate.
+			// phpcs:disable WordPress.PHP.NoSilencedErrors.Discouraged
+			$decoded = @gzuncompress( $raw );
+			if ( false === $decoded ) {
+				$decoded = @gzinflate( $raw );
+			}
+			// phpcs:enable
+			$source = ( false !== $decoded ) ? $decoded : $raw;
+
+			// Extract text from BT...ET blocks.
 			preg_match_all( '/BT[\s\S]*?ET/', $source, $bt_blocks );
 			foreach ( $bt_blocks[0] as $block ) {
-				// Tj operator — single string.
+				// Tj — single string literal.
 				preg_match_all( '/\(([^()\\\\]*(?:\\\\.[^()\\\\]*)*)\)\s*Tj/', $block, $tj );
 				foreach ( $tj[1] as $t ) {
 					$text .= stripslashes( $t ) . ' ';
 				}
-				// TJ operator — array of strings.
+				// TJ — array of strings.
 				preg_match_all( '/\[([^\]]*)\]\s*TJ/', $block, $tj_arr );
-				foreach ( $tj_arr[1] as $t ) {
-					preg_match_all( '/\(([^()]*)\)/', $t, $parts );
+				foreach ( $tj_arr[1] as $arr_str ) {
+					preg_match_all( '/\(([^()]*)\)/', $arr_str, $parts );
 					foreach ( $parts[1] as $p ) {
 						$text .= $p . ' ';
 					}

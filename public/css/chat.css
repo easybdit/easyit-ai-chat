@@ -641,26 +641,36 @@ body.eaic-has-fullscreen { overflow: hidden !important; }
 .eaic-widget .eaic-fb-btn:hover   { opacity:1 !important; background:#f3f4f6 !important; transform:scale(1.1) !important; }
 .eaic-widget .eaic-fb-btn.eaic-fb-active { opacity:1 !important; border-color:var(--c-accent) !important; background:rgba(79,70,229,.07) !important; }
 
-/* ---- Copy message button ---- */
-.eaic-widget .eaic-copy-msg-btn {
-	display:      none !important;
+/* ---- Message action bar (Copy + Download) ---- */
+.eaic-widget .eaic-msg-actions {
+	display:      flex !important;
 	align-items:  center !important;
-	justify-content: center !important;
-	width:        26px !important;
-	height:       26px !important;
-	background:   transparent !important;
-	border:       1px solid var(--c-border) !important;
-	border-radius:6px !important;
-	color:        var(--c-muted) !important;
-	cursor:       pointer !important;
-	padding:      0 !important;
-	margin-top:   4px !important;
-	box-shadow:   none !important;
-	transition:   background .12s, color .12s, border-color .12s !important;
-	flex-shrink:  0 !important;
+	gap:          6px !important;
+	margin-top:   8px !important;
 }
-.eaic-widget .eaic-msg--assistant:hover .eaic-copy-msg-btn { display:flex !important; }
-.eaic-widget .eaic-copy-msg-btn:hover { background:#f3f4f6 !important; color:#111827 !important; border-color:#d1d5db !important; }
+.eaic-widget .eaic-copy-msg-btn,
+.eaic-widget .eaic-download-msg-btn {
+	display:       flex !important;
+	align-items:   center !important;
+	gap:           4px !important;
+	height:        26px !important;
+	padding:       0 8px !important;
+	background:    transparent !important;
+	border:        1px solid var(--c-border) !important;
+	border-radius: 6px !important;
+	color:         var(--c-muted) !important;
+	cursor:        pointer !important;
+	font-size:     11px !important;
+	font-family:   var(--font) !important;
+	font-weight:   500 !important;
+	box-shadow:    none !important;
+	transition:    background .12s, color .12s, border-color .12s !important;
+	flex-shrink:   0 !important;
+	margin:        0 !important;
+	line-height:   1 !important;
+}
+.eaic-widget .eaic-copy-msg-btn:hover,
+.eaic-widget .eaic-download-msg-btn:hover { background:#f3f4f6 !important; color:#111827 !important; border-color:#d1d5db !important; }
 .eaic-widget .eaic-copy-msg-btn.is-copied { color:#16a34a !important; border-color:#16a34a !important; }
 
 /* ---- Message timestamp ---- */

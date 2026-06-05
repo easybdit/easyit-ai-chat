@@ -4,7 +4,7 @@ Tags: chatbot, ai chatbot, openai, gemini, ollama
 Requires at least: 6.0
 Tested up to: 7.0
 Requires PHP: 8.0
-Stable tag: 2.1.2
+Stable tag: 2.3.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -51,7 +51,7 @@ You own your data, you control your keys. No tracking, no telemetry, no subscrip
 * **Typing indicator** — Smooth 3-dot animated bubble while AI is responding (accent-color matched)
 * **Stop & Regenerate** — Cancel a response mid-stream with the ⏹ Stop button; re-run with 🔄 Regenerate
 * **Message timestamps** — HH:MM time shown next to every message label
-* **Copy message** — Hover any AI response to reveal a one-click copy button
+* **Copy & Download message** — Copy or download any AI response with one click; buttons always visible below each message
 * **Read aloud (TTS)** — 🔊 Speaker button reads any AI message using the browser's built-in Speech Synthesis API
 * **Voice input** — 🎤 Microphone button transcribes speech directly into the input field (Web Speech API)
 * **Fullscreen mode** — Expand the chat widget to full-screen overlay; press Escape to exit
@@ -91,6 +91,15 @@ You own your data, you control your keys. No tracking, no telemetry, no subscrip
 * **Anti-bot math captcha** — Simple arithmetic challenge before the first message; no external API or cookies required
 * **Abuse alert email** — Get an email notification when the rate limit is exceeded; configurable recipient
 * **GDPR consent gate** — Show an accept banner before the chat activates; consent stored in a browser cookie (365 days)
+
+= 📚 Knowledge Base (RAG) =
+
+* **Document upload** — Upload PDF files to a private Knowledge Base; the AI answers questions using only your document data
+* **Semantic + keyword search** — Queries are matched against document chunks via Ollama embeddings with automatic keyword fallback
+* **Accurate counting** — "How many X" queries scan every chunk for an exact count — not just the top-K semantic results
+* **Context-aware answers** — Matched chunks are injected into the system prompt so the AI gives specific, document-grounded answers
+* **Admin test tool** — Test Query UI lets you inspect which chunks are retrieved for any query before going live
+* **Re-process on demand** — Change embedding model or chunk settings and reprocess any document without re-uploading
 
 = 🛒 WooCommerce Add-on (Pro) =
 
@@ -270,6 +279,26 @@ The captcha is a simple arithmetic question (e.g., "3 + 7 = ?") that appears abo
 
 == Changelog ==
 
+= 2.3.2 =
+* Fix: RAG count queries ("how many X") now use keyword-matched chunks as context, preventing wrong items from appearing when the embedding model returns poor results.
+* Fix: Embedding timeout reduced from 60 s to 8 s so keyword fallback kicks in quickly when the embedding model is slow or misconfigured.
+* New: Copy and Download buttons added to every AI response message — always visible, no hover required.
+* Fix: Plugin version bump ensures browsers load updated JS/CSS (cache-bust).
+
+= 2.3.1 =
+* Fix: RAG document processing — per-chunk embedding wrapped in try/catch so one bad chunk no longer aborts the whole document.
+* Fix: PHP `set_time_limit` extended during processing to prevent timeout on large PDFs.
+* Fix: Stuck documents in "processing" state are reset to "error" on next admin page load so they can be re-processed.
+* Fix: DB Setup button now reliably creates tables when RAG is first enabled.
+
+= 2.3.0 =
+* New: **Knowledge Base (RAG)** — upload PDF documents; the AI answers questions using only your document data (Retrieval-Augmented Generation).
+* New: Semantic search via Ollama embeddings with automatic keyword fallback when embeddings are unavailable.
+* New: Accurate "how many X" counting — scans all chunks with plural/singular stemming for exact results.
+* New: Admin Test Query UI — inspect which document chunks are retrieved for any query.
+* New: Document status auto-polling — admin page refreshes processing status without a manual reload.
+* New: Configurable chunk size, chunk overlap, top-K results, similarity threshold, and embedding model.
+
 = 2.1.1 =
 * Fix: Custom provider settings now save reliably (JSON decode fallback prevents silent data loss on save).
 * Fix: Settings page stays on the active tab after saving (sessionStorage-based tab restore).
@@ -400,6 +429,12 @@ The captcha is a simple arithmetic question (e.g., "3 + 7 = ?") that appears abo
 * Initial public release.
 
 == Upgrade Notice ==
+
+= 2.3.2 =
+Fix: RAG count queries now show correct items. Embedding timeout reduced for faster responses. New Copy & Download buttons on AI messages.
+
+= 2.3.0 =
+New: Knowledge Base (RAG) — upload PDF documents and let the AI answer questions from your own data.
 
 = 2.0.0 =
 Major release: 8 new security features — Access Restriction, IP Blocklist, Word Filter, Prompt Injection Detection, No-Storage Mode, Math Captcha, Abuse Alert, Message Length Limit.
