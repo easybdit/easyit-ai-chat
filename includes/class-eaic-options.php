@@ -102,7 +102,7 @@ class EAIC_Options {
 			'rag_chunk_size'               => 500,
 			'rag_chunk_overlap'            => 50,
 			'rag_top_k'                    => 3,
-			'rag_threshold'                => 0.3,
+			'rag_threshold'                => 0.1,
 		);
 	}
 

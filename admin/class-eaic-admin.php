@@ -26,7 +26,8 @@ class EAIC_Admin {
 		add_action( 'wp_ajax_eaic_rag_upload',     array( $this, 'ajax_rag_upload' ) );
 		add_action( 'wp_ajax_eaic_rag_process',    array( $this, 'ajax_rag_process' ) );
 		add_action( 'wp_ajax_eaic_rag_delete',     array( $this, 'ajax_rag_delete' ) );
-		add_action( 'wp_ajax_eaic_rag_get_status', array( $this, 'ajax_rag_get_status' ) );
+		add_action( 'wp_ajax_eaic_rag_get_status',   array( $this, 'ajax_rag_get_status' ) );
+		add_action( 'wp_ajax_eaic_rag_test_query',   array( $this, 'ajax_rag_test_query' ) );
 	}
 
 	/**
@@ -664,6 +665,39 @@ class EAIC_Admin {
 			);
 		}
 		wp_send_json_success( array( 'statuses' => $statuses ) );
+	}
+
+	/**
+	 * Test a search query against the knowledge base and return scored chunks.
+	 *
+	 * @return void
+	 */
+	public function ajax_rag_test_query() {
+		check_ajax_referer( 'eaic_admin_nonce', 'nonce' );
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( array( 'message' => __( 'Unauthorised.', 'easyit-ai-chat' ) ), 403 );
+		}
+
+		$query = isset( $_POST['query'] ) ? sanitize_textarea_field( wp_unslash( $_POST['query'] ) ) : '';
+		if ( '' === $query ) {
+			wp_send_json_error( array( 'message' => __( 'Please enter a query.', 'easyit-ai-chat' ) ) );
+		}
+
+		$total_chunks = count( EAIC_RAG_DB::get_all_chunks() );
+		if ( 0 === $total_chunks ) {
+			wp_send_json_error( array( 'message' => __( 'No chunks found. Please upload and process a document first.', 'easyit-ai-chat' ) ) );
+		}
+
+		$opts               = EAIC_Options::all();
+		$opts['ollama_url'] = ! empty( $opts['ollama_url'] ) ? $opts['ollama_url'] : 'http://localhost:11434';
+		$rag                = new EAIC_RAG( $opts );
+
+		$results = $rag->test_query( $query, 5 );
+
+		wp_send_json_success( array(
+			'results'      => $results,
+			'total_chunks' => $total_chunks,
+		) );
 	}
 
 	/**

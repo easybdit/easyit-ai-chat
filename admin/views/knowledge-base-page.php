@@ -118,6 +118,39 @@ $threshold      = isset( $eaic_opts['rag_threshold'] ) ? (float) $eaic_opts['rag
 		</table>
 	</div>
 
+	<!-- ── Test Query ───────────────────────────────────────────────── -->
+	<div class="eaic-card" style="margin-top:18px;">
+		<h2 class="eaic-card-title">🔍 <?php esc_html_e( 'Test Search Query', 'easyit-ai-chat' ); ?></h2>
+		<p class="description"><?php esc_html_e( 'Type a question to see which document chunks would be retrieved. Confirms RAG is working correctly.', 'easyit-ai-chat' ); ?></p>
+
+		<table class="form-table" role="presentation" style="margin-top:10px;">
+			<tr>
+				<th><?php esc_html_e( 'Query', 'easyit-ai-chat' ); ?></th>
+				<td>
+					<input type="text" id="eaic-rag-test-input" class="regular-text" placeholder="<?php esc_attr_e( 'e.g. how many teacher chairs are available', 'easyit-ai-chat' ); ?>">
+					<button type="button" id="eaic-rag-test-btn" class="button" style="margin-left:8px;">
+						<?php esc_html_e( 'Search', 'easyit-ai-chat' ); ?>
+					</button>
+					<span id="eaic-rag-test-spinner" class="spinner" style="float:none;margin:0 6px;visibility:hidden;"></span>
+				</td>
+			</tr>
+		</table>
+
+		<div id="eaic-rag-test-results" style="display:none;margin-top:12px;">
+			<p id="eaic-rag-test-meta" style="color:#666;font-style:italic;"></p>
+			<table class="wp-list-table widefat fixed striped">
+				<thead>
+					<tr>
+						<th style="width:80px;"><?php esc_html_e( 'Score', 'easyit-ai-chat' ); ?></th>
+						<th style="width:90px;"><?php esc_html_e( 'Method', 'easyit-ai-chat' ); ?></th>
+						<th><?php esc_html_e( 'Chunk Preview (first 300 chars)', 'easyit-ai-chat' ); ?></th>
+					</tr>
+				</thead>
+				<tbody id="eaic-rag-test-tbody"></tbody>
+			</table>
+		</div>
+	</div>
+
 	<!-- ── Documents Table ───────────────────────────────────────────── -->
 	<div class="eaic-card" style="margin-top:18px;">
 		<h2 class="eaic-card-title">📄 <?php esc_html_e( 'Uploaded Documents', 'easyit-ai-chat' ); ?></h2>
@@ -246,6 +279,46 @@ $threshold      = isset( $eaic_opts['rag_threshold'] ) ? (float) $eaic_opts['rag
 			btn.prop('disabled', false).text(<?php echo wp_json_encode( __( 'Re-process', 'easyit-ai-chat' ) ); ?>);
 			stopPolling();
 		});
+	});
+
+	// ── Test Query ──────────────────────────────────────────────────────
+	$('#eaic-rag-test-btn').on('click', function() {
+		var q = $('#eaic-rag-test-input').val().trim();
+		if (!q) { return; }
+		$('#eaic-rag-test-spinner').css('visibility', 'visible');
+		$('#eaic-rag-test-btn').prop('disabled', true);
+		$('#eaic-rag-test-results').hide();
+
+		$.post(ajaxUrl, { action: 'eaic_rag_test_query', nonce: nonce, query: q }, function(r) {
+			if (!r.success) { showNotice(r.data.message, 'error'); return; }
+			var res = r.data.results;
+			var total = r.data.total_chunks;
+			$('#eaic-rag-test-meta').text(
+				'Searched ' + total + ' chunks. Top ' + res.length + ' results:'
+			);
+			var rows = '';
+			if (res.length === 0) {
+				rows = '<tr><td colspan="3" style="color:#b32d2e;">No matching chunks found. Try lowering the Similarity Threshold or check document content.</td></tr>';
+			} else {
+				$.each(res, function(i, item) {
+					var scoreColor = item.score >= 0.3 ? '#00a32a' : (item.score >= 0.1 ? '#dba617' : '#b32d2e');
+					rows += '<tr>'
+						+ '<td style="font-weight:700;color:' + scoreColor + ';">' + item.score + '</td>'
+						+ '<td>' + (item.method === 'semantic' ? '🧠 Semantic' : '🔤 Keyword') + '</td>'
+						+ '<td style="font-family:monospace;font-size:12px;">' + $('<div>').text(item.content.substring(0, 300)).html() + '</td>'
+						+ '</tr>';
+				});
+			}
+			$('#eaic-rag-test-tbody').html(rows);
+			$('#eaic-rag-test-results').show();
+		}).always(function() {
+			$('#eaic-rag-test-spinner').css('visibility', 'hidden');
+			$('#eaic-rag-test-btn').prop('disabled', false);
+		});
+	});
+
+	$('#eaic-rag-test-input').on('keydown', function(e) {
+		if (e.key === 'Enter') { $('#eaic-rag-test-btn').trigger('click'); }
 	});
 
 	// ── Status polling ──────────────────────────────────────────────────

@@ -40,7 +40,8 @@ class EAIC_RAG {
 
 	/**
 	 * Embed a query, search all stored chunks, return a formatted context string.
-	 * Returns '' when RAG is off or no relevant chunks pass the threshold.
+	 * Falls back to keyword search when Ollama embedding is unavailable.
+	 * Returns '' when RAG is off or no relevant chunks are found.
 	 *
 	 * @param string $query User message.
 	 * @return string
@@ -55,23 +56,58 @@ class EAIC_RAG {
 			return '';
 		}
 
+		$top_k     = max( 1, (int) ( $this->opts['rag_top_k'] ?? 3 ) );
+		$threshold = isset( $this->opts['rag_threshold'] ) ? (float) $this->opts['rag_threshold'] : 0.1;
+
+		// Try semantic search via Ollama embedding.
+		$use_semantic = false;
+		$query_embedding = array();
 		try {
 			$query_embedding = $this->get_embedding( $query );
+			$use_semantic    = ! empty( $query_embedding );
 		} catch ( Exception $e ) {
-			return '';
+			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+			error_log( '[EAIC RAG] Embedding failed, using keyword fallback: ' . $e->getMessage() );
 		}
 
-		$top_k     = max( 1, (int) ( $this->opts['rag_top_k'] ?? 3 ) );
-		$threshold = isset( $this->opts['rag_threshold'] ) ? (float) $this->opts['rag_threshold'] : 0.3;
-
 		$scored = array();
-		foreach ( $all_chunks as $chunk ) {
-			$embedding = json_decode( $chunk['embedding'], true );
-			if ( ! is_array( $embedding ) || empty( $embedding ) ) {
-				continue;
+
+		if ( $use_semantic ) {
+			// Cosine similarity search.
+			foreach ( $all_chunks as $chunk ) {
+				$embedding = json_decode( $chunk['embedding'], true );
+				if ( ! is_array( $embedding ) || empty( $embedding ) ) {
+					continue;
+				}
+				$score    = $this->cosine_similarity( $query_embedding, $embedding );
+				$scored[] = array( 'content' => $chunk['content'], 'score' => $score );
 			}
-			$score    = $this->cosine_similarity( $query_embedding, $embedding );
-			$scored[] = array( 'content' => $chunk['content'], 'score' => $score );
+		} else {
+			// Keyword fallback: score by how many query words appear in the chunk.
+			$words = array_filter( explode( ' ', mb_strtolower( $query ) ), function ( $w ) {
+				return mb_strlen( $w ) > 2;
+			} );
+			$word_count = count( $words );
+			if ( 0 === $word_count ) {
+				return '';
+			}
+			foreach ( $all_chunks as $chunk ) {
+				$content_lower = mb_strtolower( $chunk['content'] );
+				$hits          = 0;
+				foreach ( $words as $word ) {
+					if ( false !== mb_strpos( $content_lower, $word ) ) {
+						$hits++;
+					}
+				}
+				if ( $hits > 0 ) {
+					$scored[] = array( 'content' => $chunk['content'], 'score' => $hits / $word_count );
+				}
+			}
+			$threshold = 0.1; // Keyword mode uses lower threshold.
+		}
+
+		if ( empty( $scored ) ) {
+			return '';
 		}
 
 		usort( $scored, function ( $a, $b ) {
@@ -95,7 +131,60 @@ class EAIC_RAG {
 		}
 
 		$context = implode( "\n\n", $context_parts );
-		return "Use the following retrieved context to help answer the user's question. If the context is not relevant, answer from your own knowledge.\n\n---\n" . $context . "\n---";
+		return "Use the following retrieved context to answer the user's question accurately. The context contains real data — use it directly.\n\n---\n" . $context . "\n---";
+	}
+
+	/**
+	 * Score all chunks against a query and return top-K results with scores.
+	 * Used by the admin Test Query feature.
+	 *
+	 * @param string $query User query.
+	 * @param int    $top_k Number of results to return.
+	 * @return array Each item: ['content' => string, 'score' => float, 'method' => string].
+	 */
+	public function test_query( $query, $top_k = 5 ) {
+		$all_chunks = EAIC_RAG_DB::get_all_chunks();
+		if ( empty( $all_chunks ) ) {
+			return array();
+		}
+
+		$scored       = array();
+		$method       = 'keyword';
+		$query_embedding = array();
+
+		try {
+			$query_embedding = $this->get_embedding( $query );
+			$method          = 'semantic';
+		} catch ( Exception $e ) {
+			// Fall through to keyword.
+		}
+
+		if ( 'semantic' === $method ) {
+			foreach ( $all_chunks as $chunk ) {
+				$emb = json_decode( $chunk['embedding'], true );
+				if ( ! is_array( $emb ) ) { continue; }
+				$scored[] = array(
+					'content' => $chunk['content'],
+					'score'   => round( $this->cosine_similarity( $query_embedding, $emb ), 4 ),
+					'method'  => 'semantic',
+				);
+			}
+		} else {
+			$words = array_filter( explode( ' ', mb_strtolower( $query ) ), function ( $w ) { return mb_strlen( $w ) > 2; } );
+			$wc    = count( $words );
+			if ( 0 === $wc ) { return array(); }
+			foreach ( $all_chunks as $chunk ) {
+				$cl   = mb_strtolower( $chunk['content'] );
+				$hits = 0;
+				foreach ( $words as $w ) { if ( false !== mb_strpos( $cl, $w ) ) { $hits++; } }
+				if ( $hits > 0 ) {
+					$scored[] = array( 'content' => $chunk['content'], 'score' => round( $hits / $wc, 4 ), 'method' => 'keyword' );
+				}
+			}
+		}
+
+		usort( $scored, function ( $a, $b ) { return $b['score'] <=> $a['score']; } );
+		return array_slice( $scored, 0, $top_k );
 	}
 
 	// -----------------------------------------------------------------------
