@@ -16,7 +16,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 $rag_enabled    = ! empty( $eaic_opts['rag_enabled'] );
 $embed_model    = isset( $eaic_opts['rag_embed_model'] ) ? $eaic_opts['rag_embed_model'] : 'nomic-embed-text';
-$ollama_url     = isset( $eaic_opts['ollama_url'] ) ? $eaic_opts['ollama_url'] : 'http://localhost:11434';
+$ollama_url     = ! empty( $eaic_opts['ollama_url'] ) ? $eaic_opts['ollama_url'] : 'http://localhost:11434';
 $chunk_size     = isset( $eaic_opts['rag_chunk_size'] ) ? (int) $eaic_opts['rag_chunk_size'] : 500;
 $chunk_overlap  = isset( $eaic_opts['rag_chunk_overlap'] ) ? (int) $eaic_opts['rag_chunk_overlap'] : 50;
 $top_k          = isset( $eaic_opts['rag_top_k'] ) ? (int) $eaic_opts['rag_top_k'] : 3;

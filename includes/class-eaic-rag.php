@@ -158,7 +158,7 @@ class EAIC_RAG {
 	 * @throws RuntimeException On API or format error.
 	 */
 	public function get_embedding( $text ) {
-		$ollama_url = rtrim( isset( $this->opts['ollama_url'] ) ? $this->opts['ollama_url'] : 'http://localhost:11434', '/' );
+		$ollama_url = rtrim( ! empty( $this->opts['ollama_url'] ) ? $this->opts['ollama_url'] : 'http://localhost:11434', '/' );
 		$model      = ! empty( $this->opts['rag_embed_model'] ) ? $this->opts['rag_embed_model'] : 'nomic-embed-text';
 		$timeout    = 60;
 

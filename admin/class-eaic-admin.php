@@ -574,8 +574,10 @@ class EAIC_Admin {
 		$doc_id = EAIC_RAG_DB::create_document( $title, $unique_name, $file_type );
 
 		// Process immediately (embed).
-		$opts = EAIC_Options::all();
-		$rag  = new EAIC_RAG( $opts );
+		$opts       = EAIC_Options::all();
+		$ollama_url = ! empty( $opts['ollama_url'] ) ? $opts['ollama_url'] : 'http://localhost:11434';
+		$opts['ollama_url'] = $ollama_url;
+		$rag        = new EAIC_RAG( $opts );
 
 		try {
 			$chunk_count = $rag->process_document( $doc_id, $dest, $file_type );
@@ -620,8 +622,9 @@ class EAIC_Admin {
 			wp_send_json_error( array( 'message' => __( 'Source file not found on disk.', 'easyit-ai-chat' ) ) );
 		}
 
-		$opts = EAIC_Options::all();
-		$rag  = new EAIC_RAG( $opts );
+		$opts               = EAIC_Options::all();
+		$opts['ollama_url'] = ! empty( $opts['ollama_url'] ) ? $opts['ollama_url'] : 'http://localhost:11434';
+		$rag                = new EAIC_RAG( $opts );
 
 		try {
 			$chunk_count = $rag->process_document( $doc_id, $file_path, $doc['file_type'] );
