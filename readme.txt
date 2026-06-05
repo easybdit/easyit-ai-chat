@@ -4,7 +4,7 @@ Tags: chatbot, ai chatbot, openai, gemini, ollama
 Requires at least: 6.0
 Tested up to: 7.0
 Requires PHP: 8.0
-Stable tag: 2.3.2
+Stable tag: 2.3.3
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -278,6 +278,9 @@ The captcha is a simple arithmetic question (e.g., "3 + 7 = ?") that appears abo
 6. Security settings — Access Restriction, IP Blocklist, Word Filter, Captcha, and more.
 
 == Changelog ==
+
+= 2.3.3 =
+* Fix: Ollama now streams tokens in real time — first word appears within seconds instead of waiting for the full response to complete.
 
 = 2.3.2 =
 * Fix: RAG count queries ("how many X") now use keyword-matched chunks as context, preventing wrong items from appearing when the embedding model returns poor results.
