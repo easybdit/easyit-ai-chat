@@ -103,7 +103,7 @@ class EAIC_Admin {
 		}
 		$current = EAIC_Options::all();
 
-		$builtin_providers = array( 'ollama', 'openai', 'anthropic', 'deepseek', 'gemini' );
+		$builtin_providers = array( 'ollama', 'openai', 'anthropic', 'deepseek', 'gemini', 'together' );
 
 		// Decode custom providers first so their slugs can be used in default_provider validation.
 		$clean_custom = $this->sanitize_custom_providers( $this->decode_json_input(
@@ -146,6 +146,14 @@ class EAIC_Admin {
 			'gemini_key'          => isset( $input['gemini_key'] )          ? sanitize_text_field( $input['gemini_key'] )                    : '',
 			'gemini_model'        => isset( $input['gemini_model'] )        ? sanitize_text_field( $input['gemini_model'] )                  : $current['gemini_model'],
 			'gemini_timeout'      => isset( $input['gemini_timeout'] )      ? absint( $input['gemini_timeout'] )                             : $current['gemini_timeout'],
+			'together_key'           => isset( $input['together_key'] )           ? sanitize_text_field( $input['together_key'] )              : '',
+			'together_model'         => isset( $input['together_model'] )         ? sanitize_text_field( $input['together_model'] )            : $current['together_model'],
+			'together_timeout'       => isset( $input['together_timeout'] )       ? absint( $input['together_timeout'] )                       : $current['together_timeout'],
+			'together_image_enabled' => ! empty( $input['together_image_enabled'] ),
+			'together_image_model'   => isset( $input['together_image_model'] )   ? sanitize_text_field( $input['together_image_model'] )      : $current['together_image_model'],
+			'together_image_size'    => ( isset( $input['together_image_size'] ) && in_array( $input['together_image_size'], array( '512x512', '768x768', '1024x1024' ), true ) )
+			                             ? $input['together_image_size'] : $current['together_image_size'],
+			'together_image_steps'   => isset( $input['together_image_steps'] )   ? max( 1, min( 50, absint( $input['together_image_steps'] ) ) ) : $current['together_image_steps'],
 			'system_prompt'       => isset( $input['system_prompt'] )       ? sanitize_textarea_field( $input['system_prompt'] )             : $current['system_prompt'],
 			'temperature'         => isset( $input['temperature'] )         ? min( 2.0, max( 0.0, (float) $input['temperature'] ) )          : $current['temperature'],
 			'max_tokens'          => isset( $input['max_tokens'] )          ? max( 100, min( 8000, absint( $input['max_tokens'] ) ) )        : $current['max_tokens'],
@@ -214,7 +222,7 @@ class EAIC_Admin {
 	 */
 	private function sanitize_bot_profiles( $raw ) {
 		if ( ! is_array( $raw ) ) { return array(); }
-		$allowed_providers = array( 'ollama', 'openai', 'anthropic', 'deepseek', 'gemini' );
+		$allowed_providers = array( 'ollama', 'openai', 'anthropic', 'deepseek', 'gemini', 'together' );
 		$clean = array();
 		foreach ( $raw as $profile ) {
 			if ( ! is_array( $profile ) ) { continue; }

@@ -116,6 +116,7 @@ class EAIC_Engine {
 			case 'anthropic': return new EAIC_Anthropic( $opts );
 			case 'deepseek':  return new EAIC_DeepSeek( $opts );
 			case 'gemini':    return new EAIC_Gemini( $opts );
+			case 'together':  return new EAIC_Together( $opts );
 			case 'ollama':
 			default:          return new EAIC_Ollama( $opts );
 		}
@@ -156,7 +157,20 @@ class EAIC_Engine {
 		}
 	}
 
-	
+	/**
+	 * If the message is an image generation command, return the prompt string.
+	 * Accepts: /image {prompt} or /img {prompt}
+	 * Returns empty string if not an image command.
+	 *
+	 * @param string $message Raw user message.
+	 * @return string
+	 */
+	private function extract_image_prompt( $message ) {
+		if ( preg_match( '/^\/(?:image|img)\s+(.+)$/is', trim( $message ), $m ) ) {
+			return trim( $m[1] );
+		}
+		return '';
+	}
 
 	// -----------------------------------------------------------------------
 	// Shared input validation / session resolution
@@ -394,6 +408,52 @@ class EAIC_Engine {
 		// Send session UUID immediately so JS can track the session before
 		// the first token arrives.
 		EAIC_Provider::sse_send( 'session', array( 'session' => $uuid ) );
+
+		// ---- Image generation routing ----
+		// If image generation is enabled and the message starts with /image or /img,
+		// route to Together AI's image generation API instead of the chat provider.
+		if ( ! empty( $opts['together_image_enabled'] ) ) {
+			$image_prompt = $this->extract_image_prompt( $message );
+			if ( '' !== $image_prompt ) {
+				$together_key = isset( $opts['together_key'] ) ? trim( $opts['together_key'] ) : '';
+				if ( '' === $together_key ) {
+					EAIC_Provider::sse_send( 'error', array(
+						'message' => __( 'Together AI API key is not configured. Add it in Settings → Together AI.', 'easyit-ai-chat' ),
+					) );
+					EAIC_Provider::sse_send( 'done', array( 'session' => $uuid, 'title' => null ) );
+					exit;
+				}
+				try {
+					$together  = new EAIC_Together( $opts );
+					$image_url = $together->generate_image( $image_prompt );
+					// Store as markdown image so history renders it correctly.
+					$ai_reply  = '![' . $image_prompt . '](' . $image_url . ')';
+					EAIC_Provider::sse_send( 'image', array(
+						'url'    => esc_url_raw( $image_url ),
+						'prompt' => $image_prompt,
+					) );
+				} catch ( Exception $e ) {
+					EAIC_Provider::sse_send( 'error', array( 'message' => $e->getMessage() ) );
+					EAIC_Provider::sse_send( 'done',  array( 'session' => $uuid, 'title' => null ) );
+					exit;
+				}
+				$new_image_title = null;
+				if ( ! $opts['disable_storage'] ) {
+					EAIC_DB::add_message( $uuid, 'user',      $message );
+					EAIC_DB::add_message( $uuid, 'assistant', $ai_reply );
+					if ( $is_first_message ) {
+						$new_image_title = mb_substr( $image_prompt, 0, 60 );
+						EAIC_DB::update_session_title( $uuid, $new_image_title );
+					}
+				}
+				EAIC_Provider::sse_send( 'done', array(
+					'session' => $uuid,
+					'title'   => $new_image_title,
+				) );
+				exit;
+			}
+		}
+		// ---- End image generation routing ----
 
 		$ai_reply = '';
 		try {

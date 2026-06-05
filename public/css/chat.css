@@ -483,6 +483,17 @@
 	white-space:  pre !important;
 }
 
+/* ---- AI Generated Images ---- */
+.eaic-widget .eaic-generated-img {
+	max-width:    100% !important;
+	height:       auto !important;
+	border-radius:10px !important;
+	margin-top:   4px !important;
+	display:      block !important;
+	border:       1px solid rgba(0,0,0,.08) !important;
+	box-shadow:   0 2px 12px rgba(0,0,0,.08) !important;
+}
+
 /* ---- Access denied message ---- */
 .eaic-access-denied {
 	padding:       20px 24px !important;

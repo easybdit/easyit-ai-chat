@@ -172,6 +172,7 @@ class EAIC_Public {
 			'anthropic' => 'Anthropic',
 			'deepseek'  => 'DeepSeek',
 			'gemini'    => 'Gemini',
+			'together'  => 'Together AI',
 		);
 		if ( ! empty( $opts['custom_providers'] ) && is_array( $opts['custom_providers'] ) ) {
 			foreach ( $opts['custom_providers'] as $i => $cp ) {

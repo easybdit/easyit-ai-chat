@@ -154,11 +154,16 @@ abstract class EAIC_Provider {
 					$msg = (string) $data['error']['message'];
 				} elseif ( isset( $data['error'] ) && is_string( $data['error'] ) ) {
 					$msg = $data['error'];
+				} elseif ( isset( $data['message'] ) && is_string( $data['message'] ) ) {
+					$msg = $data['message'];
+				} elseif ( isset( $data['detail'] ) && is_string( $data['detail'] ) ) {
+					$msg = $data['detail'];
 				}
 			}
 			if ( '' === $msg ) {
+				$raw_snippet = mb_substr( trim( wp_strip_all_tags( $raw ) ), 0, 300 );
 				/* translators: %d: HTTP status code */
-				$msg = sprintf( __( 'HTTP error %d', 'easyit-ai-chat' ), (int) $code );
+				$msg = '' !== $raw_snippet ? $raw_snippet : sprintf( __( 'HTTP error %d', 'easyit-ai-chat' ), (int) $code );
 			}
 			throw new RuntimeException( esc_html( $msg ) );
 		}
@@ -248,10 +253,23 @@ abstract class EAIC_Provider {
 
 		if ( $http_status >= 400 ) {
 			$err_data = json_decode( $error_body, true );
-			$msg      = is_array( $err_data ) && isset( $err_data['error']['message'] )
-				? $err_data['error']['message']
+			$msg      = '';
+			if ( is_array( $err_data ) ) {
+				if ( isset( $err_data['error']['message'] ) ) {
+					$msg = (string) $err_data['error']['message'];
+				} elseif ( isset( $err_data['error'] ) && is_string( $err_data['error'] ) ) {
+					$msg = $err_data['error'];
+				} elseif ( isset( $err_data['message'] ) && is_string( $err_data['message'] ) ) {
+					$msg = $err_data['message'];
+				} elseif ( isset( $err_data['detail'] ) && is_string( $err_data['detail'] ) ) {
+					$msg = $err_data['detail'];
+				}
+			}
+			if ( '' === $msg ) {
+				$raw_snippet = mb_substr( trim( wp_strip_all_tags( $error_body ) ), 0, 300 );
 				/* translators: %d: HTTP status code number */
-				: sprintf( __( 'HTTP error %d', 'easyit-ai-chat' ), $http_status );
+				$msg = '' !== $raw_snippet ? $raw_snippet : sprintf( __( 'HTTP error %d', 'easyit-ai-chat' ), $http_status );
+			}
 			throw new RuntimeException( esc_html( $msg ) );
 		}
 	}

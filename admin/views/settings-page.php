@@ -24,6 +24,7 @@ $eaic_provider_map = array(
 	'anthropic' => '🎭 Anthropic',
 	'deepseek'  => '🔍 DeepSeek',
 	'gemini'    => '✦ Gemini',
+	'together'  => '⚡ Together AI',
 );
 if ( ! empty( $eaic_opts['custom_providers'] ) && is_array( $eaic_opts['custom_providers'] ) ) {
 	foreach ( $eaic_opts['custom_providers'] as $eaic_ci => $eaic_cp ) {
@@ -53,7 +54,7 @@ $eaic_option_key = EAIC_Options::OPTION_KEY;
 			<div class="eaic-hero-icon">🤖</div>
 			<div>
 				<div class="eaic-hero-title"><?php esc_html_e( 'EasyIT AI Chat', 'easyit-ai-chat' ); ?></div>
-				<div class="eaic-hero-sub"><?php esc_html_e( 'Unified AI chatbot — Ollama · OpenAI · Anthropic · DeepSeek · Gemini', 'easyit-ai-chat' ); ?></div>
+				<div class="eaic-hero-sub"><?php esc_html_e( 'Unified AI chatbot — Ollama · OpenAI · Anthropic · DeepSeek · Gemini · Together AI', 'easyit-ai-chat' ); ?></div>
 			</div>
 		</div>
 		<div class="eaic-hero-badge">v<?php echo esc_html( EAIC_VERSION ); ?></div>
@@ -71,6 +72,7 @@ $eaic_option_key = EAIC_Options::OPTION_KEY;
 				<button type="button" class="eaic-tab-btn" data-tab="anthropic"><span class="eaic-tab-icon">🎭</span> <?php esc_html_e( 'Anthropic', 'easyit-ai-chat' ); ?></button>
 				<button type="button" class="eaic-tab-btn" data-tab="deepseek"><span class="eaic-tab-icon">🔍</span> <?php esc_html_e( 'DeepSeek', 'easyit-ai-chat' ); ?></button>
 				<button type="button" class="eaic-tab-btn" data-tab="gemini"><span class="eaic-tab-icon">✦</span> <?php esc_html_e( 'Gemini', 'easyit-ai-chat' ); ?></button>
+				<button type="button" class="eaic-tab-btn" data-tab="together"><span class="eaic-tab-icon">⚡</span> <?php esc_html_e( 'Together AI', 'easyit-ai-chat' ); ?></button>
 				<button type="button" class="eaic-tab-btn" data-tab="general"><span class="eaic-tab-icon">⚙️</span> <?php esc_html_e( 'General', 'easyit-ai-chat' ); ?></button>
 				<button type="button" class="eaic-tab-btn" data-tab="ui"><span class="eaic-tab-icon">🎨</span> <?php esc_html_e( 'UI', 'easyit-ai-chat' ); ?></button>
 				<button type="button" class="eaic-tab-btn" data-tab="security"><span class="eaic-tab-icon">🔒</span> <?php esc_html_e( 'Security', 'easyit-ai-chat' ); ?></button>
@@ -231,6 +233,69 @@ $eaic_option_key = EAIC_Options::OPTION_KEY;
 					<div class="eaic-test-row">
 						<button type="button" class="eaic-test-btn-styled eaic-test-btn" data-provider="gemini">🔌 <?php esc_html_e( 'Test Connection', 'easyit-ai-chat' ); ?></button>
 						<span class="eaic-test-result" id="eaic-test-gemini"></span>
+					</div>
+				</div>
+			</div>
+
+			<!-- TOGETHER AI -->
+			<div class="eaic-panel" id="eaic-panel-together">
+				<div class="eaic-card">
+					<div class="eaic-card-title"><span class="icon">⚡</span> <?php esc_html_e( 'Together AI — Open-Source Models', 'easyit-ai-chat' ); ?></div>
+
+					<div class="eaic-field">
+						<label class="eaic-label" for="eaic-together-key"><?php esc_html_e( 'API Key', 'easyit-ai-chat' ); ?> <span class="req">*</span></label>
+						<input id="eaic-together-key" type="password" name="<?php echo esc_attr( $eaic_option_key ); ?>[together_key]" value="<?php echo esc_attr( $eaic_opts['together_key'] ); ?>" placeholder="<?php esc_attr_e( 'Your Together AI API key', 'easyit-ai-chat' ); ?>">
+						<div class="eaic-field-desc"><?php esc_html_e( 'Get your key at', 'easyit-ai-chat' ); ?> <a href="https://api.together.ai/settings/api-keys" target="_blank" rel="noopener noreferrer">api.together.ai</a></div>
+					</div>
+
+					<div class="eaic-field">
+						<label class="eaic-label" for="eaic-together-model"><?php esc_html_e( 'Model', 'easyit-ai-chat' ); ?></label>
+						<input id="eaic-together-model" type="text" name="<?php echo esc_attr( $eaic_option_key ); ?>[together_model]" value="<?php echo esc_attr( $eaic_opts['together_model'] ); ?>" placeholder="meta-llama/Llama-3.3-70B-Instruct-Turbo">
+						<div class="eaic-field-desc"><?php esc_html_e( 'e.g.', 'easyit-ai-chat' ); ?> <code>meta-llama/Llama-3.3-70B-Instruct-Turbo</code>, <code>meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo</code>, <code>Qwen/Qwen2.5-72B-Instruct-Turbo</code>, <code>mistralai/Mistral-7B-Instruct-v0.2</code></div>
+					</div>
+
+					<div class="eaic-field">
+						<label class="eaic-label" for="eaic-together-timeout"><?php esc_html_e( 'Timeout (seconds)', 'easyit-ai-chat' ); ?></label>
+						<input id="eaic-together-timeout" type="number" name="<?php echo esc_attr( $eaic_option_key ); ?>[together_timeout]" value="<?php echo (int) $eaic_opts['together_timeout']; ?>" min="10" max="120">
+					</div>
+
+					<div class="eaic-test-row">
+						<button type="button" class="eaic-test-btn-styled eaic-test-btn" data-provider="together">🔌 <?php esc_html_e( 'Test Connection', 'easyit-ai-chat' ); ?></button>
+						<span class="eaic-test-result" id="eaic-test-together"></span>
+					</div>
+				</div>
+
+				<div class="eaic-card">
+					<div class="eaic-card-title"><span class="icon">🖼️</span> <?php esc_html_e( 'Image Generation (/image command)', 'easyit-ai-chat' ); ?></div>
+
+					<label class="eaic-check-row">
+						<input type="checkbox" name="<?php echo esc_attr( $eaic_option_key ); ?>[together_image_enabled]" value="1" <?php checked( ! empty( $eaic_opts['together_image_enabled'] ) ); ?>>
+						<div>
+							<div class="eaic-check-label"><?php esc_html_e( 'Enable Image Generation', 'easyit-ai-chat' ); ?></div>
+							<div class="eaic-check-desc"><?php esc_html_e( 'Users can generate images by typing /image followed by a description. Requires the API key above.', 'easyit-ai-chat' ); ?></div>
+						</div>
+					</label>
+
+					<div class="eaic-field">
+						<label class="eaic-label" for="eaic-together-image-model"><?php esc_html_e( 'Image Model', 'easyit-ai-chat' ); ?></label>
+						<input id="eaic-together-image-model" type="text" name="<?php echo esc_attr( $eaic_option_key ); ?>[together_image_model]" value="<?php echo esc_attr( $eaic_opts['together_image_model'] ); ?>" placeholder="black-forest-labs/FLUX.1-schnell-Free">
+						<div class="eaic-field-desc"><?php esc_html_e( 'e.g.', 'easyit-ai-chat' ); ?> <code>black-forest-labs/FLUX.1-schnell-Free</code> <?php esc_html_e( '(free)', 'easyit-ai-chat' ); ?>, <code>black-forest-labs/FLUX.1-schnell</code>, <code>black-forest-labs/FLUX.1-dev</code></div>
+					</div>
+
+					<div class="eaic-field-grid">
+						<div class="eaic-field">
+							<label class="eaic-label" for="eaic-together-image-size"><?php esc_html_e( 'Image Size', 'easyit-ai-chat' ); ?></label>
+							<select id="eaic-together-image-size" name="<?php echo esc_attr( $eaic_option_key ); ?>[together_image_size]">
+								<option value="512x512"   <?php selected( $eaic_opts['together_image_size'], '512x512' ); ?>>512 × 512</option>
+								<option value="768x768"   <?php selected( $eaic_opts['together_image_size'], '768x768' ); ?>>768 × 768</option>
+								<option value="1024x1024" <?php selected( $eaic_opts['together_image_size'], '1024x1024' ); ?>>1024 × 1024</option>
+							</select>
+						</div>
+						<div class="eaic-field">
+							<label class="eaic-label" for="eaic-together-image-steps"><?php esc_html_e( 'Steps', 'easyit-ai-chat' ); ?></label>
+							<input id="eaic-together-image-steps" type="number" min="1" max="50" name="<?php echo esc_attr( $eaic_option_key ); ?>[together_image_steps]" value="<?php echo (int) $eaic_opts['together_image_steps']; ?>">
+							<div class="eaic-field-desc"><?php esc_html_e( 'FLUX schnell: 4 · FLUX dev: 20–50', 'easyit-ai-chat' ); ?></div>
+						</div>
 					</div>
 				</div>
 			</div>
