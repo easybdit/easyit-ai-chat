@@ -212,9 +212,10 @@ $threshold      = isset( $eaic_opts['rag_threshold'] ) ? (float) $eaic_opts['rag
 			success: function(r) {
 				if (r.success) {
 					showNotice(r.data.message, 'success');
-					setTimeout(function() { location.reload(); }, 1500);
+					setTimeout(function() { location.reload(); }, 800);
 				} else {
 					showNotice(r.data.message, 'error');
+					$(document).trigger('eaic:processing_started');
 				}
 			},
 			error: function() { showNotice(<?php echo wp_json_encode( __( 'Upload failed. Please try again.', 'easyit-ai-chat' ) ); ?>, 'error'); },
@@ -231,17 +232,72 @@ $threshold      = isset( $eaic_opts['rag_threshold'] ) ? (float) $eaic_opts['rag
 		var docId = btn.data('id');
 		btn.prop('disabled', true).text(<?php echo wp_json_encode( __( 'Processing…', 'easyit-ai-chat' ) ); ?>);
 
+		$(document).trigger('eaic:processing_started');
 		$.post(ajaxUrl, { action: 'eaic_rag_process', nonce: nonce, doc_id: docId }, function(r) {
 			if (r.success) {
 				showNotice(r.data.message, 'success');
 				var row = $('#eaic-doc-row-' + docId);
 				row.find('.eaic-chunk-count').text(r.data.chunk_count);
+				row.find('td:nth-child(5)').text(statusLabels.ready).css('color', '#00a32a');
 			} else {
 				showNotice(r.data.message, 'error');
+				$('#eaic-doc-row-' + docId + ' td:nth-child(5)').text(statusLabels.error).css('color', '#b32d2e');
 			}
 			btn.prop('disabled', false).text(<?php echo wp_json_encode( __( 'Re-process', 'easyit-ai-chat' ) ); ?>);
+			stopPolling();
 		});
 	});
+
+	// ── Status polling ──────────────────────────────────────────────────
+	var statusLabels = {
+		pending:    '⏳ <?php echo esc_js( __( 'Pending', 'easyit-ai-chat' ) ); ?>',
+		processing: '⚙️ <?php echo esc_js( __( 'Processing', 'easyit-ai-chat' ) ); ?>',
+		ready:      '✅ <?php echo esc_js( __( 'Ready', 'easyit-ai-chat' ) ); ?>',
+		error:      '❌ <?php echo esc_js( __( 'Error', 'easyit-ai-chat' ) ); ?>'
+	};
+
+	function hasProcessingDocs() {
+		return $('#eaic-rag-table tbody tr').filter(function() {
+			var txt = $(this).find('td:nth-child(5)').text();
+			return txt.indexOf('Processing') !== -1 || txt.indexOf('Pending') !== -1;
+		}).length > 0;
+	}
+
+	var pollTimer = null;
+
+	function startPolling() {
+		if (pollTimer) return;
+		pollTimer = setInterval(function() {
+			if (!hasProcessingDocs()) { stopPolling(); return; }
+			$.post(ajaxUrl, { action: 'eaic_rag_get_status', nonce: nonce }, function(r) {
+				if (!r.success) return;
+				$.each(r.data.statuses, function(docId, info) {
+					var row = $('#eaic-doc-row-' + docId);
+					if (!row.length) return;
+					var statusCell = row.find('td:nth-child(5)');
+					var label = statusLabels[info.status] || info.status;
+					statusCell.text(label);
+					row.find('.eaic-chunk-count').text(info.chunk_count);
+					if (info.status === 'error') {
+						statusCell.css('color', '#b32d2e');
+					} else if (info.status === 'ready') {
+						statusCell.css('color', '#00a32a');
+					}
+				});
+				if (!hasProcessingDocs()) stopPolling();
+			});
+		}, 3000);
+	}
+
+	function stopPolling() {
+		if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
+	}
+
+	// Start polling immediately if any doc is processing/pending on page load.
+	if (hasProcessingDocs()) startPolling();
+
+	// Also start polling after an upload or re-process is triggered.
+	$(document).on('eaic:processing_started', function() { startPolling(); });
 
 	// Delete
 	$(document).on('click', '.eaic-rag-delete-btn', function() {

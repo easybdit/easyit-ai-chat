@@ -23,9 +23,10 @@ class EAIC_Admin {
 		add_action( 'admin_init',            array( $this, 'register_settings' ) );
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_assets' ) );
 		add_filter( 'plugin_action_links_' . EAIC_BASENAME, array( $this, 'action_links' ) );
-		add_action( 'wp_ajax_eaic_rag_upload',  array( $this, 'ajax_rag_upload' ) );
-		add_action( 'wp_ajax_eaic_rag_process', array( $this, 'ajax_rag_process' ) );
-		add_action( 'wp_ajax_eaic_rag_delete',  array( $this, 'ajax_rag_delete' ) );
+		add_action( 'wp_ajax_eaic_rag_upload',     array( $this, 'ajax_rag_upload' ) );
+		add_action( 'wp_ajax_eaic_rag_process',    array( $this, 'ajax_rag_process' ) );
+		add_action( 'wp_ajax_eaic_rag_delete',     array( $this, 'ajax_rag_delete' ) );
+		add_action( 'wp_ajax_eaic_rag_get_status', array( $this, 'ajax_rag_get_status' ) );
 	}
 
 	/**
@@ -591,6 +592,7 @@ class EAIC_Admin {
 				'document_id' => $doc_id,
 			) );
 		} catch ( Exception $e ) {
+			EAIC_RAG_DB::update_document_status( $doc_id, 'error' );
 			wp_send_json_error( array( 'message' => $e->getMessage() ) );
 		}
 	}
@@ -637,8 +639,31 @@ class EAIC_Admin {
 				'chunk_count' => $chunk_count,
 			) );
 		} catch ( Exception $e ) {
+			EAIC_RAG_DB::update_document_status( $doc_id, 'error' );
 			wp_send_json_error( array( 'message' => $e->getMessage() ) );
 		}
+	}
+
+	/**
+	 * Return current status + chunk_count for all documents (used for polling).
+	 *
+	 * @return void
+	 */
+	public function ajax_rag_get_status() {
+		check_ajax_referer( 'eaic_admin_nonce', 'nonce' );
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( array( 'message' => __( 'Unauthorised.', 'easyit-ai-chat' ) ), 403 );
+		}
+
+		$docs    = EAIC_RAG_DB::get_all_documents();
+		$statuses = array();
+		foreach ( $docs as $doc ) {
+			$statuses[ (int) $doc['id'] ] = array(
+				'status'      => $doc['status'],
+				'chunk_count' => (int) $doc['chunk_count'],
+			);
+		}
+		wp_send_json_success( array( 'statuses' => $statuses ) );
 	}
 
 	/**
