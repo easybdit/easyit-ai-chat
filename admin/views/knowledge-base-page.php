@@ -95,6 +95,15 @@ $threshold      = isset( $eaic_opts['rag_threshold'] ) ? (float) $eaic_opts['rag
 		</div>
 	</form>
 
+	<!-- ── DB Fix ───────────────────────────────────────────────────── -->
+	<div class="eaic-card" style="margin-top:12px;border-left:4px solid #dba617;padding:12px 16px;background:#fffbf0;">
+		<strong>⚠️ <?php esc_html_e( 'If chunks show 0 or documents won\'t process:', 'easyit-ai-chat' ); ?></strong>
+		<button type="button" id="eaic-fix-db-btn" class="button" style="margin-left:10px;">
+			🔧 <?php esc_html_e( 'Fix Database Tables', 'easyit-ai-chat' ); ?>
+		</button>
+		<span id="eaic-fix-db-result" style="margin-left:10px;font-style:italic;color:#555;"></span>
+	</div>
+
 	<!-- ── Upload Form ───────────────────────────────────────────────── -->
 	<div class="eaic-card" style="margin-top:18px;">
 		<h2 class="eaic-card-title">📤 <?php esc_html_e( 'Upload Document', 'easyit-ai-chat' ); ?></h2>
@@ -278,6 +287,23 @@ $threshold      = isset( $eaic_opts['rag_threshold'] ) ? (float) $eaic_opts['rag
 			}
 			btn.prop('disabled', false).text(<?php echo wp_json_encode( __( 'Re-process', 'easyit-ai-chat' ) ); ?>);
 			stopPolling();
+		});
+	});
+
+	// ── Fix DB ──────────────────────────────────────────────────────────
+	$('#eaic-fix-db-btn').on('click', function() {
+		var btn = $(this);
+		btn.prop('disabled', true).text('⏳ Running…');
+		$.post(ajaxUrl, { action: 'eaic_rag_fix_db', nonce: nonce }, function(r) {
+			if (r.success) {
+				$('#eaic-fix-db-result').css('color', '#00a32a').text(r.data.message);
+				if (r.data.chunks_count === 0) {
+					$('#eaic-fix-db-result').append(' ← Please click Re-process on your documents now.');
+				}
+			} else {
+				$('#eaic-fix-db-result').css('color', '#b32d2e').text(r.data.message);
+			}
+			btn.prop('disabled', false).text('🔧 <?php echo esc_js( __( 'Fix Database Tables', 'easyit-ai-chat' ) ); ?>');
 		});
 	});
 

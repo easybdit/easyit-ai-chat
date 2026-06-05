@@ -28,6 +28,7 @@ class EAIC_Admin {
 		add_action( 'wp_ajax_eaic_rag_delete',     array( $this, 'ajax_rag_delete' ) );
 		add_action( 'wp_ajax_eaic_rag_get_status',   array( $this, 'ajax_rag_get_status' ) );
 		add_action( 'wp_ajax_eaic_rag_test_query',   array( $this, 'ajax_rag_test_query' ) );
+		add_action( 'wp_ajax_eaic_rag_fix_db',       array( $this, 'ajax_rag_fix_db' ) );
 	}
 
 	/**
@@ -575,6 +576,9 @@ class EAIC_Admin {
 		$title  = '' !== $title ? $title : pathinfo( $file_name, PATHINFO_FILENAME );
 		$doc_id = EAIC_RAG_DB::create_document( $title, $unique_name, $file_type );
 
+		// Ensure RAG tables exist before inserting.
+		EAIC_DB::create_tables();
+
 		// Process immediately (embed).
 		$opts       = EAIC_Options::all();
 		$ollama_url = ! empty( $opts['ollama_url'] ) ? $opts['ollama_url'] : 'http://localhost:11434';
@@ -625,6 +629,8 @@ class EAIC_Admin {
 			wp_send_json_error( array( 'message' => __( 'Source file not found on disk.', 'easyit-ai-chat' ) ) );
 		}
 
+		EAIC_DB::create_tables();
+
 		$opts               = EAIC_Options::all();
 		$opts['ollama_url'] = ! empty( $opts['ollama_url'] ) ? $opts['ollama_url'] : 'http://localhost:11434';
 		$rag                = new EAIC_RAG( $opts );
@@ -668,6 +674,42 @@ class EAIC_Admin {
 	}
 
 	/**
+	 * Force-create all plugin DB tables (idempotent via dbDelta).
+	 * Fixes the case where RAG tables were not created on upgrade.
+	 *
+	 * @return void
+	 */
+	public function ajax_rag_fix_db() {
+		check_ajax_referer( 'eaic_admin_nonce', 'nonce' );
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( array( 'message' => __( 'Unauthorised.', 'easyit-ai-chat' ) ), 403 );
+		}
+
+		EAIC_DB::create_tables();
+		update_option( 'eaic_db_version', EAIC_VERSION );
+
+		global $wpdb;
+		$chunks_table    = $wpdb->prefix . 'eaic_chunks';
+		$documents_table = $wpdb->prefix . 'eaic_documents';
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$chunks_count    = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$chunks_table}" );
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$docs_count      = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$documents_table}" );
+
+		wp_send_json_success( array(
+			'message' => sprintf(
+				/* translators: 1: number of documents, 2: number of chunks */
+				__( 'Database tables created/verified. Found %1$d documents and %2$d chunks. If chunks = 0, please re-process your documents.', 'easyit-ai-chat' ),
+				$docs_count,
+				$chunks_count
+			),
+			'chunks_count' => $chunks_count,
+			'docs_count'   => $docs_count,
+		) );
+	}
+
+	/**
 	 * Test a search query against the knowledge base and return scored chunks.
 	 *
 	 * @return void
@@ -683,9 +725,13 @@ class EAIC_Admin {
 			wp_send_json_error( array( 'message' => __( 'Please enter a query.', 'easyit-ai-chat' ) ) );
 		}
 
+		EAIC_DB::create_tables();
+
 		$total_chunks = count( EAIC_RAG_DB::get_all_chunks() );
 		if ( 0 === $total_chunks ) {
-			wp_send_json_error( array( 'message' => __( 'No chunks found. Please upload and process a document first.', 'easyit-ai-chat' ) ) );
+			wp_send_json_error( array(
+				'message' => __( 'No chunks found in database. The RAG tables may not have been created yet. Click "Fix Database Tables" below, then re-process your documents.', 'easyit-ai-chat' ),
+			) );
 		}
 
 		$opts               = EAIC_Options::all();
