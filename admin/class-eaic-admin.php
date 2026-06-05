@@ -542,28 +542,35 @@ class EAIC_Admin {
 			wp_send_json_error( array( 'message' => __( 'Unauthorised.', 'easyit-ai-chat' ) ), 403 );
 		}
 
-		if ( empty( $_FILES['rag_file'] ) || UPLOAD_ERR_OK !== (int) $_FILES['rag_file']['error'] ) {
+		if ( ! isset( $_FILES['rag_file']['error'] ) || UPLOAD_ERR_OK !== (int) $_FILES['rag_file']['error'] ) {
 			wp_send_json_error( array( 'message' => __( 'No file received or upload error.', 'easyit-ai-chat' ) ) );
 		}
 
-		$file      = $_FILES['rag_file']; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-		$file_name = sanitize_file_name( $file['name'] );
-		$file_type = $file['type'];
-		$allowed   = array( 'text/plain', 'application/pdf' );
-
-		if ( ! in_array( $file_type, $allowed, true ) ) {
-			// Accept by extension as a fallback (some browsers mis-report MIME).
-			$ext = strtolower( pathinfo( $file_name, PATHINFO_EXTENSION ) );
-			if ( 'txt' === $ext ) {
-				$file_type = 'text/plain';
-			} elseif ( 'pdf' === $ext ) {
-				$file_type = 'application/pdf';
-			} else {
-				wp_send_json_error( array( 'message' => __( 'Only .txt and .pdf files are allowed.', 'easyit-ai-chat' ) ) );
-			}
+		// Use WP's upload handler to safely validate and move the temp file.
+		if ( ! function_exists( 'wp_handle_upload' ) ) {
+			require_once ABSPATH . 'wp-admin/includes/file.php';
 		}
 
-		// Save to uploads/eaic-docs/.
+		$uploaded = wp_handle_upload(
+			$_FILES['rag_file'], // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+			array(
+				'test_form' => false,
+				'mimes'     => array(
+					'txt' => 'text/plain',
+					'pdf' => 'application/pdf',
+				),
+			)
+		);
+
+		if ( isset( $uploaded['error'] ) ) {
+			wp_send_json_error( array( 'message' => $uploaded['error'] ) );
+		}
+
+		$source    = $uploaded['file'];
+		$file_name = sanitize_file_name( basename( $source ) );
+		$file_type = $uploaded['type'];
+
+		// Move from standard uploads to our custom eaic-docs directory.
 		$upload_dir = wp_upload_dir();
 		$target_dir = trailingslashit( $upload_dir['basedir'] ) . 'eaic-docs';
 		if ( ! is_dir( $target_dir ) ) {
@@ -576,7 +583,8 @@ class EAIC_Admin {
 		$unique_name = wp_unique_filename( $target_dir, $file_name );
 		$dest        = $target_dir . '/' . $unique_name;
 
-		if ( ! move_uploaded_file( $file['tmp_name'], $dest ) ) {
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.rename_rename
+		if ( ! rename( $source, $dest ) ) {
 			wp_send_json_error( array( 'message' => __( 'Could not save the uploaded file.', 'easyit-ai-chat' ) ) );
 		}
 
@@ -701,9 +709,9 @@ class EAIC_Admin {
 		$chunks_table    = $wpdb->prefix . 'eaic_chunks';
 		$documents_table = $wpdb->prefix . 'eaic_documents';
 
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
 		$chunks_count    = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$chunks_table}" );
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
 		$docs_count      = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$documents_table}" );
 
 		wp_send_json_success( array(

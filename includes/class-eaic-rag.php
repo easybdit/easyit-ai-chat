@@ -327,7 +327,7 @@ class EAIC_RAG {
 	public function process_document( $doc_id, $file_path, $file_type ) {
 		// Allow long-running processing (many Ollama embed calls).
 		if ( function_exists( 'set_time_limit' ) ) {
-			// phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
+			// phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged, Squiz.PHP.DiscouragedFunctions.Discouraged
 			@set_time_limit( 300 );
 		}
 
@@ -433,7 +433,7 @@ class EAIC_RAG {
 				sprintf(
 					/* translators: %s: error message */
 					esc_html__( 'Ollama embedding request failed: %s', 'easyit-ai-chat' ),
-					$response->get_error_message()
+					esc_html( $response->get_error_message() )
 				)
 			);
 		}

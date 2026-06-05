@@ -14,13 +14,13 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-$rag_enabled    = ! empty( $eaic_opts['rag_enabled'] );
-$embed_model    = isset( $eaic_opts['rag_embed_model'] ) ? $eaic_opts['rag_embed_model'] : 'nomic-embed-text';
-$ollama_url     = ! empty( $eaic_opts['ollama_url'] ) ? $eaic_opts['ollama_url'] : 'http://localhost:11434';
-$chunk_size     = isset( $eaic_opts['rag_chunk_size'] ) ? (int) $eaic_opts['rag_chunk_size'] : 500;
-$chunk_overlap  = isset( $eaic_opts['rag_chunk_overlap'] ) ? (int) $eaic_opts['rag_chunk_overlap'] : 50;
-$top_k          = isset( $eaic_opts['rag_top_k'] ) ? (int) $eaic_opts['rag_top_k'] : 3;
-$threshold      = isset( $eaic_opts['rag_threshold'] ) ? (float) $eaic_opts['rag_threshold'] : 0.3;
+$eaic_rag_enabled   = ! empty( $eaic_opts['rag_enabled'] );
+$eaic_embed_model   = isset( $eaic_opts['rag_embed_model'] ) ? $eaic_opts['rag_embed_model'] : 'nomic-embed-text';
+$eaic_ollama_url    = ! empty( $eaic_opts['ollama_url'] ) ? $eaic_opts['ollama_url'] : 'http://localhost:11434';
+$eaic_chunk_size    = isset( $eaic_opts['rag_chunk_size'] ) ? (int) $eaic_opts['rag_chunk_size'] : 500;
+$eaic_chunk_overlap = isset( $eaic_opts['rag_chunk_overlap'] ) ? (int) $eaic_opts['rag_chunk_overlap'] : 50;
+$eaic_top_k         = isset( $eaic_opts['rag_top_k'] ) ? (int) $eaic_opts['rag_top_k'] : 3;
+$eaic_threshold     = isset( $eaic_opts['rag_threshold'] ) ? (float) $eaic_opts['rag_threshold'] : 0.3;
 ?>
 <div class="wrap eaic-admin-wrap">
 	<h1>📚 <?php esc_html_e( 'Knowledge Base', 'easyit-ai-chat' ); ?></h1>
@@ -41,7 +41,7 @@ $threshold      = isset( $eaic_opts['rag_threshold'] ) ? (float) $eaic_opts['rag
 					<th><?php esc_html_e( 'Enable RAG', 'easyit-ai-chat' ); ?></th>
 					<td>
 						<label>
-							<input type="checkbox" name="eaic_options[rag_enabled]" value="1" <?php checked( $rag_enabled ); ?>>
+							<input type="checkbox" name="eaic_options[rag_enabled]" value="1" <?php checked( $eaic_rag_enabled ); ?>>
 							<?php esc_html_e( 'Inject document context into every chat message', 'easyit-ai-chat' ); ?>
 						</label>
 					</td>
@@ -49,13 +49,13 @@ $threshold      = isset( $eaic_opts['rag_threshold'] ) ? (float) $eaic_opts['rag
 				<tr>
 					<th><?php esc_html_e( 'Embedding Model', 'easyit-ai-chat' ); ?></th>
 					<td>
-						<input type="text" name="eaic_options[rag_embed_model]" value="<?php echo esc_attr( $embed_model ); ?>" class="regular-text" placeholder="nomic-embed-text">
+						<input type="text" name="eaic_options[rag_embed_model]" value="<?php echo esc_attr( $eaic_embed_model ); ?>" class="regular-text" placeholder="nomic-embed-text">
 						<p class="description">
 							<?php
 							printf(
 								/* translators: 1: Ollama URL, 2: command to pull the model */
 								esc_html__( 'Ollama embedding model. Run %2$s in your terminal, then make sure Ollama is reachable at %1$s.', 'easyit-ai-chat' ),
-								'<code>' . esc_html( $ollama_url ) . '</code>',
+								'<code>' . esc_html( $eaic_ollama_url ) . '</code>',
 								'<code>ollama pull nomic-embed-text</code>'
 							);
 							?>
@@ -65,27 +65,27 @@ $threshold      = isset( $eaic_opts['rag_threshold'] ) ? (float) $eaic_opts['rag
 				<tr>
 					<th><?php esc_html_e( 'Chunk Size (words)', 'easyit-ai-chat' ); ?></th>
 					<td>
-						<input type="number" name="eaic_options[rag_chunk_size]" value="<?php echo esc_attr( $chunk_size ); ?>" min="50" max="2000" class="small-text">
+						<input type="number" name="eaic_options[rag_chunk_size]" value="<?php echo esc_attr( $eaic_chunk_size ); ?>" min="50" max="2000" class="small-text">
 						<p class="description"><?php esc_html_e( 'Number of words per chunk. Smaller = more precise, larger = more context.', 'easyit-ai-chat' ); ?></p>
 					</td>
 				</tr>
 				<tr>
 					<th><?php esc_html_e( 'Chunk Overlap (words)', 'easyit-ai-chat' ); ?></th>
 					<td>
-						<input type="number" name="eaic_options[rag_chunk_overlap]" value="<?php echo esc_attr( $chunk_overlap ); ?>" min="0" max="500" class="small-text">
+						<input type="number" name="eaic_options[rag_chunk_overlap]" value="<?php echo esc_attr( $eaic_chunk_overlap ); ?>" min="0" max="500" class="small-text">
 					</td>
 				</tr>
 				<tr>
 					<th><?php esc_html_e( 'Top-K Results', 'easyit-ai-chat' ); ?></th>
 					<td>
-						<input type="number" name="eaic_options[rag_top_k]" value="<?php echo esc_attr( $top_k ); ?>" min="1" max="10" class="small-text">
+						<input type="number" name="eaic_options[rag_top_k]" value="<?php echo esc_attr( $eaic_top_k ); ?>" min="1" max="10" class="small-text">
 						<p class="description"><?php esc_html_e( 'How many chunks to inject per query.', 'easyit-ai-chat' ); ?></p>
 					</td>
 				</tr>
 				<tr>
 					<th><?php esc_html_e( 'Similarity Threshold', 'easyit-ai-chat' ); ?></th>
 					<td>
-						<input type="number" name="eaic_options[rag_threshold]" value="<?php echo esc_attr( $threshold ); ?>" min="0" max="1" step="0.05" class="small-text">
+						<input type="number" name="eaic_options[rag_threshold]" value="<?php echo esc_attr( $eaic_threshold ); ?>" min="0" max="1" step="0.05" class="small-text">
 						<p class="description"><?php esc_html_e( 'Minimum cosine similarity (0–1). Chunks below this score are ignored. 0.3 is a good default.', 'easyit-ai-chat' ); ?></p>
 					</td>
 				</tr>
@@ -180,34 +180,36 @@ $threshold      = isset( $eaic_opts['rag_threshold'] ) ? (float) $eaic_opts['rag
 					</tr>
 				</thead>
 				<tbody>
-					<?php foreach ( $eaic_documents as $doc ) : ?>
-						<tr id="eaic-doc-row-<?php echo esc_attr( $doc['id'] ); ?>">
-							<td><?php echo esc_html( $doc['title'] ); ?></td>
-							<td><?php echo esc_html( $doc['file_name'] ); ?></td>
-							<td><?php echo esc_html( $doc['file_type'] ); ?></td>
-							<td class="eaic-chunk-count"><?php echo esc_html( $doc['chunk_count'] ); ?></td>
+					<?php
+					$eaic_status_labels = array(
+						'pending'    => '⏳ ' . __( 'Pending', 'easyit-ai-chat' ),
+						'processing' => '⚙️ ' . __( 'Processing', 'easyit-ai-chat' ),
+						'ready'      => '✅ ' . __( 'Ready', 'easyit-ai-chat' ),
+						'error'      => '❌ ' . __( 'Error', 'easyit-ai-chat' ),
+					);
+					foreach ( $eaic_documents as $eaic_doc ) :
+					?>
+						<tr id="eaic-doc-row-<?php echo esc_attr( $eaic_doc['id'] ); ?>">
+							<td><?php echo esc_html( $eaic_doc['title'] ); ?></td>
+							<td><?php echo esc_html( $eaic_doc['file_name'] ); ?></td>
+							<td><?php echo esc_html( $eaic_doc['file_type'] ); ?></td>
+							<td class="eaic-chunk-count"><?php echo esc_html( $eaic_doc['chunk_count'] ); ?></td>
 							<td>
 								<?php
-								$status_labels = array(
-									'pending'    => '⏳ ' . __( 'Pending', 'easyit-ai-chat' ),
-									'processing' => '⚙️ ' . __( 'Processing', 'easyit-ai-chat' ),
-									'ready'      => '✅ ' . __( 'Ready', 'easyit-ai-chat' ),
-									'error'      => '❌ ' . __( 'Error', 'easyit-ai-chat' ),
-								);
-								$status = isset( $status_labels[ $doc['status'] ] ) ? $status_labels[ $doc['status'] ] : esc_html( $doc['status'] );
-								echo esc_html( $status );
+								$eaic_status = isset( $eaic_status_labels[ $eaic_doc['status'] ] ) ? $eaic_status_labels[ $eaic_doc['status'] ] : esc_html( $eaic_doc['status'] );
+								echo esc_html( $eaic_status );
 								?>
 							</td>
-							<td><?php echo esc_html( date_i18n( get_option( 'date_format' ), strtotime( $doc['created_at'] ) ) ); ?></td>
+							<td><?php echo esc_html( date_i18n( get_option( 'date_format' ), strtotime( $eaic_doc['created_at'] ) ) ); ?></td>
 							<td>
 								<button type="button"
 									class="button button-small eaic-rag-process-btn"
-									data-id="<?php echo esc_attr( $doc['id'] ); ?>">
+									data-id="<?php echo esc_attr( $eaic_doc['id'] ); ?>">
 									<?php esc_html_e( 'Re-process', 'easyit-ai-chat' ); ?>
 								</button>
 								<button type="button"
 									class="button button-small eaic-rag-delete-btn"
-									data-id="<?php echo esc_attr( $doc['id'] ); ?>"
+									data-id="<?php echo esc_attr( $eaic_doc['id'] ); ?>"
 									style="color:#b32d2e;border-color:#b32d2e;margin-left:4px;">
 									<?php esc_html_e( 'Delete', 'easyit-ai-chat' ); ?>
 								</button>
