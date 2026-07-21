@@ -2,7 +2,7 @@
 Contributors: muradbd
 Tags: chatbot, ai chatbot, openai, gemini, woocommerce
 Requires at least: 6.0
-Tested up to: 7.0
+Tested up to: 7.0.2
 Requires PHP: 8.0
 Stable tag: 2.4.0
 License: GPLv2 or later
