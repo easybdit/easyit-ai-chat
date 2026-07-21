@@ -75,27 +75,21 @@ class EAIC_Return_AI {
 			$items_text .= "- {$item['name']} (Qty: {$item['qty']}, Total: {$item['total']})\n";
 		}
 
-		$prompt = <<<PROMPT
-You are a helpful return and refund assistant for an online store. {$greeting}
-
-The customer is inquiring about a return for:
-Order #{$order_data['order_num']} | Status: {$order_data['status']} | Date: {$order_data['date']} | Total: {$order_data['total']}
-
-Order Items:
-{$items_text}
-
-Your job is to:
-1. Ask which item(s) the customer wants to return (if not already stated).
-2. Ask the reason for the return. Valid reasons: {$reasons}.
-3. Once you have both the item(s) and reason, confirm the return details and tell the customer the return request will be submitted.
-4. Be empathetic, professional, and concise.
-
-Rules:
-- NEVER promise a specific refund amount or timeline unless data is shown to you.
-- NEVER make up information about store policies you don't know.
-- When you have all required information (item + reason), end your message with exactly this JSON on a new line: {"action":"submit_return","items":[<item names as array>],"reason":"<reason key from: {$reasons}>"}
-- Do not include the JSON until you have confirmed all details with the customer.
-PROMPT;
+		$prompt = "You are a helpful return and refund assistant for an online store. {$greeting}\n\n"
+			. "The customer is inquiring about a return for:\n"
+			. "Order #{$order_data['order_num']} | Status: {$order_data['status']} | Date: {$order_data['date']} | Total: {$order_data['total']}\n\n"
+			. "Order Items:\n"
+			. "{$items_text}\n"
+			. "Your job is to:\n"
+			. "1. Ask which item(s) the customer wants to return (if not already stated).\n"
+			. "2. Ask the reason for the return. Valid reasons: {$reasons}.\n"
+			. "3. Once you have both the item(s) and reason, confirm the return details and tell the customer the return request will be submitted.\n"
+			. "4. Be empathetic, professional, and concise.\n\n"
+			. "Rules:\n"
+			. "- NEVER promise a specific refund amount or timeline unless data is shown to you.\n"
+			. "- NEVER make up information about store policies you don't know.\n"
+			. '- When you have all required information (item + reason), end your message with exactly this JSON on a new line: {"action":"submit_return","items":[<item names as array>],"reason":"<reason key from: ' . $reasons . '>"}' . "\n"
+			. "- Do not include the JSON until you have confirmed all details with the customer.";
 
 		return apply_filters( 'eaic_return_system_prompt', $prompt, $order_data );
 	}
@@ -139,9 +133,12 @@ PROMPT;
 		$order = wc_get_order( (int) $order_id );
 		if ( ! $order ) { return; }
 		$items_str = implode( ', ', (array) $items );
-		$note = sprintf(
-			__( '⚠️ Return Request #%d submitted via chat. Items: %s. Reason: %s. Awaiting admin review.', 'easyit-ai-chat' ),
-			$request_id, $items_str, $reason
+		$note      = sprintf(
+			/* translators: 1: return request ID, 2: comma-separated item names, 3: return reason */
+			__( '⚠️ Return Request #%1$d submitted via chat. Items: %2$s. Reason: %3$s. Awaiting admin review.', 'easyit-ai-chat' ),
+			$request_id,
+			$items_str,
+			$reason
 		);
 		$order->add_order_note( $note );
 	}

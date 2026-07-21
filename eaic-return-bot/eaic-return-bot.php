@@ -108,7 +108,11 @@ function eaic_return_chat_shortcode( $atts ) {
 			<div class="eaic-return-input-area">
 				<?php if ( $order_id ) : ?>
 				<div class="eaic-return-order-badge" style="display:inline-flex">
-					📦 <?php echo esc_html( sprintf( __( 'Order #%s', 'easyit-ai-chat' ), $order_id ) ); ?>
+					📦
+					<?php
+					/* translators: %s: order number */
+					echo esc_html( sprintf( __( 'Order #%s', 'easyit-ai-chat' ), $order_id ) );
+					?>
 				</div>
 				<?php else : ?>
 				<div class="eaic-return-order-row">

@@ -95,7 +95,7 @@ class EAIC_Lead_DB {
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		return $wpdb->get_results(
 			$wpdb->prepare(
-				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared
 				'SELECT * FROM ' . $wpdb->prefix . self::TABLE . ' ORDER BY created_at DESC LIMIT %d OFFSET %d',
 				$limit,
 				$offset
@@ -111,7 +111,7 @@ class EAIC_Lead_DB {
 	 */
 	public static function count_total() {
 		global $wpdb;
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared
 		return (int) $wpdb->get_var( 'SELECT COUNT(*) FROM ' . $wpdb->prefix . self::TABLE );
 	}
 
@@ -126,7 +126,7 @@ class EAIC_Lead_DB {
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		return (int) $wpdb->get_var(
 			$wpdb->prepare(
-				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared
 				'SELECT COUNT(*) FROM ' . $wpdb->prefix . self::TABLE . ' WHERE created_at >= %s',
 				gmdate( 'Y-m-d H:i:s', strtotime( "-{$days} days" ) )
 			)

@@ -66,6 +66,7 @@ class EAIC_Order_DB {
 	public static function log( $session_id, $user_id, $order_id, $role, $message ) {
 		global $wpdb;
 
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$wpdb->insert(
 			self::table(),
 			array(
@@ -91,10 +92,12 @@ class EAIC_Order_DB {
 	public static function recent( $session_id, $limit = 8 ) {
 		global $wpdb;
 
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$rows = $wpdb->get_results(
 			$wpdb->prepare(
-				"SELECT role, message FROM " . self::table() .
-				" WHERE session_id = %s ORDER BY id DESC LIMIT %d",
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared
+				'SELECT role, message FROM ' . self::table() .
+				' WHERE session_id = %s ORDER BY id DESC LIMIT %d',
 				$session_id,
 				absint( $limit )
 			),
@@ -111,9 +114,11 @@ class EAIC_Order_DB {
 		global $wpdb;
 
 		$days = (int) apply_filters( 'eaic_log_retention_days', 90 );
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$wpdb->query(
 			$wpdb->prepare(
-				"DELETE FROM " . self::table() . " WHERE created_at < %s",
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared
+				'DELETE FROM ' . self::table() . ' WHERE created_at < %s',
 				gmdate( 'Y-m-d H:i:s', time() - ( $days * DAY_IN_SECONDS ) )
 			)
 		);

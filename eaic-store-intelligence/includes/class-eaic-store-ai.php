@@ -22,31 +22,26 @@ class EAIC_Store_AI {
 		$store = $store_name ?: get_bloginfo( 'name' );
 		$today = current_time( 'Y-m-d' );
 
-		return apply_filters( 'eaic_store_system_prompt', <<<PROMPT
-You are an intelligent business assistant for the WooCommerce store "{$store}". Today is {$today}.
-You have access to live store data that will be provided to you in each message.
+		$prompt = "You are an intelligent business assistant for the WooCommerce store \"{$store}\". Today is {$today}.\n"
+			. "You have access to live store data that will be provided to you in each message.\n\n"
+			. "Your capabilities:\n"
+			. "- Sales & revenue analysis (today, this week, this month, custom period)\n"
+			. "- Order status breakdowns\n"
+			. "- Top-selling products\n"
+			. "- Low stock / out-of-stock alerts\n"
+			. "- Customer insights (new customers, top spenders)\n"
+			. "- Store health summary\n\n"
+			. "When answering:\n"
+			. "- Be concise, professional, and data-driven.\n"
+			. "- Format numbers clearly (use currency symbols, commas for thousands).\n"
+			. "- Highlight important trends or concerns.\n"
+			. "- If data shows something urgent (low stock, pending orders), mention it proactively.\n"
+			. "- ONLY answer based on the data provided. Never make up numbers.\n\n"
+			. "When you need data to answer a question, output a JSON query block on a new line:\n"
+			. '{"query":{"type":"<type>","period":"<today|week|month|year|custom>","date_from":"<Y-m-d or empty>","date_to":"<Y-m-d or empty>","limit":<number>}}' . "\n\n"
+			. 'Query types available: revenue, orders, top_products, low_stock, customers, summary';
 
-Your capabilities:
-- Sales & revenue analysis (today, this week, this month, custom period)
-- Order status breakdowns
-- Top-selling products
-- Low stock / out-of-stock alerts
-- Customer insights (new customers, top spenders)
-- Store health summary
-
-When answering:
-- Be concise, professional, and data-driven.
-- Format numbers clearly (use currency symbols, commas for thousands).
-- Highlight important trends or concerns.
-- If data shows something urgent (low stock, pending orders), mention it proactively.
-- ONLY answer based on the data provided. Never make up numbers.
-
-When you need data to answer a question, output a JSON query block on a new line:
-{"query":{"type":"<type>","period":"<today|week|month|year|custom>","date_from":"<Y-m-d or empty>","date_to":"<Y-m-d or empty>","limit":<number>}}
-
-Query types available: revenue, orders, top_products, low_stock, customers, summary
-PROMPT
-		);
+		return apply_filters( 'eaic_store_system_prompt', $prompt );
 	}
 
 	/**
@@ -169,7 +164,9 @@ PROMPT
 		if ( $after )  { $date_sql .= $wpdb->prepare( ' AND p.post_date >= %s', $after ); }
 		if ( $before ) { $date_sql .= $wpdb->prepare( ' AND p.post_date <= %s', $before ); }
 
-		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		// $date_sql is safe to interpolate — each fragment was already built via
+		// $wpdb->prepare() above (lines 164-165); it is not raw user input.
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
 		$rows = $wpdb->get_results( $wpdb->prepare(
 			"SELECT oi.order_item_name AS name, SUM(oim.meta_value) AS qty
 			 FROM {$wpdb->prefix}woocommerce_order_items oi

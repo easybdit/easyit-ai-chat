@@ -57,7 +57,7 @@ if ( is_dir( $eaic_docs_dir ) ) {
 			}
 		}
 	}
-	// phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged, WordPress.WP.AlternativeFunctions.rmdir_rmdir
+	// phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged, WordPress.WP.AlternativeFunctions.file_system_operations_rmdir
 	@rmdir( $eaic_docs_dir );
 }
 

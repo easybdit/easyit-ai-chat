@@ -19,26 +19,23 @@ class EAIC_Finder_AI {
 	public static function system_prompt( $store_name = '' ) {
 		$store = $store_name ?: get_bloginfo( 'name' );
 
-		return apply_filters( 'eaic_finder_system_prompt', <<<PROMPT
-You are a smart shopping assistant for {$store}. Your job is to help customers find the right products.
+		$prompt = "You are a smart shopping assistant for {$store}. Your job is to help customers find the right products.\n\n"
+			. "When a customer describes what they are looking for, extract search criteria and respond with:\n"
+			. "1. A friendly conversational reply.\n"
+			. "2. A JSON search block on a new line in this EXACT format:\n"
+			. '{"search":{"keyword":"<main keyword>","category":"<category name or empty>","max_price":<number or 0>,"min_price":<number or 0>,"attribute":{"<attr_name>":"<value>"}}}' . "\n\n"
+			. "Rules:\n"
+			. "- Always include the JSON block when you understand what the customer wants.\n"
+			. "- Use empty string \"\" for category if not mentioned.\n"
+			. "- Use 0 for price if not mentioned.\n"
+			. "- Attribute can be empty object {} if not mentioned.\n"
+			. "- Keep conversational response SHORT (1-2 sentences before the JSON).\n"
+			. "- If the customer's request is too vague, ask one clarifying question WITHOUT the JSON.\n"
+			. "- After products are shown, help the customer compare or choose.\n"
+			. "- Never make up products — only recommend from what is returned to you.\n"
+			. '- When product results are shown to you, refer to them naturally in your response.';
 
-When a customer describes what they are looking for, extract search criteria and respond with:
-1. A friendly conversational reply.
-2. A JSON search block on a new line in this EXACT format:
-{"search":{"keyword":"<main keyword>","category":"<category name or empty>","max_price":<number or 0>,"min_price":<number or 0>,"attribute":{"<attr_name>":"<value>"}}}
-
-Rules:
-- Always include the JSON block when you understand what the customer wants.
-- Use empty string "" for category if not mentioned.
-- Use 0 for price if not mentioned.
-- Attribute can be empty object {} if not mentioned.
-- Keep conversational response SHORT (1-2 sentences before the JSON).
-- If the customer's request is too vague, ask one clarifying question WITHOUT the JSON.
-- After products are shown, help the customer compare or choose.
-- Never make up products — only recommend from what is returned to you.
-- When product results are shown to you, refer to them naturally in your response.
-PROMPT
-		);
+		return apply_filters( 'eaic_finder_system_prompt', $prompt );
 	}
 
 	/**

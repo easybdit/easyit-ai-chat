@@ -509,7 +509,8 @@ class EAIC_Admin {
 		if ( $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $table ) ) !== $table ) {
 			return 0;
 		}
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		// $table is built from a hardcoded suffix, never user input.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
 		return (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$table} WHERE role = 'user'" );
 	}
 
@@ -527,7 +528,8 @@ class EAIC_Admin {
 			return array();
 		}
 
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		// $table is built from a hardcoded string, never user input.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, PluginCheck.Security.DirectDB.UnescapedDBParameter
 		$rows = $wpdb->get_results(
 			$wpdb->prepare(
 				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
@@ -572,7 +574,8 @@ class EAIC_Admin {
 			return array();
 		}
 
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		// $table is built from a hardcoded string, never user input.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, PluginCheck.Security.DirectDB.UnescapedDBParameter
 		return $wpdb->get_results(
 			$wpdb->prepare(
 				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared

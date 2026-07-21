@@ -110,6 +110,7 @@ class EAIC_Return_Ajax {
 
 			// Append confirmation to reply.
 			$clean_reply .= "\n\n✅ " . sprintf(
+				/* translators: %d: return request ID */
 				__( 'Return request #%d has been submitted. Our team will review it within 1–2 business days and contact you at your billing email.', 'easyit-ai-chat' ),
 				$return_request_id
 			);
