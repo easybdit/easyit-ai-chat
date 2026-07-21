@@ -476,7 +476,7 @@ class EAIC_Engine {
 
 		// Persist to DB (skip entirely in no-storage mode).
 		$new_title = null;
-		if ( ! $disable_storage ) {
+		if ( ! $opts['disable_storage'] ) {
 			EAIC_DB::add_message( $uuid, 'user',      $message );
 			EAIC_DB::add_message( $uuid, 'assistant', $ai_reply );
 			if ( $is_first_message ) {

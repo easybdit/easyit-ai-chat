@@ -74,6 +74,15 @@ class EAIC_Options {
 			'floating_widget_enabled'      => false,
 			'floating_widget_position'     => 'bottom-right',
 			'floating_widget_label'        => 'Chat with us',
+			// v2.4.0 — WooCommerce bots merged in from Pro
+			'floating_widget_mode'         => 'general', // general | smart (context-aware product/order bot, requires WooCommerce)
+			'floating_widget_exclude'      => '',         // comma-separated page IDs to hide the floating widget on
+			'lead_form_enabled'            => true,
+			'lead_form_title'              => 'Quick intro',
+			'lead_form_sub'                => 'Optional — helps us personalise your experience',
+			'powered_by_text'              => 'Powered by EasyIT',
+			'product_bot_title'            => 'Product Q&A',
+			'order_bot_title'              => 'Order Status',
 			'gdpr_gate_enabled'            => false,
 			'gdpr_gate_text'               => 'This chat uses AI services. By continuing, you agree to our Privacy Policy.',
 			'gdpr_gate_btn_text'           => 'I Accept & Continue',

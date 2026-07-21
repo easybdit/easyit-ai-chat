@@ -305,12 +305,28 @@ class EAIC_Public {
 			return;
 		}
 
+		// Optional per-page exclusion list.
+		if ( ! empty( $opts['floating_widget_exclude'] ) && is_page() ) {
+			$excluded = array_filter( array_map( 'absint', explode( ',', $opts['floating_widget_exclude'] ) ) );
+			if ( in_array( get_queried_object_id(), $excluded, true ) ) {
+				return;
+			}
+		}
+
 		$position = in_array( $opts['floating_widget_position'], array( 'bottom-right', 'bottom-left' ), true )
 			? $opts['floating_widget_position'] : 'bottom-right';
-		$label    = sanitize_text_field( $opts['floating_widget_label'] ?: 'Chat with us' );
 		$accent   = $opts['color_accent'] ?: '#4f46e5';
 
-		$chat_html = do_shortcode( '[eaic_chat height="400"]' );
+		if ( 'smart' === $opts['floating_widget_mode'] && class_exists( 'WooCommerce' ) ) {
+			$context   = $this->smart_widget_context();
+			$label     = 'order' === $context
+				? __( 'Order Help', 'easyit-ai-chat' )
+				: ( 'product' === $context ? __( 'Product Help', 'easyit-ai-chat' ) : __( 'Shop Assistant', 'easyit-ai-chat' ) );
+			$chat_html = $this->smart_widget_bot_html( $context );
+		} else {
+			$label     = sanitize_text_field( $opts['floating_widget_label'] ?: 'Chat with us' );
+			$chat_html = do_shortcode( '[eaic_chat height="400"]' );
+		}
 		?>
 <div class="eaic-floating-wrap eaic-floating-<?php echo esc_attr( $position ); ?>" style="--eaic-float-accent:<?php echo esc_attr( $accent ); ?>">
 	<div class="eaic-float-panel" id="eaic-float-panel" aria-hidden="true">
@@ -329,5 +345,46 @@ class EAIC_Public {
 	</button>
 </div>
 		<?php
+	}
+
+	/**
+	 * Detect page context for the "smart" floating widget mode.
+	 *
+	 * @return string 'product' | 'order' | 'general'
+	 */
+	private function smart_widget_context() {
+		if ( is_product() || is_shop() || is_product_category() || is_product_tag() ) {
+			return 'product';
+		}
+		if (
+			is_checkout() ||
+			is_wc_endpoint_url( 'order-received' ) ||
+			is_wc_endpoint_url( 'view-order' ) ||
+			is_wc_endpoint_url( 'orders' ) ||
+			is_wc_endpoint_url( 'order-pay' )
+		) {
+			return 'order';
+		}
+		return 'general';
+	}
+
+	/**
+	 * Render the WooCommerce bot shortcode appropriate for the given context.
+	 * Falls back to the Product Q&A bot (as a general shop assistant) when the
+	 * context is 'general' or the Order Status Bot module isn't available.
+	 *
+	 * @param string $context 'product' | 'order' | 'general'.
+	 * @return string
+	 */
+	private function smart_widget_bot_html( $context ) {
+		if ( 'order' === $context && shortcode_exists( 'eaic_order_chat' ) ) {
+			return do_shortcode( '[eaic_order_chat]' );
+		}
+		if ( ! shortcode_exists( 'eaic_product_chat' ) ) {
+			// Neither WooCommerce bot module loaded — fall back to the general chat.
+			return do_shortcode( '[eaic_chat height="400"]' );
+		}
+		$product_id = ( 'product' === $context && is_product() ) ? (int) get_the_ID() : 0;
+		return do_shortcode( '[eaic_product_chat product_id="' . $product_id . '"]' );
 	}
 }

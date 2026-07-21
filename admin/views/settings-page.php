@@ -463,6 +463,53 @@ $eaic_option_key = EAIC_Options::OPTION_KEY;
 							<label class="eaic-label" for="eaic-float-label"><?php esc_html_e( 'Button Label / Tooltip', 'easyit-ai-chat' ); ?></label>
 							<input id="eaic-float-label" type="text" name="<?php echo esc_attr( $eaic_option_key ); ?>[floating_widget_label]" value="<?php echo esc_attr( $eaic_opts['floating_widget_label'] ); ?>" placeholder="Chat with us">
 						</div>
+						<div class="eaic-field">
+							<label class="eaic-label" for="eaic-float-mode"><?php esc_html_e( 'Mode', 'easyit-ai-chat' ); ?></label>
+							<select id="eaic-float-mode" name="<?php echo esc_attr( $eaic_option_key ); ?>[floating_widget_mode]">
+								<option value="general" <?php selected( $eaic_opts['floating_widget_mode'], 'general' ); ?>><?php esc_html_e( 'General AI Chat', 'easyit-ai-chat' ); ?></option>
+								<option value="smart"   <?php selected( $eaic_opts['floating_widget_mode'], 'smart' ); ?>><?php esc_html_e( 'Smart (WooCommerce product/order aware)', 'easyit-ai-chat' ); ?></option>
+							</select>
+							<div class="eaic-field-desc"><?php esc_html_e( 'Smart mode requires WooCommerce — it switches to the Product Q&A or Order Status bot automatically based on the page being viewed, and falls back to General on non-WooCommerce pages.', 'easyit-ai-chat' ); ?></div>
+						</div>
+						<div class="eaic-field">
+							<label class="eaic-label" for="eaic-float-exclude"><?php esc_html_e( 'Hide On Pages (IDs)', 'easyit-ai-chat' ); ?></label>
+							<input id="eaic-float-exclude" type="text" name="<?php echo esc_attr( $eaic_option_key ); ?>[floating_widget_exclude]" value="<?php echo esc_attr( $eaic_opts['floating_widget_exclude'] ); ?>" placeholder="12, 45, 88">
+							<div class="eaic-field-desc"><?php esc_html_e( 'Comma-separated page/post IDs where the floating widget should not appear.', 'easyit-ai-chat' ); ?></div>
+						</div>
+					</div>
+				</div>
+
+				<div class="eaic-card">
+					<div class="eaic-card-title"><span class="icon">🛒</span> <?php esc_html_e( 'WooCommerce Bots — Lead Form & Branding', 'easyit-ai-chat' ); ?></div>
+					<div class="eaic-field-desc" style="margin-bottom:12px"><?php esc_html_e( 'Applies to the Order Status, Product Q&A, Return/Refund and Smart Product Finder bots (requires WooCommerce). Use the shortcodes [eaic_order_chat], [eaic_product_chat], [eaic_return_chat] and [eaic_product_finder].', 'easyit-ai-chat' ); ?></div>
+					<label class="eaic-check-row">
+						<input type="checkbox" name="<?php echo esc_attr( $eaic_option_key ); ?>[lead_form_enabled]" value="1" <?php checked( $eaic_opts['lead_form_enabled'] ); ?>>
+						<div>
+							<div class="eaic-check-label"><?php esc_html_e( 'Show Pre-chat Lead Form', 'easyit-ai-chat' ); ?></div>
+							<div class="eaic-check-desc"><?php esc_html_e( 'Ask guests for an optional name + email before they start chatting with the Product Q&A bot. Leads appear on the Analytics page.', 'easyit-ai-chat' ); ?></div>
+						</div>
+					</label>
+					<div class="eaic-field-grid" style="margin-top:12px">
+						<div class="eaic-field">
+							<label class="eaic-label" for="eaic-lead-title"><?php esc_html_e( 'Lead Form Title', 'easyit-ai-chat' ); ?></label>
+							<input id="eaic-lead-title" type="text" name="<?php echo esc_attr( $eaic_option_key ); ?>[lead_form_title]" value="<?php echo esc_attr( $eaic_opts['lead_form_title'] ); ?>">
+						</div>
+						<div class="eaic-field">
+							<label class="eaic-label" for="eaic-lead-sub"><?php esc_html_e( 'Lead Form Subtitle', 'easyit-ai-chat' ); ?></label>
+							<input id="eaic-lead-sub" type="text" name="<?php echo esc_attr( $eaic_option_key ); ?>[lead_form_sub]" value="<?php echo esc_attr( $eaic_opts['lead_form_sub'] ); ?>">
+						</div>
+						<div class="eaic-field">
+							<label class="eaic-label" for="eaic-powered-by"><?php esc_html_e( 'Bot Footer Text', 'easyit-ai-chat' ); ?></label>
+							<input id="eaic-powered-by" type="text" name="<?php echo esc_attr( $eaic_option_key ); ?>[powered_by_text]" value="<?php echo esc_attr( $eaic_opts['powered_by_text'] ); ?>">
+						</div>
+						<div class="eaic-field">
+							<label class="eaic-label" for="eaic-order-bot-title"><?php esc_html_e( 'Order Bot Title', 'easyit-ai-chat' ); ?></label>
+							<input id="eaic-order-bot-title" type="text" name="<?php echo esc_attr( $eaic_option_key ); ?>[order_bot_title]" value="<?php echo esc_attr( $eaic_opts['order_bot_title'] ); ?>">
+						</div>
+						<div class="eaic-field">
+							<label class="eaic-label" for="eaic-product-bot-title"><?php esc_html_e( 'Product Bot Title', 'easyit-ai-chat' ); ?></label>
+							<input id="eaic-product-bot-title" type="text" name="<?php echo esc_attr( $eaic_option_key ); ?>[product_bot_title]" value="<?php echo esc_attr( $eaic_opts['product_bot_title'] ); ?>">
+						</div>
 					</div>
 				</div>
 

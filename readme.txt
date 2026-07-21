@@ -1,10 +1,10 @@
 === EasyIT AI Chat — Chatbot for OpenAI, Claude, DeepSeek, Gemini & Ollama ===
 Contributors: muradbd
-Tags: chatbot, ai chatbot, openai, gemini, ollama
+Tags: chatbot, ai chatbot, openai, gemini, woocommerce
 Requires at least: 6.0
 Tested up to: 7.0
 Requires PHP: 8.0
-Stable tag: 2.3.4
+Stable tag: 2.4.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -101,14 +101,17 @@ You own your data, you control your keys. No tracking, no telemetry, no subscrip
 * **Admin test tool** — Test Query UI lets you inspect which chunks are retrieved for any query before going live
 * **Re-process on demand** — Change embedding model or chunk settings and reprocess any document without re-uploading
 
-= 🛒 WooCommerce Add-on (Pro) =
+= 🛒 WooCommerce Bots (v2.4.0 — now free!) =
 
-Looking for WooCommerce features? **EasyIT AI Chat Pro** adds:
+Everything below used to require the paid Pro add-on. It's now built into the free plugin — no license, no upsell. Requires WooCommerce to be active.
 
-* **Order Status Bot** — Customers check order status by chatting. Guests verify via order number + billing email.
-* **Product Q&A Bot** — AI answers questions about any product (price, stock, description). Smart keyword search included.
-* **Floating Smart Widget** — Context-aware chat launcher that appears on all pages automatically.
-* **Lead Capture** — Collect visitor name and email before chat starts.
+* **Order Status Bot** (`[eaic_order_chat]`) — Customers check order status by chatting. Guests verify via order number + billing email; logged-in users are verified automatically.
+* **Product Q&A Bot** (`[eaic_product_chat]`) — AI answers questions about any product (price, stock, description, variations) using real store data, with keyword search across your catalog.
+* **Return/Refund Bot** (`[eaic_return_chat]`) — Conversationally collects the item + reason for a return and files a return request automatically, with an order note added for your team.
+* **Smart Product Finder** (`[eaic_product_finder]`) — Natural-language product search ("red dress under $50") that returns real product cards with add-to-cart links.
+* **"Ask Your Store"** — Admin-only AI chat (EasyIT AI Chat menu, requires Shop Manager or Admin) that answers questions about revenue, orders, top products, low stock, and new customers from your own store data.
+* **Smart Floating Widget** — Set the floating widget to "Smart" mode in Settings and it automatically shows the Order Bot on order pages, the Product Bot on product pages, and a general assistant everywhere else.
+* **Lead Capture** — Optional pre-chat name + email form on the WooCommerce bots; leads are saved to your database and shown on the Analytics page.
 
 = 🔧 Shortcode Examples =
 
@@ -130,6 +133,13 @@ Looking for WooCommerce features? **EasyIT AI Chat Pro** adds:
 **Available attributes:** `provider`, `title`, `placeholder`, `system_prompt`, `height`, `profile`
 
 💡 Use the **Shortcode Builder** (EasyIT AI Chat → Shortcode Builder) to generate shortcodes visually — no typing required.
+
+**WooCommerce bots (requires WooCommerce active):**
+
+`[eaic_order_chat]` — Order Status Bot
+`[eaic_product_chat]` or `[eaic_product_chat product_id="42"]` — Product Q&A Bot
+`[eaic_return_chat]` or `[eaic_return_chat order_id="123"]` — Return/Refund Bot
+`[eaic_product_finder]` — Smart Product Finder
 
 = 🔒 Privacy =
 
@@ -168,6 +178,8 @@ Used when Ollama is selected. Calls your own self-hosted Ollama server URL.
 No third-party service is involved unless you point it at a remote server.
 
 **Data sent to external services:** The user's chat message and recent conversation history (last 10 messages). No personal data beyond what the user types is transmitted.
+
+**WooCommerce bots:** When a WooCommerce bot is used, relevant store data needed to answer the question (e.g. order status/items, product details, or — for the admin-only "Ask Your Store" tool — aggregate revenue/order/customer data) is included in the request sent to your configured AI provider. This data never goes anywhere except the AI provider you've chosen; it is not sent to the plugin author.
 
 == Installation ==
 
@@ -230,7 +242,7 @@ Yes — GPL-2.0-or-later. The only costs are to your chosen AI provider. Ollama 
 
 = Does it work with WooCommerce? =
 
-WooCommerce-specific bots (Order Status Bot, Product Q&A Bot, Floating Widget) are available in **EasyIT AI Chat Pro**.
+Yes — as of v2.4.0 the Order Status Bot, Product Q&A Bot, Return/Refund Bot, Smart Product Finder, and the admin "Ask Your Store" AI are all built into the free plugin. They activate automatically once WooCommerce is active; no separate add-on needed.
 
 = How do I restrict the chat to logged-in users only? =
 
@@ -242,7 +254,7 @@ Yes. Use **IP Blocklist** (Settings → Security) to block specific IP addresses
 
 = Does the floating widget work without WooCommerce? =
 
-Yes — the Floating Chat Widget in the free plugin works on any WordPress site. Enable it in Settings → UI, choose position (bottom-right or bottom-left), set a label, and it appears on every page automatically.
+Yes — the Floating Chat Widget works on any WordPress site. Enable it in Settings → UI, choose position (bottom-right or bottom-left), set a label, and it appears on every page automatically. If WooCommerce is active you can also switch its Mode to "Smart" so it shows the Order or Product bot instead of the general chat, based on the page being viewed.
 
 = Can I have different chatbots on different pages? =
 
@@ -278,6 +290,15 @@ The captcha is a simple arithmetic question (e.g., "3 + 7 = ?") that appears abo
 6. Security settings — Access Restriction, IP Blocklist, Word Filter, Captcha, and more.
 
 == Changelog ==
+
+= 2.4.0 =
+* New: **WooCommerce Bots** — Order Status Bot (`[eaic_order_chat]`), Product Q&A Bot (`[eaic_product_chat]`), Return/Refund Bot (`[eaic_return_chat]`), and Smart Product Finder (`[eaic_product_finder]`) are now built into the free plugin. Activate automatically when WooCommerce is present.
+* New: **"Ask Your Store"** — admin-only AI chat that answers questions about revenue, orders, top products, low stock, and new customers.
+* New: **Smart Floating Widget mode** — the floating chat button can now auto-switch between the Order Bot, Product Bot, and general chat based on the page being viewed (Settings → UI → Floating Widget → Mode).
+* New: **Lead Capture** — optional pre-chat name + email form on the WooCommerce bots; leads appear on the Analytics page alongside top-asked products and unanswered queries.
+* Security: Return Bot now requires guests to verify their billing email before it will discuss an order (previously any visitor could look up any order number).
+* Fix: "No-Storage Mode" (Settings → Security) was silently ignored on streaming chat — it now correctly stops conversations from being saved when enabled.
+* Removed the "Upgrade to Pro" link — every feature that used to require EasyIT AI Chat Pro is now part of the free plugin.
 
 = 2.3.4 =
 * Fix: Plugin Check compliance — replaced move_uploaded_file() with wp_handle_upload(), escaped exception output, added phpcs:ignore for set_time_limit() and table-name DB queries, prefixed view variables with eaic_ namespace.
@@ -435,6 +456,9 @@ The captcha is a simple arithmetic question (e.g., "3 + 7 = ?") that appears abo
 * Initial public release.
 
 == Upgrade Notice ==
+
+= 2.4.0 =
+Major release: WooCommerce Order/Product/Return bots, Smart Product Finder, and "Ask Your Store" admin AI — all formerly Pro-only — are now free. Also fixes a No-Storage Mode bug on streaming chat.
 
 = 2.3.2 =
 Fix: RAG count queries now show correct items. Embedding timeout reduced for faster responses. New Copy & Download buttons on AI messages.

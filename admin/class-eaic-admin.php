@@ -193,6 +193,16 @@ class EAIC_Admin {
 			'floating_widget_position'    => ( isset( $input['floating_widget_position'] ) && in_array( $input['floating_widget_position'], array( 'bottom-right', 'bottom-left' ), true ) )
 			                                    ? $input['floating_widget_position'] : $current['floating_widget_position'],
 			'floating_widget_label'       => isset( $input['floating_widget_label'] ) ? sanitize_text_field( $input['floating_widget_label'] ) : $current['floating_widget_label'],
+			// v2.4.0 — WooCommerce bots merged in from Pro
+			'floating_widget_mode'        => ( isset( $input['floating_widget_mode'] ) && in_array( $input['floating_widget_mode'], array( 'general', 'smart' ), true ) )
+			                                    ? $input['floating_widget_mode'] : $current['floating_widget_mode'],
+			'floating_widget_exclude'     => isset( $input['floating_widget_exclude'] ) ? sanitize_text_field( $input['floating_widget_exclude'] ) : $current['floating_widget_exclude'],
+			'lead_form_enabled'           => ! empty( $input['lead_form_enabled'] ),
+			'lead_form_title'             => isset( $input['lead_form_title'] ) ? sanitize_text_field( $input['lead_form_title'] ) : $current['lead_form_title'],
+			'lead_form_sub'               => isset( $input['lead_form_sub'] )   ? sanitize_text_field( $input['lead_form_sub'] )   : $current['lead_form_sub'],
+			'powered_by_text'             => isset( $input['powered_by_text'] )   ? sanitize_text_field( $input['powered_by_text'] )   : $current['powered_by_text'],
+			'product_bot_title'           => isset( $input['product_bot_title'] ) ? sanitize_text_field( $input['product_bot_title'] ) : $current['product_bot_title'],
+			'order_bot_title'             => isset( $input['order_bot_title'] )   ? sanitize_text_field( $input['order_bot_title'] )   : $current['order_bot_title'],
 			'color_accent'                => ! empty( $input['color_accent'] )  ? ( sanitize_hex_color( $input['color_accent'] )  ?: $current['color_accent'] )  : $current['color_accent'],
 			'color_user_bg'               => ! empty( $input['color_user_bg'] ) ? ( sanitize_hex_color( $input['color_user_bg'] ) ?: $current['color_user_bg'] ) : $current['color_user_bg'],
 			'color_bot_bg'                => ! empty( $input['color_bot_bg'] )  ? ( sanitize_hex_color( $input['color_bot_bg'] )  ?: $current['color_bot_bg'] )  : $current['color_bot_bg'],
@@ -443,10 +453,6 @@ class EAIC_Admin {
 			'<a href="' . esc_url( admin_url( 'admin.php?page=eaic' ) ) . '">'
 			. esc_html__( 'Settings', 'easyit-ai-chat' ) . '</a>'
 		);
-		if ( function_exists( 'eaic_fs' ) && ! eaic_fs()->can_use_premium_code() ) {
-			$links[] = '<a href="' . esc_url( eaic_fs()->get_upgrade_url() ) . '" style="color:#e65f00;font-weight:600;">'
-				. esc_html__( 'Upgrade to Pro →', 'easyit-ai-chat' ) . '</a>';
-		}
 		return $links;
 	}
 
@@ -475,7 +481,110 @@ class EAIC_Admin {
 		$eaic_stats    = EAIC_DB::get_stats();
 		$eaic_daily    = EAIC_DB::get_messages_per_day( 7 );
 		$eaic_feedback = EAIC_DB::get_feedback_stats();
+
+		// WooCommerce bots (merged in from Pro) — only present when those tables exist.
+		$eaic_leads_total     = class_exists( 'EAIC_Lead_DB' ) ? EAIC_Lead_DB::count_total() : 0;
+		$eaic_leads_week      = class_exists( 'EAIC_Lead_DB' ) ? EAIC_Lead_DB::count_since( 7 ) : 0;
+		$eaic_leads           = class_exists( 'EAIC_Lead_DB' ) ? EAIC_Lead_DB::get_leads( array( 'limit' => 30 ) ) : array();
+		$eaic_product_chats   = $this->count_bot_chats( 'eaic_product_chats' );
+		$eaic_order_chats     = $this->count_bot_chats( 'eaic_order_chats' );
+		$eaic_top_products    = $this->get_top_products( 8 );
+		$eaic_unanswered      = $this->get_unanswered_queries( 15 );
+		$eaic_return_requests = class_exists( 'EAIC_Return_DB' ) ? EAIC_Return_DB::get_requests( 30 ) : array();
+		$eaic_pending_returns = class_exists( 'EAIC_Return_DB' ) ? EAIC_Return_DB::count_requests_by_status( 'pending' ) : 0;
+
 		require EAIC_DIR . 'admin/views/analytics-page.php';
+	}
+
+	/**
+	 * Count 'user' role rows in a bot chat-log table, if it exists.
+	 *
+	 * @param string $table_suffix Table name without prefix.
+	 * @return int
+	 */
+	private function count_bot_chats( $table_suffix ) {
+		global $wpdb;
+		$table = $wpdb->prefix . $table_suffix;
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		if ( $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $table ) ) !== $table ) {
+			return 0;
+		}
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		return (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$table} WHERE role = 'user'" );
+	}
+
+	/**
+	 * Top products asked about via the Product Q&A bot.
+	 *
+	 * @param int $limit Max rows.
+	 * @return array
+	 */
+	private function get_top_products( $limit = 8 ) {
+		global $wpdb;
+		$table = $wpdb->prefix . 'eaic_product_chats';
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		if ( $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $table ) ) !== $table ) {
+			return array();
+		}
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$rows = $wpdb->get_results(
+			$wpdb->prepare(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				"SELECT product_id, COUNT(*) AS total FROM {$table} WHERE role = 'user' AND product_id > 0 GROUP BY product_id ORDER BY total DESC LIMIT %d",
+				absint( $limit )
+			)
+		);
+
+		$result = array();
+		foreach ( (array) $rows as $row ) {
+			$name = '#' . $row->product_id;
+			$edit = '';
+			if ( function_exists( 'wc_get_product' ) ) {
+				$product = wc_get_product( $row->product_id );
+				if ( $product ) {
+					$name = $product->get_name();
+					$edit = get_edit_post_link( $row->product_id );
+				}
+			}
+			$result[] = array(
+				'product_id' => (int) $row->product_id,
+				'name'       => $name,
+				'total'      => (int) $row->total,
+				'edit_url'   => $edit,
+			);
+		}
+		return $result;
+	}
+
+	/**
+	 * Assistant replies matching common "I don't know" fallback phrases —
+	 * a heuristic signal for content gaps worth improving.
+	 *
+	 * @param int $limit Max rows.
+	 * @return array
+	 */
+	private function get_unanswered_queries( $limit = 15 ) {
+		global $wpdb;
+		$table = $wpdb->prefix . 'eaic_product_chats';
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		if ( $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $table ) ) !== $table ) {
+			return array();
+		}
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		return $wpdb->get_results(
+			$wpdb->prepare(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				"SELECT message, created_at FROM {$table} WHERE role = 'assistant' AND ( message LIKE %s OR message LIKE %s OR message LIKE %s OR message LIKE %s OR message LIKE %s ) ORDER BY created_at DESC LIMIT %d",
+				'%not sure%',
+				'%no matching%',
+				'%rephrase%',
+				'%contact support%',
+				'%browse the store%',
+				absint( $limit )
+			)
+		);
 	}
 
 	/**
@@ -523,8 +632,45 @@ class EAIC_Admin {
 			}
 		}
 
+		self::ensure_docs_dir_protected();
+
 		$eaic_documents = EAIC_RAG_DB::get_all_documents();
 		require EAIC_DIR . 'admin/views/knowledge-base-page.php';
+	}
+
+	/**
+	 * Create (if missing) the eaic-docs upload directory and make sure it
+	 * carries both an index.php (blocks directory listing) and a .htaccess
+	 * (blocks direct HTTP access to the uploaded knowledge-base documents).
+	 * Idempotent — safe to call on every page load / upload.
+	 *
+	 * @return string Absolute path to the eaic-docs directory.
+	 */
+	private static function ensure_docs_dir_protected() {
+		$upload_dir = wp_upload_dir();
+		$target_dir = trailingslashit( $upload_dir['basedir'] ) . 'eaic-docs';
+
+		if ( ! is_dir( $target_dir ) ) {
+			wp_mkdir_p( $target_dir );
+		}
+
+		$index_file = $target_dir . '/index.php';
+		if ( ! file_exists( $index_file ) ) {
+			// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents
+			file_put_contents( $index_file, '<?php // Silence is golden.' );
+		}
+
+		$htaccess_file = $target_dir . '/.htaccess';
+		if ( ! file_exists( $htaccess_file ) ) {
+			// Block direct HTTP access to uploaded knowledge-base documents (Apache 2.2 + 2.4).
+			// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents
+			file_put_contents(
+				$htaccess_file,
+				"<IfModule mod_authz_core.c>\nRequire all denied\n</IfModule>\n<IfModule !mod_authz_core.c>\nDeny from all\n</IfModule>\n"
+			);
+		}
+
+		return $target_dir;
 	}
 
 	// -----------------------------------------------------------------------
@@ -571,14 +717,7 @@ class EAIC_Admin {
 		$file_type = $uploaded['type'];
 
 		// Move from standard uploads to our custom eaic-docs directory.
-		$upload_dir = wp_upload_dir();
-		$target_dir = trailingslashit( $upload_dir['basedir'] ) . 'eaic-docs';
-		if ( ! is_dir( $target_dir ) ) {
-			wp_mkdir_p( $target_dir );
-			// Block direct HTTP access.
-			// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents
-			file_put_contents( $target_dir . '/index.php', '<?php // Silence is golden.' );
-		}
+		$target_dir = self::ensure_docs_dir_protected();
 
 		$unique_name = wp_unique_filename( $target_dir, $file_name );
 		$dest        = $target_dir . '/' . $unique_name;
